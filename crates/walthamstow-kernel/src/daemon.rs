@@ -4,7 +4,7 @@
 //! their consumers through, the tasks the daemon runs on its own behalf, and the signal
 //! that stops them.
 
-use std::sync::{Arc, PoisonError, RwLock};
+use std::sync::{Arc, Mutex, PoisonError, RwLock};
 use tokio::sync::broadcast;
 use tokio_util::sync::CancellationToken;
 use tokio_util::task::TaskTracker;
@@ -131,6 +131,9 @@ impl<E> TransportPublisher<E> {
 pub struct Daemon {
     shutdown: CancellationToken,
     tasks: TaskTracker,
+    /// Held while a task is admitted and while shutdown begins, so no task is admitted
+    /// once it has.
+    admission: Mutex<()>,
 }
 
 impl Daemon {
@@ -138,9 +141,13 @@ impl Daemon {
         Self::default()
     }
 
-    /// Signals the daemon's tasks, and all work holding its shutdown token, to stop. Signalling again does
-    /// nothing more.
+    /// Signals the daemon's tasks, and all work holding its shutdown token, to stop.
+    /// Signalling again does nothing more.
     pub fn shutdown(&self) {
+        let _admission = self
+            .admission
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
         self.shutdown.cancel();
     }
 
@@ -158,17 +165,25 @@ impl Daemon {
         self.shutdown.is_cancelled()
     }
 
-    /// Runs `task` on the daemon's behalf, so [`stop`](Self::stop) waits for it.
-    pub fn spawn<F>(&self, task: F) -> tokio::task::JoinHandle<F::Output>
+    /// Runs `task` on the daemon's behalf, so [`stop`](Self::stop) waits for it. Once
+    /// shutdown has begun the task is refused, and `None` is returned.
+    pub fn spawn<F>(&self, task: F) -> Option<tokio::task::JoinHandle<F::Output>>
     where
         F: std::future::Future + Send + 'static,
         F::Output: Send + 'static,
     {
-        self.tasks.spawn(task)
+        let _admission = self
+            .admission
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
+        if self.shutdown.is_cancelled() {
+            return None;
+        }
+        Some(self.tasks.spawn(task))
     }
 
     /// Shuts down, then waits for every task the daemon runs on its own behalf. No task
-    /// can be added once it has begun.
+    /// is admitted once it has begun.
     pub async fn stop(&self) {
         self.shutdown();
         self.tasks.close();
@@ -267,10 +282,12 @@ mod tests {
         let finished = Arc::new(AtomicBool::new(false));
         let token = daemon.shutdown_token().child_token();
         let task_finished = finished.clone();
-        daemon.spawn(async move {
-            token.cancelled().await;
-            task_finished.store(true, Ordering::SeqCst);
-        });
+        daemon
+            .spawn(async move {
+                token.cancelled().await;
+                task_finished.store(true, Ordering::SeqCst);
+            })
+            .expect("a running daemon admits a task");
 
         assert!(!daemon.is_shutting_down());
         daemon.stop().await;
@@ -281,5 +298,22 @@ mod tests {
             "stop returned before its task finished"
         );
         daemon.shutting_down().await;
+    }
+
+    #[tokio::test]
+    async fn a_task_offered_once_shutdown_has_begun_is_refused_and_never_runs() {
+        let daemon = Daemon::new();
+        let ran = Arc::new(AtomicBool::new(false));
+        daemon.shutdown();
+        let task_ran = ran.clone();
+        assert!(daemon
+            .spawn(async move { task_ran.store(true, Ordering::SeqCst) })
+            .is_none());
+        daemon.stop().await;
+        let task_ran = ran.clone();
+        assert!(daemon
+            .spawn(async move { task_ran.store(true, Ordering::SeqCst) })
+            .is_none());
+        assert!(!ran.load(Ordering::SeqCst));
     }
 }

@@ -53,7 +53,10 @@ fn walk_object_schema<F: FnMut(WalkerField)>(
         };
         let field_type = type_label(property, &resolved, defs);
         let description = description_for(property, &resolved);
-        let allowed_values = enum_values(property);
+        let allowed_values = match enum_values(property) {
+            direct if direct.is_empty() => enum_values(&resolved),
+            direct => direct,
+        };
         emit(WalkerField {
             path: field_path.clone(),
             field_type,
@@ -149,4 +152,34 @@ pub fn schema_summary(schema: &Value) -> String {
         .unwrap_or("")
         .trim()
         .to_string()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    fn fields(schema: &Value) -> Vec<WalkerField> {
+        let mut fields = Vec::new();
+        walk_describe_schema(schema, |field| fields.push(field));
+        fields
+    }
+
+    #[test]
+    fn an_enum_gives_its_allowed_values_directly_or_through_a_reference() {
+        let allowed = ["draft", "final"];
+        let schema = json!({
+            "$defs": { "Status": { "type": "string", "enum": allowed } },
+            "type": "object",
+            "properties": {
+                "direct": { "type": "string", "enum": allowed },
+                "referenced": { "$ref": "#/$defs/Status" },
+                "plain": { "type": "string" }
+            }
+        });
+        for field in fields(&schema) {
+            let expected: &[&str] = if field.path == "plain" { &[] } else { &allowed };
+            assert_eq!(field.allowed_values, expected, "{}", field.path);
+        }
+    }
 }

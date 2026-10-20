@@ -140,17 +140,17 @@ impl CollaborativeDocuments {
             .transpose()
     }
 
-    /// Records that the document's files render `generation`, or that no
-    /// accepted document remains when it is `None`. The mark stays when a
-    /// later generation has been accepted since.
     /// Whether `resource_id` waits for its files to be written from what was
-    /// accepted.
+    /// accepted. Documents that have no files never wait.
     pub fn publication_pending(&self, resource_id: &str) -> bool {
         self.publications
             .as_ref()
-            .is_none_or(|journal| journal.is_marked(&self.id(resource_id)))
+            .is_some_and(|journal| journal.is_marked(&self.id(resource_id)))
     }
 
+    /// Records that the document's files render `generation`, or that no
+    /// accepted document remains when it is `None`. The mark stays when a
+    /// later generation has been accepted since.
     pub fn published(&self, resource_id: &str, generation: Option<u64>) -> KernelResult<()> {
         let Some(journal) = &self.publications else {
             return Ok(());
@@ -362,10 +362,12 @@ impl CollaborativeDocuments {
         )
     }
 
-    /// Removes the document, as `actor` asked.
+    /// Removes the document, as `actor` asked. Its mark stays until
+    /// [`published`](Self::published) records that its files are gone too.
     pub fn remove(&self, resource_id: &str, actor: &Principal) -> KernelResult<()> {
+        let _pending = self.pending(resource_id)?;
         self.service.delete(actor, &self.id(resource_id))?;
-        self.published(resource_id, None)
+        Ok(())
     }
 
     /// Commits `actor`'s edit to the accepted document, as any writer's edit is
@@ -468,5 +470,158 @@ impl CollaborativeDocuments {
             ))
         })?;
         (self.resource.validate)(resource_id, &value)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use clerkenwell_events::ActorKind;
+    use clerkenwell_schema::{
+        GeneratedCollaborationConflict, GeneratedCollaborationFieldSpec,
+        GeneratedCollaborationStorageKind, GeneratedCollaborationValueCodec,
+    };
+    use clerkenwell_store::{CommitPolicy, PeerKey};
+    use std::num::NonZeroU32;
+    use std::time::Duration;
+    use walthamstow_kernel::collaboration_storage::FileCollaborationStorage;
+    use walthamstow_kernel::durability::WriteDurability;
+    use walthamstow_kernel::WallClock;
+
+    const fn field(
+        path: &'static str,
+        storage_kind: GeneratedCollaborationStorageKind,
+        container: Option<&'static str>,
+        key: Option<&'static str>,
+        conflict: GeneratedCollaborationConflict,
+    ) -> GeneratedCollaborationFieldSpec {
+        GeneratedCollaborationFieldSpec {
+            path,
+            storage_kind,
+            container,
+            container_template: None,
+            key,
+            identity_path: None,
+            identity_variable: None,
+            order_container: None,
+            item_container_template: None,
+            metadata_container: None,
+            metadata_container_template: None,
+            metadata_key: None,
+            codec: GeneratedCollaborationValueCodec::String,
+            value_schema: None,
+            required: true,
+            required_in_parent: true,
+            conflict,
+            writers: &[],
+        }
+    }
+
+    static NOTE_FIELDS: &[GeneratedCollaborationFieldSpec] = &[
+        field(
+            "note_id",
+            GeneratedCollaborationStorageKind::Scalar,
+            Some("note"),
+            Some("note_id"),
+            GeneratedCollaborationConflict::Immutable,
+        ),
+        field(
+            "body",
+            GeneratedCollaborationStorageKind::Text,
+            Some("body"),
+            None,
+            GeneratedCollaborationConflict::Merge,
+        ),
+        field(
+            "etag",
+            GeneratedCollaborationStorageKind::DerivedRevision,
+            None,
+            None,
+            GeneratedCollaborationConflict::Immutable,
+        ),
+    ];
+
+    static NOTE_PLANS: &[GeneratedCollaborationEntitySpec] = &[GeneratedCollaborationEntitySpec {
+        name: "Note",
+        id_field: "note_id",
+        schema_version: 1,
+        authoring_projection: "notes.authoringState",
+        authoring_document: None,
+        authoring_store_params: &[],
+        import_mutation: "note.importUpdate",
+        root_container: "note",
+        fields: NOTE_FIELDS,
+    }];
+
+    fn accept(_: &str, _: &Value) -> KernelResult<()> {
+        Ok(())
+    }
+
+    static NOTES: CollaborativeResource = CollaborativeResource::new(&NOTE_PLANS[0], accept);
+
+    const DURABILITY: WriteDurability = WriteDurability::System;
+
+    fn service(root: &std::path::Path) -> CollaborationService {
+        CollaborationService::new(
+            FileCollaborationStorage::new(root, DURABILITY, WallClock::default()),
+            NOTE_PLANS,
+            CommitPolicy {
+                retained_operations: 8,
+                attempts: NonZeroU32::MIN,
+                backoff: Duration::ZERO,
+            },
+            PeerKey::new([7; 32]).unwrap(),
+            "walthamstow-test",
+        )
+    }
+
+    fn writer() -> Principal {
+        Principal::new("writer", ActorKind::Human)
+    }
+
+    fn note(id: &str) -> Value {
+        serde_json::json!({ "note_id": id, "body": "text" })
+    }
+
+    #[test]
+    fn a_removed_document_waits_for_its_files_until_they_are_published_gone() {
+        let store = tempfile::tempdir().unwrap();
+        let data = tempfile::tempdir().unwrap();
+        let journal = || PublicationJournal::open(data.path(), DURABILITY).unwrap();
+        let documents = CollaborativeDocuments::new(service(store.path()), &NOTES, Some(journal()));
+        documents
+            .bootstrap("one", &note("one"), |_| Ok(()))
+            .unwrap();
+        let generation = documents.summary("one").unwrap().unwrap().generation;
+        documents.published("one", Some(generation)).unwrap();
+        assert!(!documents.publication_pending("one"));
+
+        documents.remove("one", &writer()).unwrap();
+        assert!(documents.summary("one").unwrap().is_none());
+        assert!(
+            documents.publication_pending("one"),
+            "the removed document's files are not yet known to be gone"
+        );
+        assert!(
+            journal().is_marked(&CollaborationDocumentId::new("Note", "one")),
+            "the mark is found again after a restart"
+        );
+
+        documents.published("one", None).unwrap();
+        assert!(!documents.publication_pending("one"));
+        assert!(!journal().is_marked(&CollaborationDocumentId::new("Note", "one")));
+    }
+
+    #[test]
+    fn documents_that_have_no_files_never_wait_for_publication() {
+        let store = tempfile::tempdir().unwrap();
+        let documents = CollaborativeDocuments::new(service(store.path()), &NOTES, None);
+        assert!(!documents.publication_pending("one"));
+        documents
+            .bootstrap("one", &note("one"), |_| Ok(()))
+            .unwrap();
+        assert!(!documents.publication_pending("one"));
+        documents.remove("one", &writer()).unwrap();
+        assert!(!documents.publication_pending("one"));
     }
 }

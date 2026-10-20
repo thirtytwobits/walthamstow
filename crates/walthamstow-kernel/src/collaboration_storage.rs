@@ -522,6 +522,11 @@ impl CollaborationStoragePort for FileCollaborationStorage {
         let path = self.envelope_path(document);
         self.with_document_lock(document, || {
             let current = read_optional(&path)?;
+            if current.as_deref() == Some(bytes) && expected != Some(sha256_hex(bytes).as_str()) {
+                // A write that returned an error after its rename landed; it is settled now.
+                self.sync_entity_dir(&path)?;
+                return Ok(Some(sha256_hex(bytes)));
+            }
             if current.as_deref().map(sha256_hex).as_deref() != expected {
                 return Ok(None);
             }
@@ -640,6 +645,16 @@ impl CollaborationStoragePort for FileCollaborationStorage {
                 .collect();
             let discarded = records.len() - kept.len();
             if discarded == 0 {
+                // An earlier discard may have replaced the stream without syncing it.
+                if self.records.join(AUDIT_FILE).try_exists().unwrap_or(false) {
+                    self.durability
+                        .sync_directory(&self.records)
+                        .map_err(|error| {
+                            StoreError::internal(format!(
+                                "Could not settle the collaboration audit stream: {error}"
+                            ))
+                        })?;
+                }
                 return Ok(0);
             }
             let mut bytes = Vec::new();
@@ -1639,5 +1654,43 @@ mod tests {
                 .len(),
             1
         );
+    }
+
+    #[test]
+    fn a_swap_retried_after_its_write_landed_reports_and_settles_it() {
+        for durability in [WriteDurability::Device, WriteDurability::System] {
+            let root = tempfile::tempdir().unwrap();
+            let storage = FileCollaborationStorage::new(root.path(), durability, clock());
+            let id = document("one");
+            let written = storage.compare_and_swap(&id, None, b"landed").unwrap();
+            assert!(written.is_some());
+            assert_eq!(
+                storage.compare_and_swap(&id, None, b"landed").unwrap(),
+                written
+            );
+            assert!(storage
+                .compare_and_swap(&id, None, b"other")
+                .unwrap()
+                .is_none());
+        }
+    }
+
+    #[test]
+    fn a_discard_retried_with_nothing_left_settles_under_each_durability() {
+        for durability in [WriteDurability::Device, WriteDurability::System] {
+            let root = tempfile::tempdir().unwrap();
+            let storage = FileCollaborationStorage::new(root.path(), durability, clock());
+            storage.append_audit(&record("ada", "one", 10)).unwrap();
+            storage.append_audit(&record("ada", "one", 20)).unwrap();
+            assert_eq!(storage.discard_audit_before(20).unwrap(), 1);
+            assert_eq!(storage.discard_audit_before(20).unwrap(), 0);
+            assert_eq!(
+                storage
+                    .audit(&CollaborationAuditQuery::default())
+                    .unwrap()
+                    .len(),
+                1
+            );
+        }
     }
 }

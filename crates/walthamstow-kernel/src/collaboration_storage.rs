@@ -87,6 +87,11 @@ impl FileCollaborationStorage {
                 "The entity \"{entity}\" maps to {name}, which the store reserves for itself."
             )));
         }
+        if crate::files::is_windows_device_name(&name) {
+            return Err(StoreError::internal(format!(
+                "The entity \"{entity}\" maps to {name}, a device name Windows reserves."
+            )));
+        }
         let directory = self.entity_dir(entity);
         match std::fs::symlink_metadata(&directory) {
             Ok(metadata) if metadata.file_type().is_symlink() => {
@@ -608,8 +613,19 @@ impl CollaborationStoragePort for FileCollaborationStorage {
     }
 
     fn audit(&self, query: &CollaborationAuditQuery) -> StoreResult<Vec<CollaborationAuditRecord>> {
+        // A read makes nothing: no records directory means no record.
+        let held = self.records.try_exists().map_err(|error| {
+            StoreError::internal(format!(
+                "Could not inspect the collaboration records {}: {error}",
+                self.records.display()
+            ))
+        })?;
+        if !held {
+            return Ok(Vec::new());
+        }
+        // Read under the lock appends hold, so an append that fails is never seen.
         Ok(self
-            .audit_records()?
+            .with_audit_lock(|| self.audit_records())?
             .into_iter()
             .filter(|record| query.selects(record))
             .collect())
@@ -1588,5 +1604,40 @@ mod tests {
         let root = data.path().join("collaboration");
         std::os::unix::fs::symlink(outside.path(), &root).unwrap();
         assert!(prepare_cache_root(&root, WriteDurability::System).is_err());
+    }
+
+    #[test]
+    fn an_entity_whose_directory_windows_reserves_is_refused() {
+        let root = tempfile::tempdir().unwrap();
+        let storage = FileCollaborationStorage::new(root.path(), WriteDurability::System, clock());
+        for entity in ["Con", "AUX", "Com1", "lpt9"] {
+            let id = CollaborationDocumentId::new(entity, "one");
+            assert!(
+                storage.compare_and_swap(&id, None, b"x").is_err(),
+                "{entity}"
+            );
+            assert!(storage.sources(entity).is_err(), "{entity}");
+        }
+    }
+
+    #[test]
+    fn an_audit_read_of_records_never_kept_makes_nothing() {
+        let root = tempfile::tempdir().unwrap();
+        let records = root.path().join("records");
+        let storage = FileCollaborationStorage::new(root.path(), WriteDurability::System, clock())
+            .with_records_at(&records);
+        assert!(storage
+            .audit(&CollaborationAuditQuery::default())
+            .unwrap()
+            .is_empty());
+        assert!(!records.exists());
+        storage.append_audit(&record("ada", "one", 10)).unwrap();
+        assert_eq!(
+            storage
+                .audit(&CollaborationAuditQuery::default())
+                .unwrap()
+                .len(),
+            1
+        );
     }
 }

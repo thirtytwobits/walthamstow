@@ -46,6 +46,24 @@ impl Journal {
     pub fn root(self, data_dir: &Path) -> PathBuf {
         data_dir.join("journals").join(self.0)
     }
+
+    /// The journal's directory, refused when it or the `journals` directory holding it is a
+    /// link, so what is read from it and written to it stays under `data_dir`.
+    pub fn unlinked_root(self, data_dir: &Path) -> std::io::Result<PathBuf> {
+        let journals = data_dir.join("journals");
+        let root = journals.join(self.0);
+        for path in [&journals, &root] {
+            if std::fs::symlink_metadata(path)
+                .is_ok_and(|metadata| metadata.file_type().is_symlink())
+            {
+                return Err(std::io::Error::other(format!(
+                    "{} is a link, which a journal does not follow.",
+                    path.display()
+                )));
+            }
+        }
+        Ok(root)
+    }
 }
 
 /// Where an operation stages what it promotes into place by rename, and parks
@@ -113,5 +131,24 @@ mod tests {
         }
         Journal::new("collaboration-publications");
         Staging::new("session_imports");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_journal_reached_through_a_link_is_refused() {
+        let journal = Journal::new("an-operation");
+        let outside = tempfile::tempdir().unwrap();
+        for linked in ["journals", "journals/an-operation"] {
+            let data = tempfile::tempdir().unwrap();
+            let link = data.path().join(linked);
+            std::fs::create_dir_all(link.parent().unwrap()).unwrap();
+            std::os::unix::fs::symlink(outside.path(), &link).unwrap();
+            assert!(journal.unlinked_root(data.path()).is_err(), "{linked}");
+        }
+        let data = tempfile::tempdir().unwrap();
+        assert_eq!(
+            journal.unlinked_root(data.path()).unwrap(),
+            journal.root(data.path())
+        );
     }
 }

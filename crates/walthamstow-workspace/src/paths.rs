@@ -6,10 +6,11 @@ use anyhow::{anyhow, bail, Context, Result};
 use std::path::{Component, Path, PathBuf};
 
 /// Resolves each `(name, configured)` directory against `root_dir`. A directory must be a
-/// normalised relative path that stays within the root, and no two may overlap, through a
-/// link within the root or otherwise. Directories that differ only in case overlap, since a
-/// case-insensitive file system holds them as one. A refusal names each directory by its
-/// `name`.
+/// normalised relative path in ASCII that stays within the root, and no two may overlap,
+/// through a link within the root or otherwise. Directories that differ only in case overlap,
+/// since a case-insensitive file system holds them as one. ASCII is required because file
+/// systems differ in which other spellings they hold as one. A refusal names each directory by
+/// its `name`.
 pub fn resolve_directories<const N: usize>(
     root_dir: &Path,
     configured: [(&str, &str); N],
@@ -68,6 +69,9 @@ fn resolve_directory(
 ) -> Result<(PathBuf, PathBuf)> {
     if configured.is_empty() || configured.contains('\\') {
         bail!("{name} must be a non-empty relative path using forward slashes.");
+    }
+    if !configured.is_ascii() {
+        bail!("{name} must be spelled in ASCII.");
     }
     let relative = Path::new(configured);
     if relative.is_absolute()
@@ -316,6 +320,18 @@ mod tests {
             std::os::unix::fs::symlink(root.path().join("notes"), root.path().join("linked"))
                 .unwrap();
             assert!(resolve_directories(root.path(), [("documents", "linked")]).is_err());
+        }
+    }
+
+    #[test]
+    fn a_directory_spelled_outside_ascii_is_refused() {
+        let root = tempfile::tempdir().unwrap();
+        for configured in ["caf\u{e9}", "cafe\u{301}", "data/\u{fc}ber"] {
+            let error = resolve_directories(root.path(), [("documents", configured)]).unwrap_err();
+            assert!(
+                error.to_string().contains("documents"),
+                "{configured}: {error}"
+            );
         }
     }
 }

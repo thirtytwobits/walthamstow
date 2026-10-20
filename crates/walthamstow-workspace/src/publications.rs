@@ -27,8 +27,9 @@ struct Inner {
     root: PathBuf,
     /// How far each mark is written before a commit relies on it.
     durability: walthamstow_kernel::durability::WriteDurability,
-    /// Every marked document, with how many commits to it are under way.
-    marked: Mutex<HashMap<CollaborationDocumentId, usize>>,
+    /// Every marked document, with how many commits to it are under way and the file its
+    /// mark is kept in.
+    marked: Mutex<HashMap<CollaborationDocumentId, Marked>>,
     /// Woken when a commit to a marked document finishes.
     finished: tokio::sync::Notify,
 }
@@ -40,6 +41,14 @@ struct Mark {
     resource_id: String,
 }
 
+/// A marked document's commits under way, and the file its mark is kept in: the name it was
+/// written under, which a mark from an earlier release keeps.
+#[derive(Debug)]
+struct Marked {
+    under_way: usize,
+    path: PathBuf,
+}
+
 /// A commit under way to a marked document. While one is, the mark stays.
 #[derive(Debug)]
 pub struct PendingCommit {
@@ -49,8 +58,8 @@ pub struct PendingCommit {
 
 impl Drop for PendingCommit {
     fn drop(&mut self) {
-        if let Some(under_way) = self.inner.locked().get_mut(&self.document) {
-            *under_way = under_way.saturating_sub(1);
+        if let Some(marked) = self.inner.locked().get_mut(&self.document) {
+            marked.under_way = marked.under_way.saturating_sub(1);
         }
         self.inner.finished.notify_one();
     }
@@ -64,14 +73,16 @@ fn internal(path: &Path, error: impl std::fmt::Display) -> KernelError {
 }
 
 impl Inner {
-    fn locked(&self) -> MutexGuard<'_, HashMap<CollaborationDocumentId, usize>> {
+    fn locked(&self) -> MutexGuard<'_, HashMap<CollaborationDocumentId, Marked>> {
         self.marked.lock().unwrap_or_else(PoisonError::into_inner)
     }
 
+    /// Where a new mark for `document` is written: named by a hash of the entity and resource
+    /// as a JSON pair, which no two documents share.
     fn path(&self, document: &CollaborationDocumentId) -> PathBuf {
-        let name = walthamstow_kernel::hashing::sha256_hex(
-            format!("{}/{}", document.entity, document.resource_id).as_bytes(),
-        );
+        let pair = serde_json::to_vec(&(&document.entity, &document.resource_id))
+            .expect("a pair of strings encodes");
+        let name = walthamstow_kernel::hashing::sha256_hex(&pair);
         self.root.join(format!("{name}.json"))
     }
 }
@@ -99,7 +110,7 @@ impl PublicationJournal {
                 serde_json::from_slice(&bytes).map_err(|error| internal(&path, error))?;
             marked.insert(
                 CollaborationDocumentId::new(mark.entity, mark.resource_id),
-                0,
+                Marked { under_way: 0, path },
             );
         }
         Ok(Self {
@@ -116,8 +127,8 @@ impl PublicationJournal {
     /// at least until the returned commit is dropped.
     pub fn mark(&self, document: &CollaborationDocumentId) -> KernelResult<PendingCommit> {
         let mut marked = self.inner.locked();
+        let path = self.inner.path(document);
         if !marked.contains_key(document) {
-            let path = self.inner.path(document);
             let mark = serde_json::to_vec(&Mark {
                 entity: document.entity.clone(),
                 resource_id: document.resource_id.clone(),
@@ -126,7 +137,10 @@ impl PublicationJournal {
             walthamstow_kernel::durability::write_synced(self.inner.durability, &path, &mark)
                 .map_err(|error| internal(&path, error))?;
         }
-        *marked.entry(document.clone()).or_default() += 1;
+        marked
+            .entry(document.clone())
+            .or_insert(Marked { under_way: 0, path })
+            .under_way += 1;
         Ok(PendingCommit {
             inner: self.inner.clone(),
             document: document.clone(),
@@ -141,19 +155,26 @@ impl PublicationJournal {
         published: impl FnOnce() -> KernelResult<bool>,
     ) -> KernelResult<()> {
         let mut marked = self.inner.locked();
-        if marked.get(document) != Some(&0) || !published()? {
+        let Some(path) = marked
+            .get(document)
+            .filter(|marked| marked.under_way == 0)
+            .map(|marked| marked.path.clone())
+        else {
+            return Ok(());
+        };
+        if !published()? {
             return Ok(());
         }
-        let path = self.inner.path(document);
         match std::fs::remove_file(&path) {
-            Ok(()) => self
-                .inner
-                .durability
-                .sync_directory(&self.inner.root)
-                .map_err(|error| internal(&self.inner.root, error))?,
+            Ok(()) => {}
+            // An earlier clear removed it, and may not have synced its removal.
             Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
             Err(error) => return Err(internal(&path, error)),
         }
+        self.inner
+            .durability
+            .sync_directory(&self.inner.root)
+            .map_err(|error| internal(&self.inner.root, error))?;
         marked.remove(document);
         Ok(())
     }
@@ -301,5 +322,51 @@ mod tests {
                 panic!("an unmarked document has nothing to confirm")
             })
             .unwrap();
+    }
+
+    #[test]
+    fn documents_whose_identities_join_alike_keep_marks_of_their_own() {
+        let data_dir = tempfile::tempdir().unwrap();
+        let journal = PublicationJournal::open(data_dir.path(), WriteDurability::System).unwrap();
+        let first = CollaborationDocumentId::new("a", "b/c");
+        let second = CollaborationDocumentId::new("a/b", "c");
+        drop(journal.mark(&first).unwrap());
+        drop(journal.mark(&second).unwrap());
+        let reopened = PublicationJournal::open(data_dir.path(), WriteDurability::System).unwrap();
+        assert!(reopened.is_marked(&first) && reopened.is_marked(&second));
+        assert_eq!(reopened.count(), 2);
+    }
+
+    #[test]
+    fn a_mark_under_another_name_is_found_and_cleared() {
+        let data_dir = tempfile::tempdir().unwrap();
+        let root = JOURNAL.root(data_dir.path());
+        let earlier = root.join("an-earlier-name.json");
+        walthamstow_kernel::durability::write_synced(
+            WriteDurability::System,
+            &earlier,
+            br#"{"entity":"Note","resource_id":"kept"}"#,
+        )
+        .unwrap();
+        let journal = PublicationJournal::open(data_dir.path(), WriteDurability::System).unwrap();
+        assert!(journal.is_marked(&document("kept")));
+        journal.clear(&document("kept"), || Ok(true)).unwrap();
+        assert!(!earlier.exists());
+        let reopened = PublicationJournal::open(data_dir.path(), WriteDurability::System).unwrap();
+        assert!(reopened.marked().is_empty());
+    }
+
+    #[test]
+    fn a_clear_finds_its_mark_already_gone_and_still_settles() {
+        for durability in [WriteDurability::Device, WriteDurability::System] {
+            let data_dir = tempfile::tempdir().unwrap();
+            let journal = PublicationJournal::open(data_dir.path(), durability).unwrap();
+            drop(journal.mark(&document("gone")).unwrap());
+            for entry in std::fs::read_dir(JOURNAL.root(data_dir.path())).unwrap() {
+                std::fs::remove_file(entry.unwrap().path()).unwrap();
+            }
+            journal.clear(&document("gone"), || Ok(true)).unwrap();
+            assert!(!journal.is_marked(&document("gone")));
+        }
     }
 }

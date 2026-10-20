@@ -21,6 +21,33 @@ pub fn safe_id(id: &str) -> Result<()> {
     Ok(())
 }
 
+/// Whether `name` is a device name Windows reserves in every directory, in any case: CON, PRN,
+/// AUX, NUL, and COM or LPT followed by a digit from 1 to 9.
+pub const fn is_windows_device_name(name: &str) -> bool {
+    const fn named(name: &[u8], device: &[u8]) -> bool {
+        if name.len() != device.len() {
+            return false;
+        }
+        let mut index = 0;
+        while index < name.len() {
+            if name[index].to_ascii_lowercase() != device[index] {
+                return false;
+            }
+            index += 1;
+        }
+        true
+    }
+    let name = name.as_bytes();
+    if named(name, b"con") || named(name, b"prn") || named(name, b"aux") || named(name, b"nul") {
+        return true;
+    }
+    if name.len() != 4 || !matches!(name[3], b'1'..=b'9') {
+        return false;
+    }
+    let stem = [name[0], name[1], name[2]];
+    named(&stem, b"com") || named(&stem, b"lpt")
+}
+
 /// Every file under `dir`, by its path relative to `dir`. A symlink or any other entry
 /// that is neither a file nor a directory is refused.
 pub fn read_files(dir: &Path) -> Result<BTreeMap<PathBuf, Vec<u8>>> {
@@ -92,6 +119,16 @@ mod tests {
         {
             std::os::unix::fs::symlink(dir.path().join(top), dir.path().join("link")).unwrap();
             assert!(read_files(dir.path()).is_err());
+        }
+    }
+
+    #[test]
+    fn a_windows_device_name_is_recognised_in_any_case_and_nothing_else_is() {
+        for device in ["con", "PRN", "Aux", "nul", "COM1", "com9", "Lpt1", "lpt9"] {
+            assert!(is_windows_device_name(device), "{device}");
+        }
+        for ordinary in ["console", "com", "com0", "com10", "lpt", "null", "", "co"] {
+            assert!(!is_windows_device_name(ordinary), "{ordinary}");
         }
     }
 }

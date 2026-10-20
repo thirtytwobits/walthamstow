@@ -43,18 +43,10 @@ pub fn work_dir(data_dir: &Path, operation_id: &str) -> Result<PathBuf> {
     {
         bail!("An upgrade's operation id holds only lowercase letters, digits, '-' and '_'.");
     }
-    if is_reserved_on_windows(operation_id) {
+    if walthamstow_kernel::files::is_windows_device_name(operation_id) {
         bail!("{operation_id} names a Windows device, which no directory can be named.");
     }
     Ok(JOURNAL.root(data_dir).join(operation_id))
-}
-
-/// Whether `name` is one of the device names Windows reserves in every directory.
-fn is_reserved_on_windows(name: &str) -> bool {
-    matches!(name, "con" | "prn" | "aux" | "nul")
-        || ((name.starts_with("com") || name.starts_with("lpt"))
-            && name.len() == 4
-            && matches!(name.as_bytes()[3], b'1'..=b'9'))
 }
 
 /// Where an upgrade stages the files it publishes.

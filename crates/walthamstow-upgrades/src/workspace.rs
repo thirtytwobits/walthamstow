@@ -32,11 +32,14 @@ pub struct Operation {
     target_hashes: BTreeMap<PathBuf, String>,
 }
 
-/// The directory an upgrade works in. An `operation_id` that is not one visible path
-/// component is refused.
+/// The directory an upgrade works in, named by a hash of `operation_id`, so ids that differ
+/// only in case keep directories of their own on a case-insensitive file system. An
+/// `operation_id` that is not one visible path component is refused.
 pub fn work_dir(data_dir: &Path, operation_id: &str) -> Result<PathBuf> {
     walthamstow_kernel::files::safe_id(operation_id)?;
-    Ok(JOURNAL.root(data_dir).join(operation_id))
+    Ok(JOURNAL
+        .root(data_dir)
+        .join(sha256_hex(operation_id.as_bytes())))
 }
 
 /// Where an upgrade stages the files it publishes.
@@ -274,6 +277,38 @@ mod tests {
         }
         let work = work_dir(data.path(), "an-upgrade").unwrap();
         assert_eq!(work.parent(), Some(JOURNAL.root(data.path()).as_path()));
+    }
+
+    #[test]
+    fn ids_that_differ_only_in_case_work_in_directories_of_their_own() {
+        let data = tempfile::tempdir().unwrap();
+        let upper = work_dir(data.path(), "Upgrade").unwrap();
+        let lower = work_dir(data.path(), "upgrade").unwrap();
+        assert_ne!(
+            upper.to_string_lossy().to_lowercase(),
+            lower.to_string_lossy().to_lowercase()
+        );
+    }
+
+    #[test]
+    fn an_upgrade_in_a_directory_named_by_its_id_is_recovered() {
+        let workspace = tempfile::tempdir().unwrap();
+        let data = tempfile::tempdir().unwrap();
+        let work = JOURNAL.root(data.path()).join("named-by-its-id");
+        let path = PathBuf::from("data/first.json");
+        let (original, target) = (b"original".to_vec(), b"upgraded".to_vec());
+        write_synced(DURABILITY, &workspace.path().join(&path), &original).unwrap();
+        write_synced(DURABILITY, &prepared_dir(&work).join(&path), &target).unwrap();
+        authorise(
+            DURABILITY,
+            &work,
+            "named-by-its-id",
+            &BTreeMap::from([(path.clone(), original)]),
+            &BTreeMap::from([(path.clone(), target.clone())]),
+        )
+        .unwrap();
+        recover(workspace.path(), data.path(), DURABILITY).unwrap();
+        assert_eq!(std::fs::read(workspace.path().join(&path)).unwrap(), target);
     }
 
     #[test]

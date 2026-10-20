@@ -21,8 +21,8 @@ pub struct WalkerField {
 /// objects and `$ref`s, expanding arrays of objects into
 /// `<path>[].<field>` entries). Caller-provided `emit` collects.
 pub fn walk_describe_schema<F: FnMut(WalkerField)>(schema: &Value, mut emit: F) {
-    let document = resolve_ref(schema, schema);
-    within(&mut Vec::new(), [ref_name(schema)], |active| {
+    let (document, passed) = resolve_ref(schema, schema);
+    within(&mut Vec::new(), &passed, |active| {
         walk_object_schema(&document, "", schema, &mut emit, active)
     });
 }
@@ -46,7 +46,7 @@ fn walk_object_schema<F: FnMut(WalkerField)>(
     };
 
     for (name, property) in properties {
-        let resolved = resolve_ref(property, root);
+        let (resolved, passed) = resolve_ref(property, root);
         let field_path = if path.is_empty() {
             name.clone()
         } else {
@@ -78,16 +78,17 @@ fn walk_object_schema<F: FnMut(WalkerField)>(
                 &resolved
             };
             if let Some(items) = array.get("items") {
-                let item_schema = resolve_ref(items, root);
+                let (item_schema, item_passed) = resolve_ref(items, root);
                 if matches_object(&item_schema) {
                     let array_path = format!("{field_path}[]");
-                    within(active, [ref_name(property), ref_name(items)], |active| {
+                    let references = [passed.as_slice(), &item_passed].concat();
+                    within(active, &references, |active| {
                         walk_object_schema(&item_schema, &array_path, root, emit, active)
                     });
                 }
             }
         } else if matches_object(&resolved) {
-            within(active, [ref_name(property)], |active| {
+            within(active, &passed, |active| {
                 walk_object_schema(&resolved, &field_path, root, emit, active)
             });
         }
@@ -95,20 +96,15 @@ fn walk_object_schema<F: FnMut(WalkerField)>(
 }
 
 /// Runs `walk` with `references` added to `active`, unless one of them is already there.
-fn within<'a>(
-    active: &mut Vec<String>,
-    references: impl IntoIterator<Item = Option<&'a str>>,
-    walk: impl FnOnce(&mut Vec<String>),
-) {
-    let references = references.into_iter().flatten().collect::<Vec<_>>();
+fn within(active: &mut Vec<String>, references: &[String], walk: impl FnOnce(&mut Vec<String>)) {
     if references
         .iter()
-        .any(|reference| active.iter().any(|held| held == reference))
+        .any(|reference| active.contains(reference))
     {
         return;
     }
     let depth = active.len();
-    active.extend(references.iter().map(|reference| reference.to_string()));
+    active.extend_from_slice(references);
     walk(active);
     active.truncate(depth);
 }
@@ -177,9 +173,10 @@ fn ref_name(node: &Value) -> Option<&str> {
 }
 
 /// The schema `node` refers to, through any chain of local references resolved as JSON Pointers
-/// into `root`, or `node` when it refers to none. The `properties` and `required` beside each
-/// reference on the way are kept. A chain that returns to a reference it passed stops there.
-fn resolve_ref(node: &Value, root: &Value) -> Value {
+/// into `root`, or `node` when it refers to none, with each reference passed on the way. The
+/// `properties` and `required` beside each reference are kept. A chain that returns to a
+/// reference it passed stops there.
+fn resolve_ref(node: &Value, root: &Value) -> (Value, Vec<String>) {
     let mut resolved = node.clone();
     let mut passed = Vec::new();
     while let Some(reference) = ref_name(&resolved).map(str::to_string) {
@@ -196,7 +193,7 @@ fn resolve_ref(node: &Value, root: &Value) -> Value {
         passed.push(reference);
         resolved = with_siblings(&resolved, target.clone());
     }
-    resolved
+    (resolved, passed)
 }
 
 /// `node`'s type, naming an array's item type. `active` names the item references being
@@ -222,9 +219,9 @@ fn type_label(node: &Value, resolved: &Value, root: &Value, active: &mut Vec<Str
             labels.push(name.to_string());
             continue;
         };
-        let item = resolve_ref(items, root);
+        let (item, passed) = resolve_ref(items, root);
         let mut label = "array".to_string();
-        within(active, [ref_name(items)], |active| {
+        within(active, &passed, |active| {
             label = format!("array of {}", type_label(&item, &item, root, active));
         });
         labels.push(label);
@@ -588,5 +585,34 @@ mod tests {
         assert!(list.field_type.contains("array of") && list.field_type.contains("null"));
         let label = fields.iter().find(|field| field.path == "label").unwrap();
         assert!(label.field_type.contains("string") && label.field_type.contains("null"));
+    }
+
+    #[test]
+    fn a_recursive_definition_reached_through_an_alias_is_walked_once() {
+        let schema = json!({
+            "$defs": {
+                "Node": {
+                    "type": "object",
+                    "properties": {
+                        "name": { "type": "string" },
+                        "child": { "$ref": "#/$defs/Node" }
+                    }
+                },
+                "Alias": { "$ref": "#/$defs/Node" }
+            },
+            "type": "object",
+            "properties": {
+                "direct": { "$ref": "#/$defs/Node" },
+                "aliased": { "$ref": "#/$defs/Alias" }
+            }
+        });
+        let fields = fields(&schema);
+        let under = |prefix: &str| {
+            fields
+                .iter()
+                .filter_map(|field| field.path.strip_prefix(prefix).map(str::to_string))
+                .collect::<Vec<_>>()
+        };
+        assert_eq!(under("aliased."), under("direct."));
     }
 }

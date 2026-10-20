@@ -27,10 +27,43 @@ pub fn file_hash(path: &Path) -> Result<Option<String>> {
     }
 }
 
+/// Refuses `path` unless it is relative and stays beneath the root it is joined to.
+pub fn check_relative_path(path: &Path) -> Result<()> {
+    if path.as_os_str().is_empty()
+        || path.components().any(|part| {
+            matches!(
+                part,
+                Component::ParentDir | Component::RootDir | Component::Prefix(_)
+            )
+        })
+    {
+        bail!("Invalid publication path {}.", path.display());
+    }
+    Ok(())
+}
+
+/// Refuses `path` beneath `root` when any part of it that exists is a link, so a write to it
+/// cannot leave `root`.
+fn refuse_links(root: &Path, path: &Path) -> Result<()> {
+    let mut walked = root.to_path_buf();
+    for part in path.components() {
+        walked.push(part);
+        match std::fs::symlink_metadata(&walked) {
+            Ok(metadata) if metadata.file_type().is_symlink() => {
+                bail!("{} is a link, which a publication does not write through.", walked.display())
+            }
+            Ok(_) => {}
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(()),
+            Err(error) => return Err(error.into()),
+        }
+    }
+    Ok(())
+}
+
 /// Publishes each replacement from `staged` into `live`. Every replacement is checked before
 /// any is written: a live file already at its target is left alone, one still at its source is
-/// replaced, and one that is neither refuses the whole publication. Publishing again after an
-/// interruption finishes it.
+/// replaced, and one that is neither, or that lies through a link, refuses the whole
+/// publication. Publishing again after an interruption finishes it.
 pub fn publish(
     durability: WriteDurability,
     live: &Path,
@@ -39,16 +72,8 @@ pub fn publish(
 ) -> Result<()> {
     let mut publications = Vec::new();
     for replacement in replacements {
-        if replacement.path.as_os_str().is_empty()
-            || replacement.path.components().any(|part| {
-                matches!(
-                    part,
-                    Component::ParentDir | Component::RootDir | Component::Prefix(_)
-                )
-            })
-        {
-            bail!("Invalid publication path {}.", replacement.path.display());
-        }
+        check_relative_path(&replacement.path)?;
+        refuse_links(live, &replacement.path)?;
         let current = file_hash(&live.join(&replacement.path))?;
         if current.as_ref() == Some(&replacement.target_hash) {
             continue;
@@ -170,6 +195,35 @@ mod tests {
                 publish(DURABILITY, live.path(), staged.path(), &[replacement]).is_err(),
                 "{path}"
             );
+        }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_publication_does_not_write_through_a_link() {
+        let outside = tempfile::tempdir().unwrap();
+        for link in ["linked", "linked/a.json"] {
+            let (live, staged, replacements) = stage(&[("linked/a.json", None, b"new a")]);
+            write_synced(DURABILITY, &outside.path().join("a.json"), b"old a").unwrap();
+            let replacements = replacements
+                .into_iter()
+                .map(|replacement| Replacement {
+                    source_hash: Some(sha256_hex(b"old a")),
+                    ..replacement
+                })
+                .collect::<Vec<_>>();
+            let target = if link == "linked" {
+                outside.path().to_path_buf()
+            } else {
+                std::fs::create_dir_all(live.path().join("linked")).unwrap();
+                outside.path().join("a.json")
+            };
+            std::os::unix::fs::symlink(&target, live.path().join(link)).unwrap();
+            assert!(
+                publish(DURABILITY, live.path(), staged.path(), &replacements).is_err(),
+                "{link}"
+            );
+            assert_eq!(std::fs::read(outside.path().join("a.json")).unwrap(), b"old a");
         }
     }
 }

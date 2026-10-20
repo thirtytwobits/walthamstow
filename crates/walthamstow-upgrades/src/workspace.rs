@@ -5,7 +5,7 @@
 //! publishes, `original/` the files they replace, and `operation.json` the journal that
 //! authorises publication.
 
-use crate::publication::{publish, Replacement};
+use crate::publication::{check_relative_path, publish, Replacement};
 use anyhow::{bail, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
@@ -44,6 +44,8 @@ pub fn prepared_dir(work: &Path) -> PathBuf {
 
 /// Authorises publishing `changes` over the workspace files they replace, which `sources`
 /// holds by path: keeps each replaced file under `original/` and writes the committing journal.
+/// A path that does not stay beneath the workspace refuses the upgrade before anything is
+/// written.
 pub fn authorise(
     durability: WriteDurability,
     work: &Path,
@@ -51,6 +53,9 @@ pub fn authorise(
     sources: &BTreeMap<PathBuf, Vec<u8>>,
     changes: &BTreeMap<PathBuf, Vec<u8>>,
 ) -> Result<Operation> {
+    for path in changes.keys() {
+        check_relative_path(path)?;
+    }
     let mut operation = Operation {
         operation_id: operation_id.to_owned(),
         status: COMMITTING.into(),
@@ -232,6 +237,28 @@ mod tests {
         .unwrap();
         recover(workspace.path(), data.path(), DURABILITY).unwrap();
         assert!(!work.exists());
+    }
+
+    #[test]
+    fn a_path_that_leaves_the_workspace_refuses_the_upgrade_before_anything_is_written() {
+        let data = tempfile::tempdir().unwrap();
+        let work = work_dir(data.path(), "escaping");
+        for path in ["../../escape.json", "/absolute.json"] {
+            let path = PathBuf::from(path);
+            let bytes = b"bytes".to_vec();
+            assert!(authorise(
+                DURABILITY,
+                &work,
+                "escaping",
+                &BTreeMap::from([(path.clone(), bytes.clone())]),
+                &BTreeMap::from([(path.clone(), bytes)]),
+            )
+            .is_err());
+        }
+        assert!(
+            !JOURNAL.root(data.path()).exists(),
+            "nothing is written for a refused upgrade"
+        );
     }
 
     #[test]

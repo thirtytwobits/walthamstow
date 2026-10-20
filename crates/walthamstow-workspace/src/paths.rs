@@ -6,7 +6,8 @@ use anyhow::{anyhow, bail, Context, Result};
 use std::path::{Component, Path, PathBuf};
 
 /// Resolves each `(name, configured)` directory against `root_dir`. A directory must be a
-/// normalised relative path that stays within the root, and no two may overlap.
+/// normalised relative path that stays within the root, and no two may overlap, through a
+/// link within the root or otherwise. A refusal names each directory by its `name`.
 pub fn resolve_directories<const N: usize>(
     root_dir: &Path,
     configured: [(&str, &str); N],
@@ -15,16 +16,19 @@ pub fn resolve_directories<const N: usize>(
         .canonicalize()
         .with_context(|| format!("Failed to resolve workspace root {}.", root_dir.display()))?;
     let mut resolved = Vec::with_capacity(N);
+    let mut targets = Vec::with_capacity(N);
     for (name, value) in configured {
-        resolved.push(resolve_directory(root_dir, &canonical_root, name, value)?);
+        let (directory, target) = resolve_directory(root_dir, &canonical_root, name, value)?;
+        resolved.push(directory);
+        targets.push(target);
     }
     for left in 0..N {
         for right in (left + 1)..N {
-            if resolved[left].starts_with(&resolved[right])
-                || resolved[right].starts_with(&resolved[left])
+            if targets[left].starts_with(&targets[right])
+                || targets[right].starts_with(&targets[left])
             {
                 bail!(
-                    "workspace.paths.{} and workspace.paths.{} must not overlap.",
+                    "{} and {} must not overlap.",
                     configured[left].0,
                     configured[right].0
                 );
@@ -36,14 +40,16 @@ pub fn resolve_directories<const N: usize>(
         .expect("one resolved directory for each configured one"))
 }
 
+/// The directory `configured` names beneath `root_dir`, and where it leads once every link
+/// on the way to it is followed.
 fn resolve_directory(
     root_dir: &Path,
     canonical_root: &Path,
     name: &str,
     configured: &str,
-) -> Result<PathBuf> {
+) -> Result<(PathBuf, PathBuf)> {
     if configured.is_empty() || configured.contains('\\') {
-        bail!("workspace.paths.{name} must be a non-empty relative path using forward slashes.");
+        bail!("{name} must be a non-empty relative path using forward slashes.");
     }
     let relative = Path::new(configured);
     if relative.is_absolute()
@@ -51,7 +57,7 @@ fn resolve_directory(
             .components()
             .any(|component| !matches!(component, Component::Normal(_)))
     {
-        bail!("workspace.paths.{name} must stay within the workspace root.");
+        bail!("{name} must stay within the workspace root.");
     }
     let normalised = relative
         .components()
@@ -59,26 +65,28 @@ fn resolve_directory(
         .collect::<Vec<_>>()
         .join("/");
     if normalised != configured {
-        bail!("workspace.paths.{name} must be a normalised relative path.");
+        bail!("{name} must be a normalised relative path.");
     }
 
     let resolved = root_dir.join(relative);
     let mut existing = resolved.as_path();
     while !existing.exists() {
-        existing = existing.parent().ok_or_else(|| {
-            anyhow!("Failed to resolve workspace.paths.{name} within the workspace root.")
-        })?;
+        existing = existing
+            .parent()
+            .ok_or_else(|| anyhow!("Failed to resolve {name} within the workspace root."))?;
     }
-    let canonical_existing = existing.canonicalize().with_context(|| {
-        format!(
-            "Failed to resolve workspace.paths.{name} at {}.",
-            existing.display()
-        )
-    })?;
+    let canonical_existing = existing
+        .canonicalize()
+        .with_context(|| format!("Failed to resolve {name} at {}.", existing.display()))?;
     if !canonical_existing.starts_with(canonical_root) {
-        bail!("workspace.paths.{name} must stay within the workspace root.");
+        bail!("{name} must stay within the workspace root.");
     }
-    Ok(resolved)
+    let target = canonical_existing.join(
+        resolved
+            .strip_prefix(existing)
+            .expect("the deepest existing ancestor prefixes the directory"),
+    );
+    Ok((resolved, target))
 }
 
 #[cfg(test)]
@@ -97,27 +105,26 @@ mod tests {
     }
 
     #[test]
-    fn a_directory_outside_the_root_or_not_normalised_is_refused() {
+    fn a_directory_outside_the_root_or_not_normalised_is_refused_by_name() {
         let root = tempfile::tempdir().unwrap();
+        let name = "documents directory";
         for configured in ["", "../outside", "/absolute", "./data", "data\\back"] {
-            assert!(
-                resolve_directories(root.path(), [("documents", configured)]).is_err(),
-                "{configured:?}"
-            );
+            let error = resolve_directories(root.path(), [(name, configured)]).unwrap_err();
+            assert!(error.to_string().contains(name), "{configured:?}: {error}");
         }
     }
 
     #[test]
     fn a_directory_is_accepted_only_in_its_normalised_spelling() {
         let root = tempfile::tempdir().unwrap();
-        for configured in ["data//flows", "data/flows/", "data/./flows"] {
+        for configured in ["data//notes", "data/notes/", "data/./notes"] {
             assert!(
-                resolve_directories(root.path(), [("flows", configured)]).is_err(),
+                resolve_directories(root.path(), [("notes", configured)]).is_err(),
                 "{configured:?}"
             );
         }
-        let [flows] = resolve_directories(root.path(), [("flows", "data/flows")]).unwrap();
-        assert_eq!(flows, root.path().join("data/flows"));
+        let [notes] = resolve_directories(root.path(), [("notes", "data/notes")]).unwrap();
+        assert_eq!(notes, root.path().join("data/notes"));
     }
 
     #[cfg(unix)]
@@ -139,5 +146,25 @@ mod tests {
             message.contains("outer") && message.contains("inner"),
             "{message}"
         );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn directories_that_a_link_within_the_root_makes_overlap_are_refused() {
+        let root = tempfile::tempdir().unwrap();
+        std::fs::create_dir_all(root.path().join("data/nested")).unwrap();
+        std::os::unix::fs::symlink(root.path().join("data"), root.path().join("alias")).unwrap();
+        for configured in [
+            [("linked", "alias"), ("direct", "data")],
+            [("linked", "alias"), ("direct", "data/nested")],
+            [("linked", "alias/missing"), ("direct", "data")],
+        ] {
+            let error = resolve_directories(root.path(), configured).unwrap_err();
+            let message = error.to_string();
+            assert!(
+                message.contains("linked") && message.contains("direct"),
+                "{configured:?}: {message}"
+            );
+        }
     }
 }

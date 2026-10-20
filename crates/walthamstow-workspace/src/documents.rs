@@ -36,7 +36,9 @@ pub fn supported_document(path: &Path) -> bool {
 /// Recursively lists supported YAML and JSON documents beneath a directory.
 ///
 /// Missing directories return `[]`. Results are recursively discovered, filtered to supported
-/// document extensions, and sorted lexicographically by path for stable loader behaviour.
+/// document extensions, and sorted lexicographically by path for stable loader behaviour. A
+/// link beneath `directory` to a directory or to a document is refused, so discovery never
+/// leaves it.
 pub fn list_documents(directory: &Path) -> anyhow::Result<Vec<PathBuf>> {
     if !directory.exists() {
         return Ok(Vec::new());
@@ -46,7 +48,15 @@ pub fn list_documents(directory: &Path) -> anyhow::Result<Vec<PathBuf>> {
     for entry in fs::read_dir(directory)? {
         let entry = entry?;
         let path = entry.path();
-        if path.is_dir() {
+        let kind = entry.file_type()?;
+        if kind.is_symlink() {
+            if path.is_dir() || supported_document(&path) {
+                anyhow::bail!(
+                    "{} is a link, which workspace discovery does not follow.",
+                    path.display()
+                );
+            }
+        } else if kind.is_dir() {
             files.extend(list_documents(&path)?);
         } else if supported_document(&path) {
             files.push(path);
@@ -159,5 +169,38 @@ mod tests {
         assert!(list_documents(&root.path().join("missing"))
             .unwrap()
             .is_empty());
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn listing_refuses_a_link_to_a_directory_or_a_document_and_passes_over_others() {
+        use std::os::unix::fs::symlink;
+        let outside = tempfile::tempdir().unwrap();
+        fs::write(outside.path().join("elsewhere.yaml"), "").unwrap();
+        fs::write(outside.path().join("elsewhere.txt"), "").unwrap();
+        for (link, target) in [
+            ("linked", outside.path().to_path_buf()),
+            ("linked.yaml", outside.path().join("elsewhere.yaml")),
+            ("nested/linked.json", outside.path().join("elsewhere.yaml")),
+        ] {
+            let root = tempfile::tempdir().unwrap();
+            fs::write(root.path().join("kept.yaml"), "").unwrap();
+            let link = root.path().join(link);
+            fs::create_dir_all(link.parent().unwrap()).unwrap();
+            symlink(&target, &link).unwrap();
+            let error = list_documents(root.path()).unwrap_err();
+            assert!(error.to_string().contains(&link.display().to_string()), "{error}");
+        }
+        let root = tempfile::tempdir().unwrap();
+        fs::write(root.path().join("kept.yaml"), "").unwrap();
+        symlink(
+            outside.path().join("elsewhere.txt"),
+            root.path().join("notes.txt"),
+        )
+        .unwrap();
+        assert_eq!(
+            list_documents(root.path()).unwrap(),
+            vec![root.path().join("kept.yaml")]
+        );
     }
 }

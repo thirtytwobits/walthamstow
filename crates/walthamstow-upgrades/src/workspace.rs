@@ -43,7 +43,18 @@ pub fn work_dir(data_dir: &Path, operation_id: &str) -> Result<PathBuf> {
     {
         bail!("An upgrade's operation id holds only lowercase letters, digits, '-' and '_'.");
     }
+    if is_reserved_on_windows(operation_id) {
+        bail!("{operation_id} names a Windows device, which no directory can be named.");
+    }
     Ok(JOURNAL.root(data_dir).join(operation_id))
+}
+
+/// Whether `name` is one of the device names Windows reserves in every directory.
+fn is_reserved_on_windows(name: &str) -> bool {
+    matches!(name, "con" | "prn" | "aux" | "nul")
+        || ((name.starts_with("com") || name.starts_with("lpt"))
+            && name.len() == 4
+            && matches!(name.as_bytes()[3], b'1'..=b'9'))
 }
 
 /// Where an upgrade stages the files it publishes.
@@ -130,7 +141,14 @@ pub fn recover(root: &Path, data_dir: &Path, durability: WriteDurability) -> Res
         Err(error) => return Err(error.into()),
     };
     for entry in operations {
-        let work = entry?.path();
+        let entry = entry?;
+        let work = entry.path();
+        if !entry.file_type()?.is_dir() {
+            bail!(
+                "{} is not a directory; recovery does not follow a link or open a file there.",
+                work.display()
+            );
+        }
         let path = work.join(JOURNAL_FILE);
         if !path.exists() {
             std::fs::remove_dir_all(&work)?;
@@ -334,5 +352,37 @@ mod tests {
             std::fs::read(workspace.path().join(&path)).unwrap(),
             original
         );
+    }
+
+    #[test]
+    fn an_operation_id_that_names_a_windows_device_is_refused() {
+        let data = tempfile::tempdir().unwrap();
+        for device in ["con", "prn", "aux", "nul", "com1", "com9", "lpt1", "lpt9"] {
+            assert!(work_dir(data.path(), device).is_err(), "{device}");
+        }
+        for ordinary in ["console", "com", "com0", "lpt10", "null"] {
+            assert!(work_dir(data.path(), ordinary).is_ok(), "{ordinary}");
+        }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn recovery_refuses_a_linked_operation_and_leaves_its_target_alone() {
+        let workspace = tempfile::tempdir().unwrap();
+        let data = tempfile::tempdir().unwrap();
+        let outside = tempfile::tempdir().unwrap();
+        write_synced(
+            DURABILITY,
+            &prepared_dir(outside.path()).join("data/first.json"),
+            b"x",
+        )
+        .unwrap();
+        std::fs::create_dir_all(JOURNAL.root(data.path())).unwrap();
+        std::os::unix::fs::symlink(outside.path(), JOURNAL.root(data.path()).join("linked"))
+            .unwrap();
+        assert!(recover(workspace.path(), data.path(), DURABILITY).is_err());
+        assert!(prepared_dir(outside.path())
+            .join("data/first.json")
+            .exists());
     }
 }

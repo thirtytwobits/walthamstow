@@ -1112,5 +1112,5 @@ pub mod walthamstow_workspace::schemas
 pub fn walthamstow_workspace::schemas::collect_validation_messages(validator: &jsonschema::validator::Validator, value: &serde_json::value::Value, file_label: &str) -> alloc::vec::Vec<alloc::string::String>
 pub fn walthamstow_workspace::schemas::compile_schema_document(schema: &serde_json::value::Value, path: &std::path::Path) -> anyhow::Result<jsonschema::validator::Validator>
 pub fn walthamstow_workspace::schemas::load_schema_document(path: &std::path::Path) -> anyhow::Result<serde_json::value::Value>
-pub fn walthamstow_workspace::schemas::normalize_schema_document(value: &mut serde_json::value::Value)
+pub fn walthamstow_workspace::schemas::normalize_schema_document(schema: &mut serde_json::value::Value)
 pub fn walthamstow_workspace::schemas::validate_document_value(validator: &jsonschema::validator::Validator, value: &serde_json::value::Value, file_label: &str) -> anyhow::Result<()>

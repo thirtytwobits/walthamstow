@@ -120,14 +120,22 @@ fn ref_name(node: &Value) -> Option<&str> {
     node.get("$ref")?.as_str()?.strip_prefix("#/$defs/")
 }
 
+/// The definition `node` refers to, through any chain of references, or `node` when it
+/// refers to none. A chain that returns to a definition it passed stops there.
 fn resolve_ref(node: &Value, defs: &serde_json::Map<String, Value>) -> Value {
-    let Some(reference) = node.get("$ref").and_then(Value::as_str) else {
-        return node.clone();
-    };
-    let Some(name) = reference.strip_prefix("#/$defs/") else {
-        return node.clone();
-    };
-    defs.get(name).cloned().unwrap_or_else(|| node.clone())
+    let mut resolved = node.clone();
+    let mut passed = Vec::new();
+    while let Some(name) = ref_name(&resolved).map(str::to_string) {
+        let Some(definition) = defs.get(&name) else {
+            break;
+        };
+        if passed.contains(&name) {
+            break;
+        }
+        passed.push(name);
+        resolved = definition.clone();
+    }
+    resolved
 }
 
 /// `node`'s type, naming an array's item type. `active` names the item references being
@@ -286,5 +294,29 @@ mod tests {
             paths.iter().all(|path| !path.starts_with("root.child.")),
             "{paths:?}"
         );
+    }
+
+    #[test]
+    fn a_reference_to_an_alias_reaches_the_definition_behind_it() {
+        let schema = json!({
+            "$defs": {
+                "Alias": { "$ref": "#/$defs/Concrete" },
+                "Concrete": { "type": "object", "properties": { "inner": { "type": "string" } } },
+                "Loop": { "$ref": "#/$defs/Back" },
+                "Back": { "$ref": "#/$defs/Loop" }
+            },
+            "type": "object",
+            "properties": {
+                "aliased": { "$ref": "#/$defs/Alias" },
+                "looped": { "$ref": "#/$defs/Loop" }
+            }
+        });
+        let fields = fields(&schema);
+        let paths = fields
+            .iter()
+            .map(|field| field.path.as_str())
+            .collect::<Vec<_>>();
+        assert!(paths.contains(&"aliased.inner"), "{paths:?}");
+        assert!(paths.contains(&"looped"), "{paths:?}");
     }
 }

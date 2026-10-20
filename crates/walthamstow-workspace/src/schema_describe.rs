@@ -21,11 +21,17 @@ pub struct WalkerField {
 /// objects and `$ref`s, expanding arrays of objects into
 /// `<path>[].<field>` entries). Caller-provided `emit` collects.
 pub fn walk_describe_schema<F: FnMut(WalkerField)>(schema: &Value, mut emit: F) {
-    let defs = schema
-        .get("$defs")
-        .and_then(Value::as_object)
-        .cloned()
-        .unwrap_or_default();
+    let mut defs = serde_json::Map::new();
+    for section in ["$defs", "definitions"] {
+        for (name, definition) in schema
+            .get(section)
+            .and_then(Value::as_object)
+            .into_iter()
+            .flatten()
+        {
+            defs.insert(format!("#/{section}/{name}"), definition.clone());
+        }
+    }
     walk_object_schema(schema, "", &defs, &mut emit, &mut Vec::new());
 }
 
@@ -115,9 +121,9 @@ fn within<'a>(
     active.truncate(depth);
 }
 
-/// The definition `node` refers to, when it refers to one.
+/// The reference `node` makes, when it makes one: the key its definition is held under.
 fn ref_name(node: &Value) -> Option<&str> {
-    node.get("$ref")?.as_str()?.strip_prefix("#/$defs/")
+    node.get("$ref")?.as_str()
 }
 
 /// The definition `node` refers to, through any chain of references, or `node` when it
@@ -318,5 +324,25 @@ mod tests {
             .collect::<Vec<_>>();
         assert!(paths.contains(&"aliased.inner"), "{paths:?}");
         assert!(paths.contains(&"looped"), "{paths:?}");
+    }
+
+    #[test]
+    fn a_reference_into_legacy_definitions_is_walked() {
+        let schema = json!({
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "definitions": {
+                "Address": {
+                    "type": "object",
+                    "properties": {
+                        "street": { "type": "string", "description": "Where it is." }
+                    }
+                }
+            },
+            "type": "object",
+            "properties": { "home": { "$ref": "#/definitions/Address" } }
+        });
+        let fields = fields(&schema);
+        let street = fields.iter().find(|field| field.path == "home.street");
+        assert!(street.is_some_and(|field| !field.description.is_empty()));
     }
 }

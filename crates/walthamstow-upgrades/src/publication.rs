@@ -77,8 +77,12 @@ pub fn publish(
     for replacement in replacements {
         check_relative_path(&replacement.path)?;
         refuse_links(live, &replacement.path)?;
-        let current = file_hash(&live.join(&replacement.path))?;
+        let live_path = live.join(&replacement.path);
+        let current = file_hash(&live_path)?;
         if current.as_ref() == Some(&replacement.target_hash) {
+            // An interrupted publication may have written it without syncing its entry.
+            durability
+                .sync_directory(live_path.parent().expect("a published file has a parent"))?;
             continue;
         }
         if current != replacement.source_hash {
@@ -156,6 +160,16 @@ mod tests {
         assert_eq!(contents(live.path()), contents(staged.path()));
         publish(DURABILITY, live.path(), staged.path(), &replacements).unwrap();
         assert_eq!(contents(live.path()), contents(staged.path()));
+    }
+
+    #[test]
+    fn files_already_published_are_settled_under_each_durability() {
+        for durability in [WriteDurability::Device, WriteDurability::System] {
+            let (live, staged, replacements) = stage(&[("kept/a.json", Some(b"old a"), b"new a")]);
+            write_synced(durability, &live.path().join("kept/a.json"), b"new a").unwrap();
+            publish(durability, live.path(), staged.path(), &replacements).unwrap();
+            assert_eq!(contents(live.path()), contents(staged.path()));
+        }
     }
 
     #[test]

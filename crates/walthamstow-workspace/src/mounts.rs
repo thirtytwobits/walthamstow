@@ -3,7 +3,7 @@
 //! Paths within a mount: a directory a workspace exposes to clients by id. The helpers
 //! normalise mount-relative paths and keep every resolved path inside its mount.
 
-use std::path::{Path, PathBuf};
+use std::path::{Component, Path, PathBuf};
 use walthamstow_kernel::error::{KernelError, KernelResult};
 
 /// Normalises a mount-relative path to the engine's forward-slash form.
@@ -51,6 +51,16 @@ pub fn resolve_mount_path(root: &Path, requested_path: &str) -> KernelResult<Pat
 
     if normalized.is_empty() {
         return Ok(mount_root);
+    }
+    if Path::new(&normalized).components().any(|component| {
+        matches!(
+            component,
+            Component::ParentDir | Component::RootDir | Component::Prefix(_)
+        )
+    }) {
+        return Err(KernelError::invalid_request(
+            "Mount paths must stay within the mount root.",
+        ));
     }
 
     let joined = root.join(&normalized);
@@ -215,6 +225,20 @@ mod tests {
         let error =
             resolve_mount_path(&dir.path().join("missing"), "").expect_err("missing root fails");
         assert_eq!(error.code, "internal_error");
+    }
+
+    #[test]
+    fn a_parent_component_is_refused_even_behind_a_missing_directory() {
+        let dir = make_root();
+        let mount_root_dir = dir.path().join("data/assets");
+        for requested in [
+            "missing/../../outside/missing.png",
+            "album/../portrait.png",
+            "missing/..",
+        ] {
+            let error = resolve_mount_path(&mount_root_dir, requested).expect_err(requested);
+            assert_eq!(error.code, "invalid_request", "{requested}");
+        }
     }
 
     #[cfg(unix)]

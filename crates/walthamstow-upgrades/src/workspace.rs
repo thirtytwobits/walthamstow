@@ -32,9 +32,11 @@ pub struct Operation {
     target_hashes: BTreeMap<PathBuf, String>,
 }
 
-/// The directory an upgrade works in.
-pub fn work_dir(data_dir: &Path, operation_id: &str) -> PathBuf {
-    JOURNAL.root(data_dir).join(operation_id)
+/// The directory an upgrade works in. An `operation_id` that is not one visible path
+/// component is refused.
+pub fn work_dir(data_dir: &Path, operation_id: &str) -> Result<PathBuf> {
+    walthamstow_kernel::files::safe_id(operation_id)?;
+    Ok(JOURNAL.root(data_dir).join(operation_id))
 }
 
 /// Where an upgrade stages the files it publishes.
@@ -164,7 +166,7 @@ mod tests {
             let workspace = tempfile::tempdir().unwrap();
             let data = tempfile::tempdir().unwrap();
             let root = workspace.path();
-            let work = work_dir(data.path(), "authorised");
+            let work = work_dir(data.path(), "authorised").unwrap();
             let paths = [
                 PathBuf::from("data/first.json"),
                 PathBuf::from("data/second.json"),
@@ -209,7 +211,7 @@ mod tests {
     fn workspace_recovery_does_not_start_an_uncommitted_upgrade() {
         let workspace = tempfile::tempdir().unwrap();
         let data = tempfile::tempdir().unwrap();
-        let work = work_dir(data.path(), "uncommitted");
+        let work = work_dir(data.path(), "uncommitted").unwrap();
         let operation = Operation {
             operation_id: "uncommitted".into(),
             status: "preparing".into(),
@@ -228,7 +230,7 @@ mod tests {
     fn workspace_recovery_discards_staging_that_no_journal_authorises() {
         let workspace = tempfile::tempdir().unwrap();
         let data = tempfile::tempdir().unwrap();
-        let work = work_dir(data.path(), "abandoned");
+        let work = work_dir(data.path(), "abandoned").unwrap();
         write_synced(
             DURABILITY,
             &prepared_dir(&work).join("data/first.json"),
@@ -242,7 +244,7 @@ mod tests {
     #[test]
     fn a_path_that_leaves_the_workspace_refuses_the_upgrade_before_anything_is_written() {
         let data = tempfile::tempdir().unwrap();
-        let work = work_dir(data.path(), "escaping");
+        let work = work_dir(data.path(), "escaping").unwrap();
         for path in ["../../escape.json", "/absolute.json"] {
             let path = PathBuf::from(path);
             let bytes = b"bytes".to_vec();
@@ -262,10 +264,23 @@ mod tests {
     }
 
     #[test]
+    fn an_operation_id_that_is_not_one_path_component_is_refused() {
+        let data = tempfile::tempdir().unwrap();
+        for operation_id in ["", "../../other", "nested/id", "/absolute", ".hidden", ".."] {
+            assert!(
+                work_dir(data.path(), operation_id).is_err(),
+                "{operation_id:?}"
+            );
+        }
+        let work = work_dir(data.path(), "an-upgrade").unwrap();
+        assert_eq!(work.parent(), Some(JOURNAL.root(data.path()).as_path()));
+    }
+
+    #[test]
     fn a_tampered_original_stops_the_publication() {
         let workspace = tempfile::tempdir().unwrap();
         let data = tempfile::tempdir().unwrap();
-        let work = work_dir(data.path(), "tampered");
+        let work = work_dir(data.path(), "tampered").unwrap();
         let path = PathBuf::from("data/first.json");
         let (original, target) = (b"original".to_vec(), b"upgraded".to_vec());
         write_synced(DURABILITY, &workspace.path().join(&path), &original).unwrap();

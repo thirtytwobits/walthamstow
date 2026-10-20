@@ -40,12 +40,19 @@ pub fn supported_document(path: &Path) -> bool {
 /// link beneath `directory` to a directory or to a document is refused, so discovery never
 /// leaves it.
 pub fn list_documents(directory: &Path) -> anyhow::Result<Vec<PathBuf>> {
-    if !directory.exists() {
-        return Ok(Vec::new());
-    }
+    let entries = match fs::read_dir(directory) {
+        Ok(entries) => entries,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
+        Err(error) => {
+            return Err(anyhow::anyhow!(
+                "Could not list {}: {error}",
+                directory.display()
+            ))
+        }
+    };
 
     let mut files = Vec::new();
-    for entry in fs::read_dir(directory)? {
+    for entry in entries {
         let entry = entry?;
         let path = entry.path();
         let kind = entry.file_type()?;
@@ -231,5 +238,16 @@ mod tests {
             list_documents(root.path()).unwrap(),
             vec![root.path().join("kept.yaml")]
         );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_directory_that_cannot_be_listed_is_an_error_not_an_empty_workspace() {
+        let root = tempfile::tempdir().unwrap();
+        fs::write(root.path().join("plain"), "").unwrap();
+        assert!(list_documents(&root.path().join("plain/documents")).is_err());
+        assert!(list_documents(&root.path().join("missing"))
+            .unwrap()
+            .is_empty());
     }
 }

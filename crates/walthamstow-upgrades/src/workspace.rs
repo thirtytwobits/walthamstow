@@ -124,11 +124,12 @@ pub fn finish(
 
 /// Finishes each authorised upgrade and discards staging no journal authorises.
 pub fn recover(root: &Path, data_dir: &Path, durability: WriteDurability) -> Result<()> {
-    let operations = JOURNAL.root(data_dir);
-    if !operations.exists() {
-        return Ok(());
-    }
-    for entry in std::fs::read_dir(operations)? {
+    let operations = match std::fs::read_dir(JOURNAL.root(data_dir)) {
+        Ok(operations) => operations,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(()),
+        Err(error) => return Err(error.into()),
+    };
+    for entry in operations {
         let work = entry?.path();
         let path = work.join(JOURNAL_FILE);
         if !path.exists() {
@@ -297,6 +298,17 @@ mod tests {
             let work = work_dir(data.path(), id).unwrap();
             assert_eq!(work.file_name().and_then(|name| name.to_str()), Some(id));
         }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_journal_that_cannot_be_read_stops_recovery() {
+        let workspace = tempfile::tempdir().unwrap();
+        let data = tempfile::tempdir().unwrap();
+        std::fs::write(data.path().join("journals"), b"not a directory").unwrap();
+        assert!(recover(workspace.path(), data.path(), DURABILITY).is_err());
+        let empty = tempfile::tempdir().unwrap();
+        recover(workspace.path(), empty.path(), DURABILITY).unwrap();
     }
 
     #[test]

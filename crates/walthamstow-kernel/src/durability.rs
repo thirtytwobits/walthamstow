@@ -33,8 +33,26 @@ impl WriteDurability {
 
     /// Makes the entries of `directory` durable.
     pub fn sync_directory(self, directory: &Path) -> io::Result<()> {
-        self.sync(&File::open(directory)?)
+        self.sync(&open_directory(directory)?)
     }
+}
+
+/// `directory`, opened so its entries can be synced.
+#[cfg(not(windows))]
+fn open_directory(directory: &Path) -> io::Result<File> {
+    File::open(directory)
+}
+
+/// `directory`, opened so its entries can be flushed. Windows opens a directory only with
+/// `FILE_FLAG_BACKUP_SEMANTICS`, and flushes only through a handle with write access.
+#[cfg(windows)]
+fn open_directory(directory: &Path) -> io::Result<File> {
+    use std::os::windows::fs::OpenOptionsExt;
+    const FILE_FLAG_BACKUP_SEMANTICS: u32 = 0x0200_0000;
+    std::fs::OpenOptions::new()
+        .write(true)
+        .custom_flags(FILE_FLAG_BACKUP_SEMANTICS)
+        .open(directory)
 }
 
 /// Creates `directory` and every missing ancestor, each new entry durable as

@@ -21,10 +21,23 @@ pub fn compile_schema_document(schema: &Value, path: &Path) -> Result<Validator>
     validator_for(schema).map_err(|error| anyhow!("{}: {error}", path.display()))
 }
 
-/// Removes the `$schema` keyword, which the validator does not take, from the schema and
-/// from every subschema within it. Values that are not schemas, such as a property's name or a
-/// `const`, are left as they are.
+/// Removes the `$schema` keyword from every subschema, and from the schema itself unless it
+/// names a dialect the validator knows: a known dialect selects the draft the schema is
+/// validated under, and an unknown one is refused by the validator. Values that are not
+/// schemas, such as a property's name or a `const`, are left as they are.
 pub fn normalize_schema_document(schema: &mut Value) {
+    let dialect = schema
+        .get("$schema")
+        .cloned()
+        .filter(|_| jsonschema::Draft::default().detect(schema).is_ok());
+    strip_schema_keywords(schema);
+    if let (Some(dialect), Value::Object(map)) = (dialect, schema) {
+        map.insert("$schema".to_string(), dialect);
+    }
+}
+
+/// Removes the `$schema` keyword from `schema` and every subschema within it.
+fn strip_schema_keywords(schema: &mut Value) {
     let Value::Object(map) = schema else {
         return;
     };
@@ -42,13 +55,13 @@ pub fn normalize_schema_document(schema: &mut Value) {
             | "propertyNames"
             | "then"
             | "unevaluatedItems"
-            | "unevaluatedProperties" => normalize_subschemas(value),
-            "allOf" | "anyOf" | "oneOf" | "prefixItems" => normalize_subschemas(value),
+            | "unevaluatedProperties" => strip_subschemas(value),
+            "allOf" | "anyOf" | "oneOf" | "prefixItems" => strip_subschemas(value),
             // Subschemas by name; in older drafts a dependency is a schema or a list of names.
             "$defs" | "definitions" | "dependentSchemas" | "patternProperties" | "properties"
             | "dependencies" => {
                 if let Value::Object(named) = value {
-                    named.values_mut().for_each(normalize_schema_document);
+                    named.values_mut().for_each(strip_schema_keywords);
                 }
             }
             _ => {}
@@ -56,11 +69,11 @@ pub fn normalize_schema_document(schema: &mut Value) {
     }
 }
 
-/// Normalises `value`, a subschema or an array of subschemas.
-fn normalize_subschemas(value: &mut Value) {
+/// Strips `value`, a subschema or an array of subschemas.
+fn strip_subschemas(value: &mut Value) {
     match value {
-        Value::Array(subschemas) => subschemas.iter_mut().for_each(normalize_schema_document),
-        subschema => normalize_schema_document(subschema),
+        Value::Array(subschemas) => subschemas.iter_mut().for_each(strip_schema_keywords),
+        subschema => strip_schema_keywords(subschema),
     }
 }
 
@@ -113,7 +126,7 @@ properties:
 "#;
 
     #[test]
-    fn a_loaded_schema_holds_no_schema_keywords_at_any_depth() {
+    fn a_loaded_schema_keeps_its_known_dialect_and_no_schema_keyword_below_it() {
         let (_dir, path) = schema_file(SCHEMA);
         let schema = load_schema_document(&path).unwrap();
         fn holds_keyword(value: &Value) -> bool {
@@ -125,7 +138,33 @@ properties:
                 _ => false,
             }
         }
-        assert!(!holds_keyword(&schema));
+        assert!(jsonschema::Draft::default().detect(&schema).is_ok());
+        assert!(schema.get("$schema").is_some());
+        assert!(!holds_keyword(&schema["properties"]));
+    }
+
+    #[test]
+    fn a_known_dialect_selects_the_draft_and_an_unknown_one_is_dropped() {
+        let tuple =
+            json!({ "type": "array", "items": [{ "type": "string" }, { "type": "integer" }] });
+        let mut draft_7 = tuple.clone();
+        draft_7["$schema"] = json!("http://json-schema.org/draft-07/schema#");
+        normalize_schema_document(&mut draft_7);
+        let validator =
+            compile_schema_document(&draft_7, Path::new("draft-7.schema.yaml")).unwrap();
+        assert!(validator.is_valid(&json!(["a", 1])));
+        assert!(
+            !validator.is_valid(&json!([1, "a"])),
+            "items are judged as a tuple"
+        );
+
+        let mut unknown = json!({ "type": "object", "required": ["name"] });
+        unknown["$schema"] = json!("http://stsci.edu/schemas/yaml-schema/draft-01");
+        normalize_schema_document(&mut unknown);
+        assert!(unknown.get("$schema").is_none());
+        let validator =
+            compile_schema_document(&unknown, Path::new("unknown.schema.yaml")).unwrap();
+        assert!(!validator.is_valid(&json!({})));
     }
 
     #[test]
@@ -162,7 +201,10 @@ properties:
             "anyOf": [{ "$schema": "x", "type": "object" }]
         });
         normalize_schema_document(&mut schema);
-        assert!(schema.get("$schema").is_none());
+        assert!(
+            schema.get("$schema").is_some(),
+            "the root's known dialect is kept"
+        );
         assert!(
             schema["properties"].get("$schema").is_some(),
             "a property's name is kept"

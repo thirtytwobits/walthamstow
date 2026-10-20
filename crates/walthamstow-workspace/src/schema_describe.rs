@@ -71,7 +71,12 @@ fn walk_object_schema<F: FnMut(WalkerField)>(
             .or_else(|| resolved.get("type").and_then(Value::as_str))
             .unwrap_or("");
         if raw_type == "array" {
-            if let Some(item_schema) = array_item_schema(property, defs) {
+            let array = if property.get("items").is_some() {
+                property
+            } else {
+                &resolved
+            };
+            if let Some(item_schema) = array_item_schema(array, defs) {
                 if matches_object(&item_schema) {
                     let array_path = format!("{field_path}[]");
                     walk_object_schema(&item_schema, &array_path, defs, emit);
@@ -94,22 +99,20 @@ fn resolve_ref(node: &Value, defs: &serde_json::Map<String, Value>) -> Value {
 }
 
 fn type_label(node: &Value, resolved: &Value, defs: &serde_json::Map<String, Value>) -> String {
-    if let Some(direct) = node.get("type").and_then(Value::as_str) {
-        if direct == "array" {
-            if let Some(item) = array_item_schema(node, defs) {
-                return format!("array of {}", type_label(&item, &item, defs));
-            }
-            return "array".to_string();
-        }
-        return direct.to_string();
+    let typed = if node.get("type").is_some() {
+        node
+    } else {
+        resolved
+    };
+    match typed.get("type").and_then(Value::as_str) {
+        Some("array") => match array_item_schema(typed, defs) {
+            Some(item) => format!("array of {}", type_label(&item, &item, defs)),
+            None => "array".to_string(),
+        },
+        Some(declared) => declared.to_string(),
+        None if node.get("$ref").is_some() => "object".to_string(),
+        None => "any".to_string(),
     }
-    if let Some(resolved_type) = resolved.get("type").and_then(Value::as_str) {
-        return resolved_type.to_string();
-    }
-    if node.get("$ref").is_some() {
-        return "object".to_string();
-    }
-    "any".to_string()
 }
 
 fn description_for(node: &Value, resolved: &Value) -> String {
@@ -180,6 +183,33 @@ mod tests {
         for field in fields(&schema) {
             let expected: &[&str] = if field.path == "plain" { &[] } else { &allowed };
             assert_eq!(field.allowed_values, expected, "{}", field.path);
+        }
+    }
+
+    #[test]
+    fn an_array_gives_its_item_fields_directly_or_through_a_reference() {
+        let tag = json!({ "type": "object", "properties": { "name": { "type": "string" } } });
+        let schema = json!({
+            "$defs": {
+                "Tag": tag,
+                "Tags": { "type": "array", "items": { "$ref": "#/$defs/Tag" } }
+            },
+            "type": "object",
+            "properties": {
+                "direct": { "type": "array", "items": { "$ref": "#/$defs/Tag" } },
+                "referenced": { "$ref": "#/$defs/Tags" }
+            }
+        });
+        let fields = fields(&schema);
+        for path in ["direct", "referenced"] {
+            let array = fields.iter().find(|field| field.path == path).unwrap();
+            assert_eq!(array.field_type, "array of object", "{path}");
+            let item = format!("{path}[].name");
+            assert!(
+                fields.iter().any(|field| field.path == item),
+                "{path}: {:?}",
+                fields.iter().map(|field| &field.path).collect::<Vec<_>>()
+            );
         }
     }
 }

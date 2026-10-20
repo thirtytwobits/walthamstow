@@ -21,7 +21,8 @@ pub struct WalkerField {
 /// objects and `$ref`s, expanding arrays of objects into
 /// `<path>[].<field>` entries). Caller-provided `emit` collects.
 pub fn walk_describe_schema<F: FnMut(WalkerField)>(schema: &Value, mut emit: F) {
-    walk_object_schema(schema, "", schema, &mut emit, &mut Vec::new());
+    let document = resolve_ref(schema, schema);
+    walk_object_schema(&document, "", schema, &mut emit, &mut Vec::new());
 }
 
 /// Walks `node`'s properties. `active` names the references expanded on the way here; one
@@ -379,5 +380,17 @@ mod tests {
             .collect::<Vec<_>>();
         assert!(paths.contains(&"nested.deep"), "{paths:?}");
         assert!(paths.contains(&"again.shared"), "{paths:?}");
+    }
+
+    #[test]
+    fn a_root_that_is_a_reference_is_walked_as_its_definition() {
+        let schema = json!({
+            "$ref": "#/$defs/Document",
+            "$defs": {
+                "Document": { "type": "object", "properties": { "title": { "type": "string" } } }
+            }
+        });
+        let fields = fields(&schema);
+        assert!(fields.iter().any(|field| field.path == "title"));
     }
 }

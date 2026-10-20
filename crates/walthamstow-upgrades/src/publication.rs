@@ -67,7 +67,7 @@ static PUBLISHING: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
 /// Refuses `path` beneath `root` when any part of it that exists is a link, so a write to it
 /// cannot leave `root`.
-fn refuse_links(root: &Path, path: &Path) -> Result<()> {
+pub(crate) fn refuse_links(root: &Path, path: &Path) -> Result<()> {
     let mut walked = root.to_path_buf();
     for part in path.components() {
         walked.push(part);

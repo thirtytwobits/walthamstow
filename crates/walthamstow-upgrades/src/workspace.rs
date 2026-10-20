@@ -5,7 +5,7 @@
 //! publishes, `original/` the files they replace, and `operation.json` the journal that
 //! authorises publication.
 
-use crate::publication::{check_relative_path, publish, read_regular, Replacement};
+use crate::publication::{check_relative_path, publish, read_regular, refuse_links, Replacement};
 use anyhow::{bail, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
@@ -46,7 +46,16 @@ pub fn work_dir(data_dir: &Path, operation_id: &str) -> Result<PathBuf> {
     if walthamstow_kernel::files::is_windows_device_name(operation_id) {
         bail!("{operation_id} names a Windows device, which no directory can be named.");
     }
-    Ok(JOURNAL.unlinked_root(data_dir)?.join(operation_id))
+    let work = JOURNAL.unlinked_root(data_dir)?.join(operation_id);
+    match std::fs::symlink_metadata(&work) {
+        Ok(metadata) if !metadata.is_dir() => bail!(
+            "{} is not a directory; an upgrade does not work through a link.",
+            work.display()
+        ),
+        Ok(_) => Ok(work),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(work),
+        Err(error) => Err(error.into()),
+    }
 }
 
 /// Where an upgrade stages the files it publishes.
@@ -78,7 +87,9 @@ pub fn authorise(
     for (path, bytes) in changes {
         let original = sources.get(path);
         if let Some(bytes) = original {
-            write_synced(durability, &work.join("original").join(path), bytes)?;
+            let kept = Path::new("original").join(path);
+            refuse_links(work, &kept)?;
+            write_synced(durability, &work.join(kept), bytes)?;
         }
         operation
             .source_hashes
@@ -111,7 +122,9 @@ pub fn finish(
             bail!("The upgrade journal omits {}.", path.display());
         };
         if let Some(expected) = source_hash {
-            let original = read_regular(&work.join("original").join(path))?;
+            let kept = Path::new("original").join(path);
+            refuse_links(work, &kept)?;
+            let original = read_regular(&work.join(kept))?;
             if sha256_hex(&original) != *expected {
                 bail!("Upgrade original checksum mismatch.");
             }
@@ -436,5 +449,47 @@ mod tests {
             );
             assert!(work_dir(data.path(), "an-upgrade").is_err(), "{linked}");
         }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_linked_operation_directory_is_not_worked_in() {
+        let data = tempfile::tempdir().unwrap();
+        let outside = tempfile::tempdir().unwrap();
+        let root = JOURNAL.root(data.path());
+        std::fs::create_dir_all(&root).unwrap();
+        std::os::unix::fs::symlink(outside.path(), root.join("an-upgrade")).unwrap();
+        assert!(work_dir(data.path(), "an-upgrade").is_err());
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn originals_are_neither_kept_nor_read_through_a_link() {
+        let data = tempfile::tempdir().unwrap();
+        let outside = tempfile::tempdir().unwrap();
+        let work = work_dir(data.path(), "linked-originals").unwrap();
+        std::fs::create_dir_all(&work).unwrap();
+        std::os::unix::fs::symlink(outside.path(), work.join("original")).unwrap();
+        let path = PathBuf::from("data/first.json");
+        let refused = authorise(
+            DURABILITY,
+            &work,
+            "linked-originals",
+            &BTreeMap::from([(path.clone(), b"original".to_vec())]),
+            &BTreeMap::from([(path.clone(), b"upgraded".to_vec())]),
+        );
+        assert!(refused.is_err());
+        assert_eq!(std::fs::read_dir(outside.path()).unwrap().count(), 0);
+
+        write_synced(DURABILITY, &outside.path().join(&path), b"original").unwrap();
+        let workspace = tempfile::tempdir().unwrap();
+        let mut operation = Operation {
+            operation_id: "linked-originals".into(),
+            status: COMMITTING.into(),
+            paths: vec![path.clone()],
+            source_hashes: BTreeMap::from([(path.clone(), Some(sha256_hex(b"original")))]),
+            target_hashes: BTreeMap::from([(path, sha256_hex(b"upgraded"))]),
+        };
+        assert!(finish(DURABILITY, workspace.path(), &work, &mut operation).is_err());
     }
 }

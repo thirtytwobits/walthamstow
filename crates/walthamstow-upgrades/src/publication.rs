@@ -99,7 +99,7 @@ pub fn publish(
     let _publishing = PUBLISHING
         .lock()
         .unwrap_or_else(std::sync::PoisonError::into_inner);
-    if std::fs::symlink_metadata(staged)?.file_type().is_symlink() {
+    if std::fs::symlink_metadata(staged).is_ok_and(|metadata| metadata.file_type().is_symlink()) {
         bail!(
             "{} is a link, which a publication does not read through.",
             staged.display()
@@ -346,5 +346,13 @@ mod tests {
         std::os::unix::fs::symlink(staged.path(), &linked).unwrap();
         assert!(publish(DURABILITY, live.path(), &linked, &replacements).is_err());
         assert_eq!(std::fs::read(live.path().join("a.json")).unwrap(), b"old a");
+    }
+
+    #[test]
+    fn a_publication_of_nothing_needs_no_staging_directory() {
+        let live = tempfile::tempdir().unwrap();
+        let absent = live.path().join("never-staged");
+        publish(DURABILITY, live.path(), &absent, &[]).unwrap();
+        assert!(!absent.exists());
     }
 }

@@ -1074,6 +1074,7 @@ pub struct walthamstow_kernel::journals::Journal(_)
 impl walthamstow_kernel::journals::Journal
 pub const fn walthamstow_kernel::journals::Journal::new(name: &'static str) -> Self
 pub fn walthamstow_kernel::journals::Journal::root(self, data_dir: &std::path::Path) -> std::path::PathBuf
+pub fn walthamstow_kernel::journals::Journal::unlinked_root(self, data_dir: &std::path::Path) -> std::io::error::Result<std::path::PathBuf>
 impl core::clone::Clone for walthamstow_kernel::journals::Journal
 pub fn walthamstow_kernel::journals::Journal::clone(&self) -> walthamstow_kernel::journals::Journal
 impl core::cmp::Eq for walthamstow_kernel::journals::Journal

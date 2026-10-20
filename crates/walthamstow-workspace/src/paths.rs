@@ -127,6 +127,12 @@ fn resolve_directory(
     if !canonical_existing.starts_with(canonical_root) {
         bail!("{name} must stay within the workspace root.");
     }
+    if !canonical_existing.is_dir() {
+        bail!(
+            "{name} must be a directory; {} is not one.",
+            existing.display()
+        );
+    }
     let target = canonical_existing.join(
         resolved
             .strip_prefix(existing)
@@ -292,5 +298,24 @@ mod tests {
         }
         resolve_directories(root.path(), [("documents", "data/console")]).unwrap();
         resolve_directories(root.path(), [("documents", ".media/v1.2")]).unwrap();
+    }
+
+    #[test]
+    fn a_file_where_a_configured_directory_goes_is_refused() {
+        let root = tempfile::tempdir().unwrap();
+        std::fs::write(root.path().join("notes"), b"a file").unwrap();
+        for configured in ["notes", "notes/inner"] {
+            let error = resolve_directories(root.path(), [("documents", configured)]).unwrap_err();
+            assert!(
+                error.to_string().contains("documents"),
+                "{configured}: {error}"
+            );
+        }
+        #[cfg(unix)]
+        {
+            std::os::unix::fs::symlink(root.path().join("notes"), root.path().join("linked"))
+                .unwrap();
+            assert!(resolve_directories(root.path(), [("documents", "linked")]).is_err());
+        }
     }
 }

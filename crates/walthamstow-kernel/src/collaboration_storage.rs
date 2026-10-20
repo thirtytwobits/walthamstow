@@ -177,8 +177,8 @@ impl FileCollaborationStorage {
     /// Every audit record the stream holds. A final line without its newline is
     /// an append that did not finish, and is not a record.
     fn audit_records(&self) -> StoreResult<Vec<CollaborationAuditRecord>> {
-        match std::fs::read(self.records.join(AUDIT_FILE)) {
-            Ok(bytes) => {
+        match read_optional(&self.records.join(AUDIT_FILE)) {
+            Ok(Some(bytes)) => {
                 let complete = bytes
                     .iter()
                     .rposition(|byte| *byte == b'\n')
@@ -198,10 +198,8 @@ impl FileCollaborationStorage {
                     })
                     .collect()
             }
-            Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(Vec::new()),
-            Err(error) => Err(StoreError::internal(format!(
-                "Could not read the collaboration audit stream: {error}"
-            ))),
+            Ok(None) => Ok(Vec::new()),
+            Err(error) => Err(error),
         }
     }
 }
@@ -220,6 +218,7 @@ fn with_lock<T>(
             ))
         })?;
     }
+    refuse_link(lock_path)?;
     let lock = OpenOptions::new()
         .create(true)
         .truncate(false)
@@ -252,25 +251,25 @@ fn write_envelope(durability: WriteDurability, path: &Path, bytes: &[u8]) -> Sto
     })
 }
 
-/// The bytes at `path`, or `None` when there is no file. A link is refused, which the
-/// store does not follow.
-fn read_optional(path: &Path) -> StoreResult<Option<Vec<u8>>> {
+/// Refuses `path` when it is a link, which the store does not follow.
+fn refuse_link(path: &Path) -> StoreResult<()> {
     match std::fs::symlink_metadata(path) {
-        Ok(metadata) if metadata.file_type().is_symlink() => {
-            return Err(StoreError::internal(format!(
-                "Collaboration state {} is a link, which the store does not follow.",
-                path.display()
-            )))
-        }
-        Ok(_) => {}
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
-        Err(error) => {
-            return Err(StoreError::internal(format!(
-                "Could not inspect collaboration state {}: {error}",
-                path.display()
-            )))
-        }
+        Ok(metadata) if metadata.file_type().is_symlink() => Err(StoreError::internal(format!(
+            "Collaboration state {} is a link, which the store does not follow.",
+            path.display()
+        ))),
+        Ok(_) => Ok(()),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
+        Err(error) => Err(StoreError::internal(format!(
+            "Could not inspect collaboration state {}: {error}",
+            path.display()
+        ))),
     }
+}
+
+/// The bytes at `path`, or `None` when there is no file. A link is refused.
+fn read_optional(path: &Path) -> StoreResult<Option<Vec<u8>>> {
+    refuse_link(path)?;
     match std::fs::read(path) {
         Ok(bytes) => Ok(Some(bytes)),
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(None),
@@ -492,6 +491,7 @@ impl CollaborationStoragePort for FileCollaborationStorage {
         label: &str,
         bytes: &[u8],
     ) -> StoreResult<String> {
+        refuse_link(&self.records.join(QUARANTINE_DIR))?;
         let destination = self.records.join(QUARANTINE_DIR).join(format!(
             "{}-{}-{}-{}-{}.json",
             safe_entity_name(&document.entity),
@@ -510,6 +510,7 @@ impl CollaborationStoragePort for FileCollaborationStorage {
                 .map_err(|error| StoreError::internal(error.to_string()))?;
             line.push(b'\n');
             let path = self.records.join(AUDIT_FILE);
+            refuse_link(&path)?;
             let created = !path.try_exists().map_err(|error| {
                 StoreError::internal(format!(
                     "Could not inspect the collaboration audit stream: {error}"
@@ -669,6 +670,13 @@ pub fn peer_key(data_dir: &Path, durability: WriteDurability) -> AnyhowResult<Pe
                     "{} does not hold a peer key: expected at least {PEER_KEY_MIN_BYTES} bytes as hex.",
                     path.display()
                 )
+            })
+            .and_then(|secret| {
+                // A start that installed the key may have stopped before syncing its entry.
+                durability
+                    .sync_directory(data_dir)
+                    .with_context(|| format!("syncing the peer key {}", path.display()))?;
+                Ok(secret)
             })?,
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
             let secret = generate_peer_secret();
@@ -1303,5 +1311,52 @@ mod tests {
             .collect::<Vec<_>>();
         held.sort();
         assert_eq!(held, ["peer-key", "peer-key.interrupted.tmp"]);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_linked_quarantine_directory_receives_no_evidence() {
+        let root = tempfile::tempdir().unwrap();
+        let outside = tempfile::tempdir().unwrap();
+        std::os::unix::fs::symlink(outside.path(), root.path().join(QUARANTINE_DIR)).unwrap();
+        let storage = FileCollaborationStorage::new(root.path(), WriteDurability::System, clock());
+        assert!(storage.preserve(&document("one"), "corrupt", b"x").is_err());
+        assert_eq!(std::fs::read_dir(outside.path()).unwrap().count(), 0);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_linked_audit_stream_or_lock_is_neither_read_nor_written() {
+        let root = tempfile::tempdir().unwrap();
+        let outside = tempfile::tempdir().unwrap();
+        let target = outside.path().join("stream");
+        std::fs::write(&target, b"kept\n").unwrap();
+        std::os::unix::fs::symlink(&target, root.path().join(AUDIT_FILE)).unwrap();
+        let storage = FileCollaborationStorage::new(root.path(), WriteDurability::System, clock());
+        assert!(storage.append_audit(&record("ada", "one", 10)).is_err());
+        assert!(storage.audit(&CollaborationAuditQuery::default()).is_err());
+        assert_eq!(std::fs::read(&target).unwrap(), b"kept\n");
+
+        let locked = tempfile::tempdir().unwrap();
+        let lock_target = outside.path().join("lock");
+        std::os::unix::fs::symlink(&lock_target, locked.path().join(AUDIT_LOCK_FILE)).unwrap();
+        let storage =
+            FileCollaborationStorage::new(locked.path(), WriteDurability::System, clock());
+        assert!(storage.append_audit(&record("ada", "one", 10)).is_err());
+        assert!(!lock_target.exists(), "nothing is made through the link");
+    }
+
+    #[test]
+    fn an_existing_peer_key_is_read_back_under_each_durability() {
+        for durability in [WriteDurability::Device, WriteDurability::System] {
+            let data = tempfile::tempdir().unwrap();
+            peer_key(data.path(), WriteDurability::System).unwrap();
+            let text = std::fs::read_to_string(data.path().join(PEER_KEY_FILE)).unwrap();
+            peer_key(data.path(), durability).unwrap();
+            assert_eq!(
+                std::fs::read_to_string(data.path().join(PEER_KEY_FILE)).unwrap(),
+                text
+            );
+        }
     }
 }

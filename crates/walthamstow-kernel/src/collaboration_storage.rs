@@ -153,17 +153,20 @@ impl FileCollaborationStorage {
                     .iter()
                     .rposition(|byte| *byte == b'\n')
                     .map_or(&bytes[..0], |end| &bytes[..=end]);
-                std::str::from_utf8(complete).map_err(|error| {
-                    StoreError::internal(format!("Invalid collaboration audit stream: {error}"))
-                })?
-                .lines()
-                .filter(|line| !line.trim().is_empty())
-                .map(|line| {
-                    serde_json::from_str(line).map_err(|error| {
-                        StoreError::internal(format!("Invalid collaboration audit record: {error}"))
+                std::str::from_utf8(complete)
+                    .map_err(|error| {
+                        StoreError::internal(format!("Invalid collaboration audit stream: {error}"))
+                    })?
+                    .lines()
+                    .filter(|line| !line.trim().is_empty())
+                    .map(|line| {
+                        serde_json::from_str(line).map_err(|error| {
+                            StoreError::internal(format!(
+                                "Invalid collaboration audit record: {error}"
+                            ))
+                        })
                     })
-                })
-                .collect()
+                    .collect()
             }
             Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(Vec::new()),
             Err(error) => Err(StoreError::internal(format!(
@@ -415,15 +418,15 @@ impl CollaborationStoragePort for FileCollaborationStorage {
                 return Ok(false);
             }
             remove_file_if_exists(&path)?;
-            let directory = path.parent().expect("an envelope lies in its entity's directory");
-            self.durability
-                .sync_directory(directory)
-                .map_err(|error| {
-                    StoreError::internal(format!(
-                        "Could not record the removal of {}: {error}",
-                        path.display()
-                    ))
-                })?;
+            let directory = path
+                .parent()
+                .expect("an envelope lies in its entity's directory");
+            self.durability.sync_directory(directory).map_err(|error| {
+                StoreError::internal(format!(
+                    "Could not record the removal of {}: {error}",
+                    path.display()
+                ))
+            })?;
             Ok(true)
         })
     }
@@ -1092,7 +1095,10 @@ mod tests {
         let directory = root.path().join(safe_entity_name("Note"));
         std::fs::create_dir_all(&directory).unwrap();
         assert!(storage.sources("Note").unwrap().is_empty());
-        assert!(!directory.join(ENTITY_FILE).exists(), "a read writes nothing");
+        assert!(
+            !directory.join(ENTITY_FILE).exists(),
+            "a read writes nothing"
+        );
         storage
             .compare_and_swap(&document("one"), None, b"kept")
             .unwrap()

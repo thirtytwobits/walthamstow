@@ -189,7 +189,10 @@ mod tests {
             fs::create_dir_all(link.parent().unwrap()).unwrap();
             symlink(&target, &link).unwrap();
             let error = list_documents(root.path()).unwrap_err();
-            assert!(error.to_string().contains(&link.display().to_string()), "{error}");
+            assert!(
+                error.to_string().contains(&link.display().to_string()),
+                "{error}"
+            );
         }
         let root = tempfile::tempdir().unwrap();
         fs::write(root.path().join("kept.yaml"), "").unwrap();

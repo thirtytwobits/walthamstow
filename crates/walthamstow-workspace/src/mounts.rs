@@ -176,8 +176,8 @@ mod tests {
                 .expect("canonical mount root")
         );
 
-        let existing =
-            resolve_mount_path(&mount_root_dir, "album/portrait.png").expect("existing file resolves");
+        let existing = resolve_mount_path(&mount_root_dir, "album/portrait.png")
+            .expect("existing file resolves");
         assert_eq!(
             existing,
             dir.path()
@@ -193,8 +193,8 @@ mod tests {
             dir.path().join("data/assets/album/generated/new.png")
         );
 
-        let traversal =
-            resolve_mount_path(&mount_root_dir, "../secrets.txt").expect_err("traversal should fail");
+        let traversal = resolve_mount_path(&mount_root_dir, "../secrets.txt")
+            .expect_err("traversal should fail");
         assert_eq!(traversal.code, "invalid_request");
         assert!(traversal
             .message

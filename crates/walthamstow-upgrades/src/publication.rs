@@ -50,7 +50,10 @@ fn refuse_links(root: &Path, path: &Path) -> Result<()> {
         walked.push(part);
         match std::fs::symlink_metadata(&walked) {
             Ok(metadata) if metadata.file_type().is_symlink() => {
-                bail!("{} is a link, which a publication does not write through.", walked.display())
+                bail!(
+                    "{} is a link, which a publication does not write through.",
+                    walked.display()
+                )
             }
             Ok(_) => {}
             Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(()),
@@ -223,7 +226,10 @@ mod tests {
                 publish(DURABILITY, live.path(), staged.path(), &replacements).is_err(),
                 "{link}"
             );
-            assert_eq!(std::fs::read(outside.path().join("a.json")).unwrap(), b"old a");
+            assert_eq!(
+                std::fs::read(outside.path().join("a.json")).unwrap(),
+                b"old a"
+            );
         }
     }
 }

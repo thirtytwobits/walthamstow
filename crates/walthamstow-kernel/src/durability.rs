@@ -58,6 +58,16 @@ fn open_directory(directory: &Path) -> io::Result<File> {
 /// Creates `directory` and every missing ancestor, each new entry durable as
 /// `durability` asks once it returns.
 pub fn create_dir_all_synced(durability: WriteDurability, directory: &Path) -> io::Result<()> {
+    create_dir_all_with(directory, |entry_of| durability.sync_directory(entry_of))
+}
+
+/// Creates `directory` and every missing ancestor, calling `sync` on the directory holding
+/// each one it creates. When creating or syncing fails, what it created is removed again, so
+/// a retry creates it and syncs it once more.
+fn create_dir_all_with(
+    directory: &Path,
+    mut sync: impl FnMut(&Path) -> io::Result<()>,
+) -> io::Result<()> {
     let directory = present(directory);
     let mut missing = Vec::new();
     let mut ancestor = directory;
@@ -66,11 +76,17 @@ pub fn create_dir_all_synced(durability: WriteDurability, directory: &Path) -> i
         ancestor =
             parent(ancestor).ok_or_else(|| io::Error::other("Missing directory ancestor."))?;
     }
-    std::fs::create_dir_all(directory)?;
-    for created in missing.into_iter().rev() {
-        durability.sync_directory(parent(created).expect("a created directory has a parent"))?;
+    let made = std::fs::create_dir_all(directory).and_then(|()| {
+        missing.iter().rev().try_for_each(|created| {
+            sync(parent(created).expect("a created directory has a parent"))
+        })
+    });
+    if made.is_err() {
+        for created in &missing {
+            let _ = std::fs::remove_dir(created);
+        }
     }
-    Ok(())
+    made
 }
 
 /// `path`, with the empty path read as the current directory.
@@ -101,14 +117,21 @@ pub fn write_synced(durability: WriteDurability, path: &Path, bytes: &[u8]) -> a
         .write(true)
         .create_new(true)
         .open(&tmp)?;
-    match std::fs::metadata(path) {
-        Ok(replaced) => file.set_permissions(replaced.permissions())?,
-        Err(error) if error.kind() == io::ErrorKind::NotFound => {}
-        Err(error) => return Err(error.into()),
+    let staged = (|| -> io::Result<()> {
+        match std::fs::metadata(path) {
+            Ok(replaced) => file.set_permissions(replaced.permissions())?,
+            Err(error) if error.kind() == io::ErrorKind::NotFound => {}
+            Err(error) => return Err(error),
+        }
+        file.write_all(bytes)?;
+        durability.sync(&file)?;
+        drop(file);
+        std::fs::rename(&tmp, path)
+    })();
+    if let Err(error) = staged {
+        let _ = std::fs::remove_file(&tmp);
+        return Err(error.into());
     }
-    file.write_all(bytes)?;
-    durability.sync(&file)?;
-    std::fs::rename(&tmp, path)?;
     if let Some(directory) = parent(path) {
         durability.sync_directory(directory)?;
     }
@@ -165,6 +188,49 @@ mod tests {
                 .permissions()
                 .mode();
             assert_eq!(kept & 0o777, mode, "{mode:o}");
+        }
+    }
+
+    #[test]
+    fn a_creation_that_cannot_be_synced_is_undone_and_made_again_on_retry() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let nested = dir.path().join("a/b/c");
+        let failed =
+            super::create_dir_all_with(&nested, |_| Err(std::io::Error::other("the sync failed")));
+        assert!(failed.is_err());
+        assert!(!dir.path().join("a").exists(), "the creation is undone");
+
+        let mut synced = Vec::new();
+        super::create_dir_all_with(&nested, |entry_of| {
+            synced.push(entry_of.to_path_buf());
+            Ok(())
+        })
+        .expect("retry");
+        assert!(nested.is_dir());
+        for created in ["a", "a/b", "a/b/c"] {
+            let created = dir.path().join(created);
+            assert!(
+                synced
+                    .iter()
+                    .any(|entry_of| Some(entry_of.as_path()) == created.parent()),
+                "{} is synced into its directory",
+                created.display()
+            );
+        }
+    }
+
+    #[test]
+    fn a_write_that_fails_leaves_nothing_staged() {
+        for durability in [WriteDurability::Device, WriteDurability::System] {
+            let dir = tempfile::tempdir().expect("tempdir");
+            let path = dir.path().join("occupied");
+            std::fs::create_dir(&path).expect("a directory where the file goes");
+            assert!(super::write_synced(durability, &path, b"bytes").is_err());
+            let held = std::fs::read_dir(dir.path())
+                .expect("list")
+                .map(|entry| entry.expect("entry").file_name())
+                .collect::<Vec<_>>();
+            assert_eq!(held, [std::ffi::OsString::from("occupied")]);
         }
     }
 }

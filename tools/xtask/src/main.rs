@@ -2,6 +2,8 @@
 //!
 //! Walthamstow's repository tasks. Run `cargo xtask <task>`.
 
+mod storage_layout;
+
 use serde_json::Value;
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitCode};
@@ -22,8 +24,9 @@ const FORBIDDEN_PREFIXES: &[&str] = &["primrose-", "battersea-"];
 const USAGE: &str = "Usage: cargo xtask <task>
 
 Tasks:
-  check               Format, boundaries, Clippy, tests and documentation.
+  check               Format, boundaries, storage layout, Clippy, tests and documentation.
   boundaries          Each crate builds only on the Walthamstow crates it may, and on no product.
+  storage-layout      Production code creates no hidden entry but listed transient staging.
   api [--update]      Compare (or rewrite) the public API snapshots in api/.
   release-check TAG   TAG names the workspace's version.";
 
@@ -105,6 +108,7 @@ fn boundaries(root: &Path) -> Result<()> {
 fn check(root: &Path) -> Result<()> {
     run(root, "cargo", &["fmt", "--all", "--check"], &[])?;
     boundaries(root)?;
+    storage_layout::check(root)?;
     run(
         root,
         "cargo",
@@ -190,6 +194,7 @@ fn main() -> ExitCode {
     let result = match args.as_slice() {
         ["check"] => check(&root),
         ["boundaries"] => boundaries(&root),
+        ["storage-layout"] => storage_layout::check(&root),
         ["api"] => api(&root, false),
         ["api", "--update"] => api(&root, true),
         ["release-check", tag] => release_check(&root, tag),

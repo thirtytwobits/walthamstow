@@ -6,4 +6,5 @@ license.workspace = true
 publish = false
 
 [dependencies]
+regex-lite = "0.1.8"
 serde_json.workspace = true

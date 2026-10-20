@@ -3,6 +3,9 @@
 - Walthamstow builds on Clerkenwell and on no product or dataflow framework. A crate never depends
   on a `primrose-*` or `battersea-*` crate; `cargo xtask boundaries` enforces it, and every new
   crate needs a policy entry in `tools/xtask`.
+- Durable content lives in a product's workspace paths and journals in the data directory.
+  Production code creates no hidden entry but the transient staging `cargo xtask storage-layout`
+  lists.
 - Run `cargo xtask check` before finishing. Run Cargo commands one at a time.
 - A public API change reviews its snapshot diff and runs `cargo xtask api --update`.
 - Tests never sleep, set a timer or read the wall clock, and are never retried. Code under test

@@ -1,7 +1,7 @@
 # Contributing
 
 Run `cargo xtask check` before opening a pull request: formatting, the dependency boundaries,
-Clippy with warnings denied, the tests and the documentation.
+the storage layout, Clippy with warnings denied, the tests and the documentation.
 
 `cargo xtask api` compares each crate's public API with its snapshot in `api/`, using the
 toolchain `api/toolchain.json` names:

@@ -778,144 +778,9 @@ pub fn walthamstow_workspace::documents::parse_document<T>(path: &std::path::Pat
 pub fn walthamstow_workspace::documents::relative_path(root: &std::path::Path, file: &std::path::Path) -> anyhow::Result<alloc::string::String>
 pub fn walthamstow_workspace::documents::supported_document(path: &std::path::Path) -> bool
 pub mod walthamstow_workspace::mounts
-pub struct walthamstow_workspace::mounts::MountPointDescriptor
-pub walthamstow_workspace::mounts::MountPointDescriptor::label: alloc::string::String
-pub walthamstow_workspace::mounts::MountPointDescriptor::mount_id: alloc::string::String
-pub walthamstow_workspace::mounts::MountPointDescriptor::read_only: bool
-pub walthamstow_workspace::mounts::MountPointDescriptor::root_path: alloc::string::String
-impl core::clone::Clone for walthamstow_workspace::mounts::MountPointDescriptor
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::clone(&self) -> walthamstow_workspace::mounts::MountPointDescriptor
-impl core::cmp::Eq for walthamstow_workspace::mounts::MountPointDescriptor
-impl core::cmp::PartialEq for walthamstow_workspace::mounts::MountPointDescriptor
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::eq(&self, other: &walthamstow_workspace::mounts::MountPointDescriptor) -> bool
-impl core::fmt::Debug for walthamstow_workspace::mounts::MountPointDescriptor
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::marker::StructuralPartialEq for walthamstow_workspace::mounts::MountPointDescriptor
-impl schemars::JsonSchema for walthamstow_workspace::mounts::MountPointDescriptor
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::inline_schema() -> bool
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::json_schema(generator: &mut schemars::generate::SchemaGenerator) -> schemars::schema::Schema
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::schema_id() -> alloc::borrow::Cow<'static, str>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::schema_name() -> alloc::borrow::Cow<'static, str>
-impl serde_core::ser::Serialize for walthamstow_workspace::mounts::MountPointDescriptor
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
-impl<'de> serde_core::de::Deserialize<'de> for walthamstow_workspace::mounts::MountPointDescriptor
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
-impl core::marker::Freeze for walthamstow_workspace::mounts::MountPointDescriptor
-impl core::marker::Send for walthamstow_workspace::mounts::MountPointDescriptor
-impl core::marker::Sync for walthamstow_workspace::mounts::MountPointDescriptor
-impl core::marker::Unpin for walthamstow_workspace::mounts::MountPointDescriptor
-impl core::panic::unwind_safe::RefUnwindSafe for walthamstow_workspace::mounts::MountPointDescriptor
-impl core::panic::unwind_safe::UnwindSafe for walthamstow_workspace::mounts::MountPointDescriptor
-impl<Q, K> equivalent::Equivalent<K> for walthamstow_workspace::mounts::MountPointDescriptor where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::equivalent(&self, key: &K) -> bool
-impl<Q, K> hashbrown::Equivalent<K> for walthamstow_workspace::mounts::MountPointDescriptor where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
-impl<Q, K> hashbrown::Equivalent<K> for walthamstow_workspace::mounts::MountPointDescriptor where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::equivalent(&self, key: &K) -> bool
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::equivalent(&self, key: &K) -> bool
-impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for walthamstow_workspace::mounts::MountPointDescriptor where ST: ?core::marker::Sized, DT: ?core::marker::Sized
-impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for walthamstow_workspace::mounts::MountPointDescriptor where ST: ?core::marker::Sized, DT: ?core::marker::Sized
-impl<T, U> core::convert::Into<U> for walthamstow_workspace::mounts::MountPointDescriptor where U: core::convert::From<T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::into(self) -> U
-impl<T, U> core::convert::TryFrom<U> for walthamstow_workspace::mounts::MountPointDescriptor where U: core::convert::Into<T>
-pub type walthamstow_workspace::mounts::MountPointDescriptor::Error = core::convert::Infallible
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
-impl<T, U> core::convert::TryInto<U> for walthamstow_workspace::mounts::MountPointDescriptor where U: core::convert::TryFrom<T>
-pub type walthamstow_workspace::mounts::MountPointDescriptor::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> alloc::borrow::ToOwned for walthamstow_workspace::mounts::MountPointDescriptor where T: core::clone::Clone
-pub type walthamstow_workspace::mounts::MountPointDescriptor::Owned = T
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::clone_into(&self, target: &mut T)
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::to_owned(&self) -> T
-impl<T> core::any::Any for walthamstow_workspace::mounts::MountPointDescriptor where T: 'static + ?core::marker::Sized
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for walthamstow_workspace::mounts::MountPointDescriptor where T: ?core::marker::Sized
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for walthamstow_workspace::mounts::MountPointDescriptor where T: ?core::marker::Sized
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::borrow_mut(&mut self) -> &mut T
-impl<T> core::clone::CloneToUninit for walthamstow_workspace::mounts::MountPointDescriptor where T: core::clone::Clone
-pub unsafe fn walthamstow_workspace::mounts::MountPointDescriptor::clone_to_uninit(&self, dest: *mut u8)
-impl<T> core::convert::From<T> for walthamstow_workspace::mounts::MountPointDescriptor
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::from(t: T) -> T
-impl<T> dyn_clone::DynClone for walthamstow_workspace::mounts::MountPointDescriptor where T: core::clone::Clone
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::__clone_box(&self, _: dyn_clone::sealed::Private) -> *mut ()
-impl<T> either::into_either::IntoEither for walthamstow_workspace::mounts::MountPointDescriptor
-impl<T> serde_columnar::column::rle::Rleable for walthamstow_workspace::mounts::MountPointDescriptor where T: core::clone::Clone + core::cmp::PartialEq + serde_core::ser::Serialize + for<'de> serde_core::de::Deserialize<'de>
-impl<T> serde_core::de::DeserializeOwned for walthamstow_workspace::mounts::MountPointDescriptor where T: for<'de> serde_core::de::Deserialize<'de>
-impl<T> tower_http::follow_redirect::policy::PolicyExt for walthamstow_workspace::mounts::MountPointDescriptor where T: ?core::marker::Sized
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::and<P, B, E>(self, other: P) -> tower_http::follow_redirect::policy::and::And<T, P> where T: tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::or<P, B, E>(self, other: P) -> tower_http::follow_redirect::policy::or::Or<T, P> where T: tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
-impl<T> tracing::instrument::Instrument for walthamstow_workspace::mounts::MountPointDescriptor
-impl<T> tracing::instrument::WithSubscriber for walthamstow_workspace::mounts::MountPointDescriptor
-impl<T> typenum::type_operators::Same for walthamstow_workspace::mounts::MountPointDescriptor
-pub type walthamstow_workspace::mounts::MountPointDescriptor::Output = T
-impl<T> yansi::paint::Paint for walthamstow_workspace::mounts::MountPointDescriptor where T: ?core::marker::Sized
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::attr(&self, value: yansi::attr_quirk::Attribute) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::bg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::black(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::blink(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::blue(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::bold(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::bright(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::bright_black(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::bright_blue(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::bright_cyan(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::bright_green(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::bright_magenta(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::bright_red(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::bright_white(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::bright_yellow(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::clear(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::conceal(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::cyan(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::dim(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::fg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::fixed(&self, color: u8) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::green(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::invert(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::italic(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::linger(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::magenta(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::mask(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::on_black(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::on_blue(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::on_bright(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::on_bright_black(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::on_bright_blue(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::on_bright_cyan(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::on_bright_green(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::on_bright_magenta(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::on_bright_red(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::on_bright_white(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::on_bright_yellow(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::on_cyan(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::on_fixed(&self, color: u8) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::on_green(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::on_magenta(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::on_primary(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::on_red(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::on_rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::on_white(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::on_yellow(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::primary(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::quirk(&self, value: yansi::attr_quirk::Quirk) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::rapid_blink(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::red(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::resetting(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::strike(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::underline(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::whenever(&self, value: yansi::condition::Condition) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::white(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::wrap(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::yellow(&self) -> yansi::paint::Painted<&T>
-impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_workspace::mounts::MountPointDescriptor where T: ?core::marker::Sized
-impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_workspace::mounts::MountPointDescriptor where V: ppv_lite86::types::MultiLane<T>
-pub fn walthamstow_workspace::mounts::MountPointDescriptor::vzip(self) -> V
-pub fn walthamstow_workspace::mounts::default_media_mount(root_path: &str) -> walthamstow_workspace::mounts::MountPointDescriptor
 pub fn walthamstow_workspace::mounts::infer_mime_type(path: &str) -> core::option::Option<alloc::string::String>
 pub fn walthamstow_workspace::mounts::join_mount_path(parent: &str, child: &str) -> alloc::string::String
 pub fn walthamstow_workspace::mounts::normalize_mount_relative_path(path: &str) -> alloc::string::String
-pub fn walthamstow_workspace::mounts::require_mount(mount_id: &str, root_path: &str) -> walthamstow_kernel::error::KernelResult<walthamstow_workspace::mounts::MountPointDescriptor>
 pub fn walthamstow_workspace::mounts::resolve_mount_path(root: &std::path::Path, requested_path: &str) -> walthamstow_kernel::error::KernelResult<std::path::PathBuf>
 pub mod walthamstow_workspace::paths
 pub fn walthamstow_workspace::paths::resolve_directories<const N: usize>(root_dir: &std::path::Path, configured: [(&str, &str); N]) -> anyhow::Result<[std::path::PathBuf; N]>
@@ -1136,9 +1001,9 @@ pub fn walthamstow_workspace::publications::PublicationJournal::yellow(&self) ->
 impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_workspace::publications::PublicationJournal where T: ?core::marker::Sized
 impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_workspace::publications::PublicationJournal where V: ppv_lite86::types::MultiLane<T>
 pub fn walthamstow_workspace::publications::PublicationJournal::vzip(self) -> V
+pub const walthamstow_workspace::publications::JOURNAL: walthamstow_kernel::journals::Journal
 pub mod walthamstow_workspace::reason_codes
 pub const walthamstow_workspace::reason_codes::COLLABORATION_DOCUMENT_NOT_FOUND: &str
-pub const walthamstow_workspace::reason_codes::MOUNT_NOT_FOUND: &str
 pub mod walthamstow_workspace::schema_describe
 pub struct walthamstow_workspace::schema_describe::WalkerField
 pub walthamstow_workspace::schema_describe::WalkerField::allowed_values: alloc::vec::Vec<alloc::string::String>

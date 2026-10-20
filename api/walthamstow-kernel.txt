@@ -249,7 +249,7 @@ pub fn walthamstow_kernel::clock::WallClock::vzip(self) -> V
 pub mod walthamstow_kernel::collaboration_storage
 pub struct walthamstow_kernel::collaboration_storage::FileCollaborationStorage
 impl walthamstow_kernel::collaboration_storage::FileCollaborationStorage
-pub fn walthamstow_kernel::collaboration_storage::FileCollaborationStorage::new(root: &std::path::Path, durability: walthamstow_kernel::durability::WriteDurability) -> Self
+pub fn walthamstow_kernel::collaboration_storage::FileCollaborationStorage::new(root: &std::path::Path, durability: walthamstow_kernel::durability::WriteDurability, clock: walthamstow_kernel::clock::WallClock) -> Self
 pub fn walthamstow_kernel::collaboration_storage::FileCollaborationStorage::with_records_at(self, records: &std::path::Path) -> Self
 impl clerkenwell_store::CollaborationStoragePort for walthamstow_kernel::collaboration_storage::FileCollaborationStorage
 pub fn walthamstow_kernel::collaboration_storage::FileCollaborationStorage::append_audit(&self, record: &clerkenwell_store::CollaborationAuditRecord) -> clerkenwell_store::error::StoreResult<()>
@@ -270,8 +270,8 @@ impl core::marker::Freeze for walthamstow_kernel::collaboration_storage::FileCol
 impl core::marker::Send for walthamstow_kernel::collaboration_storage::FileCollaborationStorage
 impl core::marker::Sync for walthamstow_kernel::collaboration_storage::FileCollaborationStorage
 impl core::marker::Unpin for walthamstow_kernel::collaboration_storage::FileCollaborationStorage
-impl core::panic::unwind_safe::RefUnwindSafe for walthamstow_kernel::collaboration_storage::FileCollaborationStorage
-impl core::panic::unwind_safe::UnwindSafe for walthamstow_kernel::collaboration_storage::FileCollaborationStorage
+impl !core::panic::unwind_safe::RefUnwindSafe for walthamstow_kernel::collaboration_storage::FileCollaborationStorage
+impl !core::panic::unwind_safe::UnwindSafe for walthamstow_kernel::collaboration_storage::FileCollaborationStorage
 impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for walthamstow_kernel::collaboration_storage::FileCollaborationStorage where ST: ?core::marker::Sized, DT: ?core::marker::Sized
 impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for walthamstow_kernel::collaboration_storage::FileCollaborationStorage where ST: ?core::marker::Sized, DT: ?core::marker::Sized
 impl<T, U> core::convert::Into<U> for walthamstow_kernel::collaboration_storage::FileCollaborationStorage where U: core::convert::From<T>
@@ -494,13 +494,13 @@ pub fn walthamstow_kernel::daemon::Daemon::new() -> Self
 pub fn walthamstow_kernel::daemon::Daemon::shutdown(&self)
 pub fn walthamstow_kernel::daemon::Daemon::shutdown_token(&self) -> &tokio_util::sync::cancellation_token::CancellationToken
 pub async fn walthamstow_kernel::daemon::Daemon::shutting_down(&self)
-pub fn walthamstow_kernel::daemon::Daemon::spawn<F>(&self, task: F) -> tokio::runtime::task::join::JoinHandle<<F as core::future::future::Future>::Output> where F: core::future::future::Future + core::marker::Send + 'static, <F as core::future::future::Future>::Output: core::marker::Send + 'static
+pub fn walthamstow_kernel::daemon::Daemon::spawn<F>(&self, task: F) -> core::option::Option<tokio::runtime::task::join::JoinHandle<<F as core::future::future::Future>::Output>> where F: core::future::future::Future + core::marker::Send + 'static, <F as core::future::future::Future>::Output: core::marker::Send + 'static
 pub async fn walthamstow_kernel::daemon::Daemon::stop(&self)
 impl core::default::Default for walthamstow_kernel::daemon::Daemon
 pub fn walthamstow_kernel::daemon::Daemon::default() -> walthamstow_kernel::daemon::Daemon
 impl core::fmt::Debug for walthamstow_kernel::daemon::Daemon
 pub fn walthamstow_kernel::daemon::Daemon::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::marker::Freeze for walthamstow_kernel::daemon::Daemon
+impl !core::marker::Freeze for walthamstow_kernel::daemon::Daemon
 impl core::marker::Send for walthamstow_kernel::daemon::Daemon
 impl core::marker::Sync for walthamstow_kernel::daemon::Daemon
 impl core::marker::Unpin for walthamstow_kernel::daemon::Daemon
@@ -933,6 +933,7 @@ pub fn walthamstow_kernel::durability::WriteDurability::yellow(&self) -> yansi::
 impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_kernel::durability::WriteDurability where T: ?core::marker::Sized
 impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_kernel::durability::WriteDurability where V: ppv_lite86::types::MultiLane<T>
 pub fn walthamstow_kernel::durability::WriteDurability::vzip(self) -> V
+pub fn walthamstow_kernel::durability::create_dir_all_synced(durability: walthamstow_kernel::durability::WriteDurability, directory: &std::path::Path) -> std::io::error::Result<()>
 pub fn walthamstow_kernel::durability::write_synced(durability: walthamstow_kernel::durability::WriteDurability, path: &std::path::Path, bytes: &[u8]) -> anyhow::Result<()>
 pub mod walthamstow_kernel::error
 pub struct walthamstow_kernel::error::KernelError
@@ -943,10 +944,8 @@ impl walthamstow_kernel::error::KernelError
 pub fn walthamstow_kernel::error::KernelError::cancelled(message: impl core::convert::Into<alloc::string::String>) -> Self
 pub fn walthamstow_kernel::error::KernelError::conflict(message: impl core::convert::Into<alloc::string::String>) -> Self
 pub fn walthamstow_kernel::error::KernelError::internal(message: impl core::convert::Into<alloc::string::String>) -> Self
-pub fn walthamstow_kernel::error::KernelError::interrupted(message: impl core::convert::Into<alloc::string::String>) -> Self
 pub fn walthamstow_kernel::error::KernelError::invalid_request(message: impl core::convert::Into<alloc::string::String>) -> Self
 pub fn walthamstow_kernel::error::KernelError::not_found(message: impl core::convert::Into<alloc::string::String>) -> Self
-pub fn walthamstow_kernel::error::KernelError::rate_limit(message: impl core::convert::Into<alloc::string::String>) -> Self
 pub fn walthamstow_kernel::error::KernelError::reason_code(&self) -> core::option::Option<&str>
 pub fn walthamstow_kernel::error::KernelError::with_data(self, data: serde_json::value::Value) -> Self
 pub fn walthamstow_kernel::error::KernelError::with_reason(self, code: &'static str) -> Self
@@ -1070,27 +1069,29 @@ pub fn walthamstow_kernel::files::safe_id(id: &str) -> anyhow::Result<()>
 pub mod walthamstow_kernel::hashing
 pub fn walthamstow_kernel::hashing::sha256_hex(bytes: &[u8]) -> alloc::string::String
 pub mod walthamstow_kernel::journals
-pub enum walthamstow_kernel::journals::Journal
-pub walthamstow_kernel::journals::Journal::CharacterLifecycle
-pub walthamstow_kernel::journals::Journal::CollaborationPublications
-pub walthamstow_kernel::journals::Journal::FlowCheckpoints
-pub walthamstow_kernel::journals::Journal::FlowExecutions
-pub walthamstow_kernel::journals::Journal::RuntimeAccounting
-pub walthamstow_kernel::journals::Journal::SessionUpgrades
-pub walthamstow_kernel::journals::Journal::WorkspaceUpgrades
+pub struct walthamstow_kernel::journals::Journal(_)
 impl walthamstow_kernel::journals::Journal
+pub const fn walthamstow_kernel::journals::Journal::new(name: &'static str) -> Self
 pub fn walthamstow_kernel::journals::Journal::root(self, data_dir: &std::path::Path) -> std::path::PathBuf
 impl core::clone::Clone for walthamstow_kernel::journals::Journal
 pub fn walthamstow_kernel::journals::Journal::clone(&self) -> walthamstow_kernel::journals::Journal
+impl core::cmp::Eq for walthamstow_kernel::journals::Journal
+impl core::cmp::PartialEq for walthamstow_kernel::journals::Journal
+pub fn walthamstow_kernel::journals::Journal::eq(&self, other: &walthamstow_kernel::journals::Journal) -> bool
 impl core::fmt::Debug for walthamstow_kernel::journals::Journal
 pub fn walthamstow_kernel::journals::Journal::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for walthamstow_kernel::journals::Journal
+impl core::marker::StructuralPartialEq for walthamstow_kernel::journals::Journal
 impl core::marker::Freeze for walthamstow_kernel::journals::Journal
 impl core::marker::Send for walthamstow_kernel::journals::Journal
 impl core::marker::Sync for walthamstow_kernel::journals::Journal
 impl core::marker::Unpin for walthamstow_kernel::journals::Journal
 impl core::panic::unwind_safe::RefUnwindSafe for walthamstow_kernel::journals::Journal
 impl core::panic::unwind_safe::UnwindSafe for walthamstow_kernel::journals::Journal
+impl<Q, K> equivalent::Equivalent<K> for walthamstow_kernel::journals::Journal where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn walthamstow_kernel::journals::Journal::equivalent(&self, key: &K) -> bool
+impl<Q, K> hashbrown::Equivalent<K> for walthamstow_kernel::journals::Journal where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn walthamstow_kernel::journals::Journal::equivalent(&self, key: &K) -> bool
 impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for walthamstow_kernel::journals::Journal where ST: ?core::marker::Sized, DT: ?core::marker::Sized
 impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for walthamstow_kernel::journals::Journal where ST: ?core::marker::Sized, DT: ?core::marker::Sized
 impl<T, U> core::convert::Into<U> for walthamstow_kernel::journals::Journal where U: core::convert::From<T>
@@ -1185,24 +1186,29 @@ pub fn walthamstow_kernel::journals::Journal::yellow(&self) -> yansi::paint::Pai
 impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_kernel::journals::Journal where T: ?core::marker::Sized
 impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_kernel::journals::Journal where V: ppv_lite86::types::MultiLane<T>
 pub fn walthamstow_kernel::journals::Journal::vzip(self) -> V
-pub enum walthamstow_kernel::journals::Staging
-pub walthamstow_kernel::journals::Staging::SessionBackups
-pub walthamstow_kernel::journals::Staging::SessionImports
-pub walthamstow_kernel::journals::Staging::SessionPublishing
-pub walthamstow_kernel::journals::Staging::SessionUpgrades
+pub struct walthamstow_kernel::journals::Staging(_)
 impl walthamstow_kernel::journals::Staging
+pub const fn walthamstow_kernel::journals::Staging::new(name: &'static str) -> Self
 pub fn walthamstow_kernel::journals::Staging::root(self, data_dir: &std::path::Path) -> std::path::PathBuf
 impl core::clone::Clone for walthamstow_kernel::journals::Staging
 pub fn walthamstow_kernel::journals::Staging::clone(&self) -> walthamstow_kernel::journals::Staging
+impl core::cmp::Eq for walthamstow_kernel::journals::Staging
+impl core::cmp::PartialEq for walthamstow_kernel::journals::Staging
+pub fn walthamstow_kernel::journals::Staging::eq(&self, other: &walthamstow_kernel::journals::Staging) -> bool
 impl core::fmt::Debug for walthamstow_kernel::journals::Staging
 pub fn walthamstow_kernel::journals::Staging::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Copy for walthamstow_kernel::journals::Staging
+impl core::marker::StructuralPartialEq for walthamstow_kernel::journals::Staging
 impl core::marker::Freeze for walthamstow_kernel::journals::Staging
 impl core::marker::Send for walthamstow_kernel::journals::Staging
 impl core::marker::Sync for walthamstow_kernel::journals::Staging
 impl core::marker::Unpin for walthamstow_kernel::journals::Staging
 impl core::panic::unwind_safe::RefUnwindSafe for walthamstow_kernel::journals::Staging
 impl core::panic::unwind_safe::UnwindSafe for walthamstow_kernel::journals::Staging
+impl<Q, K> equivalent::Equivalent<K> for walthamstow_kernel::journals::Staging where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn walthamstow_kernel::journals::Staging::equivalent(&self, key: &K) -> bool
+impl<Q, K> hashbrown::Equivalent<K> for walthamstow_kernel::journals::Staging where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn walthamstow_kernel::journals::Staging::equivalent(&self, key: &K) -> bool
 impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for walthamstow_kernel::journals::Staging where ST: ?core::marker::Sized, DT: ?core::marker::Sized
 impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for walthamstow_kernel::journals::Staging where ST: ?core::marker::Sized, DT: ?core::marker::Sized
 impl<T, U> core::convert::Into<U> for walthamstow_kernel::journals::Staging where U: core::convert::From<T>
@@ -1297,10 +1303,7 @@ pub fn walthamstow_kernel::journals::Staging::yellow(&self) -> yansi::paint::Pai
 impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_kernel::journals::Staging where T: ?core::marker::Sized
 impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_kernel::journals::Staging where V: ppv_lite86::types::MultiLane<T>
 pub fn walthamstow_kernel::journals::Staging::vzip(self) -> V
-pub fn walthamstow_kernel::journals::session_journal_dir(data_dir: &std::path::Path, session_id: &str) -> std::path::PathBuf
-pub fn walthamstow_kernel::journals::session_journals_root(data_dir: &std::path::Path) -> std::path::PathBuf
 pub mod walthamstow_kernel::reason_codes
-pub const walthamstow_kernel::reason_codes::STALE_WRITE: &str
 pub const walthamstow_kernel::reason_codes::WORKSPACE_HELD: &str
 pub mod walthamstow_kernel::workspace_lock
 pub struct walthamstow_kernel::workspace_lock::WorkspaceLock
@@ -1408,10 +1411,8 @@ impl walthamstow_kernel::error::KernelError
 pub fn walthamstow_kernel::error::KernelError::cancelled(message: impl core::convert::Into<alloc::string::String>) -> Self
 pub fn walthamstow_kernel::error::KernelError::conflict(message: impl core::convert::Into<alloc::string::String>) -> Self
 pub fn walthamstow_kernel::error::KernelError::internal(message: impl core::convert::Into<alloc::string::String>) -> Self
-pub fn walthamstow_kernel::error::KernelError::interrupted(message: impl core::convert::Into<alloc::string::String>) -> Self
 pub fn walthamstow_kernel::error::KernelError::invalid_request(message: impl core::convert::Into<alloc::string::String>) -> Self
 pub fn walthamstow_kernel::error::KernelError::not_found(message: impl core::convert::Into<alloc::string::String>) -> Self
-pub fn walthamstow_kernel::error::KernelError::rate_limit(message: impl core::convert::Into<alloc::string::String>) -> Self
 pub fn walthamstow_kernel::error::KernelError::reason_code(&self) -> core::option::Option<&str>
 pub fn walthamstow_kernel::error::KernelError::with_data(self, data: serde_json::value::Value) -> Self
 pub fn walthamstow_kernel::error::KernelError::with_reason(self, code: &'static str) -> Self

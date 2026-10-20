@@ -122,6 +122,7 @@ pub fn walthamstow_upgrades::publication::Replacement::yellow(&self) -> yansi::p
 impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_upgrades::publication::Replacement where T: ?core::marker::Sized
 impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_upgrades::publication::Replacement where V: ppv_lite86::types::MultiLane<T>
 pub fn walthamstow_upgrades::publication::Replacement::vzip(self) -> V
+pub fn walthamstow_upgrades::publication::check_relative_path(path: &std::path::Path) -> anyhow::Result<()>
 pub fn walthamstow_upgrades::publication::file_hash(path: &std::path::Path) -> anyhow::Result<core::option::Option<alloc::string::String>>
 pub fn walthamstow_upgrades::publication::publish(durability: walthamstow_kernel::durability::WriteDurability, live: &std::path::Path, staged: &std::path::Path, replacements: &[walthamstow_upgrades::publication::Replacement]) -> anyhow::Result<()>
 pub mod walthamstow_upgrades::workspace
@@ -237,6 +238,7 @@ pub fn walthamstow_upgrades::workspace::Operation::yellow(&self) -> yansi::paint
 impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_upgrades::workspace::Operation where T: ?core::marker::Sized
 impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_upgrades::workspace::Operation where V: ppv_lite86::types::MultiLane<T>
 pub fn walthamstow_upgrades::workspace::Operation::vzip(self) -> V
+pub const walthamstow_upgrades::workspace::JOURNAL: walthamstow_kernel::journals::Journal
 pub fn walthamstow_upgrades::workspace::authorise(durability: walthamstow_kernel::durability::WriteDurability, work: &std::path::Path, operation_id: &str, sources: &alloc::collections::btree::map::BTreeMap<std::path::PathBuf, alloc::vec::Vec<u8>>, changes: &alloc::collections::btree::map::BTreeMap<std::path::PathBuf, alloc::vec::Vec<u8>>) -> anyhow::Result<walthamstow_upgrades::workspace::Operation>
 pub fn walthamstow_upgrades::workspace::finish(durability: walthamstow_kernel::durability::WriteDurability, root: &std::path::Path, work: &std::path::Path, operation: &mut walthamstow_upgrades::workspace::Operation) -> anyhow::Result<()>
 pub fn walthamstow_upgrades::workspace::prepared_dir(work: &std::path::Path) -> std::path::PathBuf

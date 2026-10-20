@@ -140,8 +140,13 @@ impl PublicationJournal {
     /// at least until the returned commit is dropped.
     pub fn mark(&self, document: &CollaborationDocumentId) -> KernelResult<PendingCommit> {
         let mut marked = self.inner.locked();
-        let path = self.inner.path(document);
-        if !marked.contains_key(document) {
+        let path = marked
+            .get(document)
+            .map(|marked| marked.path.clone())
+            .unwrap_or_else(|| self.inner.path(document));
+        // A mark held in memory whose file a failed clear removed is written again.
+        let kept = path.try_exists().map_err(|error| internal(&path, error))?;
+        if !kept {
             let mark = serde_json::to_vec(&Mark {
                 entity: document.entity.clone(),
                 resource_id: document.resource_id.clone(),
@@ -408,5 +413,18 @@ mod tests {
         std::fs::create_dir_all(data_dir.path().join("journals")).unwrap();
         std::os::unix::fs::symlink(outside.path(), JOURNAL.root(data_dir.path())).unwrap();
         assert!(PublicationJournal::open(data_dir.path(), WriteDurability::System).is_err());
+    }
+
+    #[test]
+    fn a_mark_held_in_memory_without_its_file_is_written_again() {
+        let data_dir = tempfile::tempdir().unwrap();
+        let journal = PublicationJournal::open(data_dir.path(), WriteDurability::System).unwrap();
+        drop(journal.mark(&document("held")).unwrap());
+        for entry in std::fs::read_dir(JOURNAL.root(data_dir.path())).unwrap() {
+            std::fs::remove_file(entry.unwrap().path()).unwrap();
+        }
+        drop(journal.mark(&document("held")).unwrap());
+        let reopened = PublicationJournal::open(data_dir.path(), WriteDurability::System).unwrap();
+        assert!(reopened.is_marked(&document("held")));
     }
 }

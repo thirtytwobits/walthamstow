@@ -76,17 +76,22 @@ fn create_dir_all_with(
         ancestor =
             parent(ancestor).ok_or_else(|| io::Error::other("Missing directory ancestor."))?;
     }
-    let made = std::fs::create_dir_all(directory).and_then(|()| {
-        missing.iter().rev().try_for_each(|created| {
-            sync(parent(created).expect("a created directory has a parent"))
-        })
+    // Created one at a time, so a failure removes only the directories this call made.
+    let mut made = Vec::new();
+    let created = missing.iter().rev().try_for_each(|missing| {
+        match std::fs::create_dir(missing) {
+            Ok(()) => made.push(*missing),
+            Err(error) if error.kind() == io::ErrorKind::AlreadyExists => return Ok(()),
+            Err(error) => return Err(error),
+        }
+        sync(parent(missing).expect("a created directory has a parent"))
     });
-    if made.is_err() {
-        for created in &missing {
-            let _ = std::fs::remove_dir(created);
+    if created.is_err() {
+        for made in made.iter().rev() {
+            let _ = std::fs::remove_dir(made);
         }
     }
-    made
+    created
 }
 
 /// `path`, with the empty path read as the current directory.
@@ -232,5 +237,25 @@ mod tests {
                 .collect::<Vec<_>>();
             assert_eq!(held, [std::ffi::OsString::from("occupied")]);
         }
+    }
+
+    #[test]
+    fn a_failed_creation_leaves_what_another_caller_made_meanwhile() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let nested = dir.path().join("a/b/c");
+        let theirs = dir.path().join("a/b");
+        let mut calls = 0;
+        let failed = super::create_dir_all_with(&nested, |_| {
+            calls += 1;
+            if calls == 1 {
+                std::fs::create_dir(&theirs).expect("another caller makes a/b");
+                Ok(())
+            } else {
+                Err(std::io::Error::other("the sync failed"))
+            }
+        });
+        assert!(failed.is_err());
+        assert!(theirs.is_dir(), "the other caller's directory stays");
+        assert!(!nested.exists(), "this call's directory is removed");
     }
 }

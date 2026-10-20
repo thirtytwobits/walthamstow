@@ -146,7 +146,11 @@ impl PublicationJournal {
         }
         let path = self.inner.path(document);
         match std::fs::remove_file(&path) {
-            Ok(()) => {}
+            Ok(()) => self
+                .inner
+                .durability
+                .sync_directory(&self.inner.root)
+                .map_err(|error| internal(&self.inner.root, error))?,
             Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
             Err(error) => return Err(internal(&path, error)),
         }
@@ -181,6 +185,7 @@ impl PublicationJournal {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use walthamstow_kernel::durability::WriteDurability;
 
     fn document(resource_id: &str) -> CollaborationDocumentId {
         CollaborationDocumentId::new("Note", resource_id)
@@ -224,6 +229,18 @@ mod tests {
 
         assert!(reopened.marked().is_empty());
         assert_eq!(reopened.count(), 0);
+    }
+
+    #[test]
+    fn a_cleared_mark_stays_gone_under_each_durability() {
+        for durability in [WriteDurability::Device, WriteDurability::System] {
+            let data_dir = tempfile::tempdir().unwrap();
+            let journal = PublicationJournal::open(data_dir.path(), durability).unwrap();
+            drop(journal.mark(&document("published")).unwrap());
+            journal.clear(&document("published"), || Ok(true)).unwrap();
+            let reopened = PublicationJournal::open(data_dir.path(), durability).unwrap();
+            assert!(reopened.marked().is_empty());
+        }
     }
 
     #[test]

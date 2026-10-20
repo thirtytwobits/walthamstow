@@ -56,7 +56,8 @@ pub fn create_dir_all_synced(durability: WriteDurability, directory: &Path) -> i
 }
 
 /// Writes `bytes` to `path` by a rename, durable as `durability` asks once it
-/// returns, with any directory it had to create.
+/// returns, with any directory it had to create. A file it replaces keeps its
+/// permissions.
 pub fn write_synced(durability: WriteDurability, path: &Path, bytes: &[u8]) -> anyhow::Result<()> {
     use std::io::Write;
     if let Some(parent) = path.parent() {
@@ -67,6 +68,11 @@ pub fn write_synced(durability: WriteDurability, path: &Path, bytes: &[u8]) -> a
         .write(true)
         .create_new(true)
         .open(&tmp)?;
+    match std::fs::metadata(path) {
+        Ok(replaced) => file.set_permissions(replaced.permissions())?,
+        Err(error) if error.kind() == io::ErrorKind::NotFound => {}
+        Err(error) => return Err(error.into()),
+    }
     file.write_all(bytes)?;
     durability.sync(&file)?;
     std::fs::rename(&tmp, path)?;
@@ -107,6 +113,25 @@ mod tests {
                 .sync_directory(dir.path())
                 .expect("sync directory");
             assert_eq!(std::fs::read(&path).expect("read"), written);
+        }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_replaced_file_keeps_its_permissions() {
+        use std::os::unix::fs::PermissionsExt;
+        let dir = tempfile::tempdir().expect("tempdir");
+        let path = dir.path().join("record");
+        for mode in [0o600, 0o640] {
+            std::fs::write(&path, b"before").expect("write");
+            std::fs::set_permissions(&path, std::fs::Permissions::from_mode(mode)).expect("chmod");
+            super::write_synced(WriteDurability::System, &path, b"after").expect("replace");
+            assert_eq!(std::fs::read(&path).expect("read"), b"after");
+            let kept = std::fs::metadata(&path)
+                .expect("metadata")
+                .permissions()
+                .mode();
+            assert_eq!(kept & 0o777, mode, "{mode:o}");
         }
     }
 }

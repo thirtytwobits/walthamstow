@@ -149,8 +149,8 @@ impl CollaborativeDocuments {
     }
 
     /// Records that the document's files render `generation`, or that no
-    /// accepted document remains when it is `None`. The mark stays when a
-    /// later generation has been accepted since.
+    /// accepted document remains when it is `None`. The mark stays unless
+    /// `generation` is the one accepted now.
     pub fn published(&self, resource_id: &str, generation: Option<u64>) -> KernelResult<()> {
         let Some(journal) = &self.publications else {
             return Ok(());
@@ -163,7 +163,7 @@ impl CollaborativeDocuments {
                 .map(|summary| summary.generation);
             Ok(match (accepted, generation) {
                 (None, None) => true,
-                (Some(accepted), Some(published)) => accepted <= published,
+                (Some(accepted), Some(published)) => accepted == published,
                 (None, Some(_)) | (Some(_), None) => false,
             })
         })
@@ -652,6 +652,26 @@ mod tests {
             .unwrap();
         assert!(!documents.publication_pending("one"));
         documents.remove("one", &writer()).unwrap();
+        assert!(!documents.publication_pending("one"));
+    }
+
+    #[test]
+    fn a_publication_clears_the_mark_only_at_the_generation_accepted() {
+        let store = tempfile::tempdir().unwrap();
+        let data = tempfile::tempdir().unwrap();
+        let journal = PublicationJournal::open(data.path(), DURABILITY).unwrap();
+        let documents = CollaborativeDocuments::new(service(store.path()), &NOTES, Some(journal));
+        documents
+            .bootstrap("one", &note("one"), |_| Ok(()))
+            .unwrap();
+        let accepted = documents.summary("one").unwrap().unwrap().generation;
+
+        documents.published("one", Some(accepted + 9)).unwrap();
+        assert!(
+            documents.publication_pending("one"),
+            "files from an earlier incarnation's later generation do not render this one"
+        );
+        documents.published("one", Some(accepted)).unwrap();
         assert!(!documents.publication_pending("one"));
     }
 }

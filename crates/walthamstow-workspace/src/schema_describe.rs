@@ -26,14 +26,17 @@ pub fn walk_describe_schema<F: FnMut(WalkerField)>(schema: &Value, mut emit: F) 
         .and_then(Value::as_object)
         .cloned()
         .unwrap_or_default();
-    walk_object_schema(schema, "", &defs, &mut emit);
+    walk_object_schema(schema, "", &defs, &mut emit, &mut Vec::new());
 }
 
+/// Walks `node`'s properties. `active` names the references expanded on the way here; one
+/// of them is not expanded again, so a schema that refers to itself is walked once.
 fn walk_object_schema<F: FnMut(WalkerField)>(
     node: &Value,
     path: &str,
     defs: &serde_json::Map<String, Value>,
     emit: &mut F,
+    active: &mut Vec<String>,
 ) {
     let required: std::collections::HashSet<&str> = node
         .get("required")
@@ -51,7 +54,7 @@ fn walk_object_schema<F: FnMut(WalkerField)>(
         } else {
             format!("{path}.{name}")
         };
-        let field_type = type_label(property, &resolved, defs);
+        let field_type = type_label(property, &resolved, defs, &mut Vec::new());
         let description = description_for(property, &resolved);
         let allowed_values = match enum_values(property) {
             direct if direct.is_empty() => enum_values(&resolved),
@@ -76,16 +79,45 @@ fn walk_object_schema<F: FnMut(WalkerField)>(
             } else {
                 &resolved
             };
-            if let Some(item_schema) = array_item_schema(array, defs) {
+            if let Some(items) = array.get("items") {
+                let item_schema = resolve_ref(items, defs);
                 if matches_object(&item_schema) {
                     let array_path = format!("{field_path}[]");
-                    walk_object_schema(&item_schema, &array_path, defs, emit);
+                    within(active, [ref_name(property), ref_name(items)], |active| {
+                        walk_object_schema(&item_schema, &array_path, defs, emit, active)
+                    });
                 }
             }
         } else if matches_object(&resolved) {
-            walk_object_schema(&resolved, &field_path, defs, emit);
+            within(active, [ref_name(property)], |active| {
+                walk_object_schema(&resolved, &field_path, defs, emit, active)
+            });
         }
     }
+}
+
+/// Runs `walk` with `references` added to `active`, unless one of them is already there.
+fn within<'a>(
+    active: &mut Vec<String>,
+    references: impl IntoIterator<Item = Option<&'a str>>,
+    walk: impl FnOnce(&mut Vec<String>),
+) {
+    let references = references.into_iter().flatten().collect::<Vec<_>>();
+    if references
+        .iter()
+        .any(|reference| active.iter().any(|held| held == reference))
+    {
+        return;
+    }
+    let depth = active.len();
+    active.extend(references.iter().map(|reference| reference.to_string()));
+    walk(active);
+    active.truncate(depth);
+}
+
+/// The definition `node` refers to, when it refers to one.
+fn ref_name(node: &Value) -> Option<&str> {
+    node.get("$ref")?.as_str()?.strip_prefix("#/$defs/")
 }
 
 fn resolve_ref(node: &Value, defs: &serde_json::Map<String, Value>) -> Value {
@@ -98,17 +130,31 @@ fn resolve_ref(node: &Value, defs: &serde_json::Map<String, Value>) -> Value {
     defs.get(name).cloned().unwrap_or_else(|| node.clone())
 }
 
-fn type_label(node: &Value, resolved: &Value, defs: &serde_json::Map<String, Value>) -> String {
+/// `node`'s type, naming an array's item type. `active` names the item references being
+/// labelled; one met again is labelled as a bare array.
+fn type_label(
+    node: &Value,
+    resolved: &Value,
+    defs: &serde_json::Map<String, Value>,
+    active: &mut Vec<String>,
+) -> String {
     let typed = if node.get("type").is_some() {
         node
     } else {
         resolved
     };
     match typed.get("type").and_then(Value::as_str) {
-        Some("array") => match array_item_schema(typed, defs) {
-            Some(item) => format!("array of {}", type_label(&item, &item, defs)),
-            None => "array".to_string(),
-        },
+        Some("array") => {
+            let Some(items) = typed.get("items") else {
+                return "array".to_string();
+            };
+            let item = resolve_ref(items, defs);
+            let mut label = "array".to_string();
+            within(active, [ref_name(items)], |active| {
+                label = format!("array of {}", type_label(&item, &item, defs, active));
+            });
+            label
+        }
         Some(declared) => declared.to_string(),
         None if node.get("$ref").is_some() => "object".to_string(),
         None => "any".to_string(),
@@ -134,11 +180,6 @@ fn enum_values(node: &Value) -> Vec<String> {
                 .collect()
         })
         .unwrap_or_default()
-}
-
-fn array_item_schema(node: &Value, defs: &serde_json::Map<String, Value>) -> Option<Value> {
-    let items = node.get("items")?;
-    Some(resolve_ref(items, defs))
 }
 
 fn matches_object(node: &Value) -> bool {
@@ -211,5 +252,39 @@ mod tests {
                 fields.iter().map(|field| &field.path).collect::<Vec<_>>()
             );
         }
+    }
+
+    #[test]
+    fn a_schema_that_refers_to_itself_is_walked_once() {
+        let schema = json!({
+            "$defs": {
+                "Node": {
+                    "type": "object",
+                    "properties": {
+                        "name": { "type": "string" },
+                        "child": { "$ref": "#/$defs/Node" },
+                        "children": { "type": "array", "items": { "$ref": "#/$defs/Node" } }
+                    }
+                },
+                "Nested": { "type": "array", "items": { "$ref": "#/$defs/Nested" } }
+            },
+            "type": "object",
+            "properties": {
+                "root": { "$ref": "#/$defs/Node" },
+                "nested": { "$ref": "#/$defs/Nested" }
+            }
+        });
+        let fields = fields(&schema);
+        let paths = fields
+            .iter()
+            .map(|field| field.path.as_str())
+            .collect::<Vec<_>>();
+        for walked in ["root", "root.name", "root.child", "root.children", "nested"] {
+            assert!(paths.contains(&walked), "{walked}: {paths:?}");
+        }
+        assert!(
+            paths.iter().all(|path| !path.starts_with("root.child.")),
+            "{paths:?}"
+        );
     }
 }

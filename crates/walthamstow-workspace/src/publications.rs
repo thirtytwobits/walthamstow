@@ -101,9 +101,20 @@ impl PublicationJournal {
             Err(error) => return Err(internal(&root, error)),
         };
         for entry in entries.into_iter().flatten() {
-            let path = entry.map_err(|error| internal(&root, error))?.path();
+            let entry = entry.map_err(|error| internal(&root, error))?;
+            let path = entry.path();
             if path.extension().and_then(|extension| extension.to_str()) != Some("json") {
                 continue;
+            }
+            if !entry
+                .file_type()
+                .map_err(|error| internal(&path, error))?
+                .is_file()
+            {
+                return Err(internal(
+                    &path,
+                    "a mark is a regular file; this is not followed or opened",
+                ));
             }
             let bytes = std::fs::read(&path).map_err(|error| internal(&path, error))?;
             let mark: Mark =
@@ -368,5 +379,22 @@ mod tests {
             journal.clear(&document("gone"), || Ok(true)).unwrap();
             assert!(!journal.is_marked(&document("gone")));
         }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_mark_that_is_not_a_regular_file_stops_the_journal_opening() {
+        let data_dir = tempfile::tempdir().unwrap();
+        let root = JOURNAL.root(data_dir.path());
+        std::fs::create_dir_all(&root).unwrap();
+        let outside = tempfile::tempdir().unwrap();
+        std::fs::write(
+            outside.path().join("mark.json"),
+            br#"{"entity":"Note","resource_id":"x"}"#,
+        )
+        .unwrap();
+        std::os::unix::fs::symlink(outside.path().join("mark.json"), root.join("linked.json"))
+            .unwrap();
+        assert!(PublicationJournal::open(data_dir.path(), WriteDurability::System).is_err());
     }
 }

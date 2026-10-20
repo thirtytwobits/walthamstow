@@ -21,19 +21,7 @@ pub struct WalkerField {
 /// objects and `$ref`s, expanding arrays of objects into
 /// `<path>[].<field>` entries). Caller-provided `emit` collects.
 pub fn walk_describe_schema<F: FnMut(WalkerField)>(schema: &Value, mut emit: F) {
-    let mut defs = serde_json::Map::new();
-    for section in ["$defs", "definitions"] {
-        for (name, definition) in schema
-            .get(section)
-            .and_then(Value::as_object)
-            .into_iter()
-            .flatten()
-        {
-            let token = name.replace('~', "~0").replace('/', "~1");
-            defs.insert(format!("#/{section}/{token}"), definition.clone());
-        }
-    }
-    walk_object_schema(schema, "", &defs, &mut emit, &mut Vec::new());
+    walk_object_schema(schema, "", schema, &mut emit, &mut Vec::new());
 }
 
 /// Walks `node`'s properties. `active` names the references expanded on the way here; one
@@ -41,7 +29,7 @@ pub fn walk_describe_schema<F: FnMut(WalkerField)>(schema: &Value, mut emit: F) 
 fn walk_object_schema<F: FnMut(WalkerField)>(
     node: &Value,
     path: &str,
-    defs: &serde_json::Map<String, Value>,
+    root: &Value,
     emit: &mut F,
     active: &mut Vec<String>,
 ) {
@@ -55,13 +43,13 @@ fn walk_object_schema<F: FnMut(WalkerField)>(
     };
 
     for (name, property) in properties {
-        let resolved = resolve_ref(property, defs);
+        let resolved = resolve_ref(property, root);
         let field_path = if path.is_empty() {
             name.clone()
         } else {
             format!("{path}.{name}")
         };
-        let field_type = type_label(property, &resolved, defs, &mut Vec::new());
+        let field_type = type_label(property, &resolved, root, &mut Vec::new());
         let description = description_for(property, &resolved);
         let allowed_values = match enum_values(property) {
             direct if direct.is_empty() => enum_values(&resolved),
@@ -87,17 +75,17 @@ fn walk_object_schema<F: FnMut(WalkerField)>(
                 &resolved
             };
             if let Some(items) = array.get("items") {
-                let item_schema = resolve_ref(items, defs);
+                let item_schema = resolve_ref(items, root);
                 if matches_object(&item_schema) {
                     let array_path = format!("{field_path}[]");
                     within(active, [ref_name(property), ref_name(items)], |active| {
-                        walk_object_schema(&item_schema, &array_path, defs, emit, active)
+                        walk_object_schema(&item_schema, &array_path, root, emit, active)
                     });
                 }
             }
         } else if matches_object(&resolved) {
             within(active, [ref_name(property)], |active| {
-                walk_object_schema(&resolved, &field_path, defs, emit, active)
+                walk_object_schema(&resolved, &field_path, root, emit, active)
             });
         }
     }
@@ -122,37 +110,36 @@ fn within<'a>(
     active.truncate(depth);
 }
 
-/// The reference `node` makes, when it makes one: the key its definition is held under.
+/// The reference `node` makes, when it makes one.
 fn ref_name(node: &Value) -> Option<&str> {
     node.get("$ref")?.as_str()
 }
 
-/// The definition `node` refers to, through any chain of references, or `node` when it
-/// refers to none. A chain that returns to a definition it passed stops there.
-fn resolve_ref(node: &Value, defs: &serde_json::Map<String, Value>) -> Value {
+/// The schema `node` refers to, through any chain of local references resolved as JSON Pointers
+/// into `root`, or `node` when it refers to none. A chain that returns to a reference it passed
+/// stops there.
+fn resolve_ref(node: &Value, root: &Value) -> Value {
     let mut resolved = node.clone();
     let mut passed = Vec::new();
-    while let Some(name) = ref_name(&resolved).map(str::to_string) {
-        let Some(definition) = defs.get(&name) else {
+    while let Some(reference) = ref_name(&resolved).map(str::to_string) {
+        let Some(target) = reference
+            .strip_prefix('#')
+            .and_then(|pointer| root.pointer(pointer))
+        else {
             break;
         };
-        if passed.contains(&name) {
+        if passed.contains(&reference) {
             break;
         }
-        passed.push(name);
-        resolved = definition.clone();
+        passed.push(reference);
+        resolved = target.clone();
     }
     resolved
 }
 
 /// `node`'s type, naming an array's item type. `active` names the item references being
 /// labelled; one met again is labelled as a bare array.
-fn type_label(
-    node: &Value,
-    resolved: &Value,
-    defs: &serde_json::Map<String, Value>,
-    active: &mut Vec<String>,
-) -> String {
+fn type_label(node: &Value, resolved: &Value, root: &Value, active: &mut Vec<String>) -> String {
     let typed = if node.get("type").is_some() {
         node
     } else {
@@ -163,10 +150,10 @@ fn type_label(
             let Some(items) = typed.get("items") else {
                 return "array".to_string();
             };
-            let item = resolve_ref(items, defs);
+            let item = resolve_ref(items, root);
             let mut label = "array".to_string();
             within(active, [ref_name(items)], |active| {
-                label = format!("array of {}", type_label(&item, &item, defs, active));
+                label = format!("array of {}", type_label(&item, &item, root, active));
             });
             label
         }
@@ -365,5 +352,32 @@ mod tests {
             .collect::<Vec<_>>();
         assert!(paths.contains(&"first.slashed"), "{paths:?}");
         assert!(paths.contains(&"second.tilded"), "{paths:?}");
+    }
+
+    #[test]
+    fn a_reference_into_a_nested_schema_is_walked() {
+        let schema = json!({
+            "$defs": {
+                "Wrapper": {
+                    "type": "object",
+                    "properties": {
+                        "inner": { "type": "object", "properties": { "deep": { "type": "string" } } }
+                    }
+                }
+            },
+            "type": "object",
+            "properties": {
+                "common": { "type": "object", "properties": { "shared": { "type": "string" } } },
+                "nested": { "$ref": "#/$defs/Wrapper/properties/inner" },
+                "again": { "$ref": "#/properties/common" }
+            }
+        });
+        let fields = fields(&schema);
+        let paths = fields
+            .iter()
+            .map(|field| field.path.as_str())
+            .collect::<Vec<_>>();
+        assert!(paths.contains(&"nested.deep"), "{paths:?}");
+        assert!(paths.contains(&"again.shared"), "{paths:?}");
     }
 }

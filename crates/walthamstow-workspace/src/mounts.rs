@@ -74,22 +74,40 @@ pub fn resolve_mount_path(root: &Path, requested_path: &str) -> KernelResult<Pat
         return Ok(candidate);
     }
 
+    // The deepest entry present, a link whose target is missing included.
     let mut ancestor = joined.as_path();
-    while !ancestor.exists() {
-        ancestor = ancestor.parent().ok_or_else(|| {
-            KernelError::internal("Failed to resolve a mount path ancestor.".to_string())
-        })?;
+    loop {
+        match std::fs::symlink_metadata(ancestor) {
+            Ok(_) => break,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                ancestor = ancestor.parent().ok_or_else(|| {
+                    KernelError::internal("Failed to resolve a mount path ancestor.".to_string())
+                })?;
+            }
+            Err(error) => return Err(KernelError::internal(error.to_string())),
+        }
     }
 
-    let ancestor = ancestor
-        .canonicalize()
-        .map_err(|error| KernelError::internal(error.to_string()))?;
+    let ancestor = match ancestor.canonicalize() {
+        Ok(ancestor) => ancestor,
+        // A link to nothing cannot be shown to stay within the mount.
+        Err(_) if is_link(ancestor) => {
+            return Err(KernelError::invalid_request(
+                "Mount paths must stay within the mount root.",
+            ))
+        }
+        Err(error) => return Err(KernelError::internal(error.to_string())),
+    };
     if !ancestor.starts_with(&mount_root) {
         return Err(KernelError::invalid_request(
             "Mount paths must stay within the mount root.",
         ));
     }
     Ok(joined)
+}
+
+fn is_link(path: &Path) -> bool {
+    std::fs::symlink_metadata(path).is_ok_and(|metadata| metadata.file_type().is_symlink())
 }
 
 /// Infers a response MIME type for the mount asset server from the file
@@ -236,6 +254,22 @@ mod tests {
             "album/../portrait.png",
             "missing/..",
         ] {
+            let error = resolve_mount_path(&mount_root_dir, requested).expect_err(requested);
+            assert_eq!(error.code, "invalid_request", "{requested}");
+        }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_path_through_a_link_to_nothing_is_refused() {
+        let dir = make_root();
+        let mount_root_dir = dir.path().join("data/assets");
+        std::os::unix::fs::symlink(
+            dir.path().join("outside/missing"),
+            mount_root_dir.join("dangling"),
+        )
+        .expect("symlink");
+        for requested in ["dangling", "dangling/new.png", "dangling/deeper/new.png"] {
             let error = resolve_mount_path(&mount_root_dir, requested).expect_err(requested);
             assert_eq!(error.code, "invalid_request", "{requested}");
         }

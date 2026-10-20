@@ -69,15 +69,37 @@ fn resolve_directory(
     }
 
     let resolved = root_dir.join(relative);
+    // The deepest entry present, a link whose target is missing included.
     let mut existing = resolved.as_path();
-    while !existing.exists() {
-        existing = existing
-            .parent()
-            .ok_or_else(|| anyhow!("Failed to resolve {name} within the workspace root."))?;
+    loop {
+        match std::fs::symlink_metadata(existing) {
+            Ok(_) => break,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                existing = existing.parent().ok_or_else(|| {
+                    anyhow!("Failed to resolve {name} within the workspace root.")
+                })?;
+            }
+            Err(error) => {
+                return Err(error).with_context(|| {
+                    format!("Failed to resolve {name} at {}.", existing.display())
+                })
+            }
+        }
     }
-    let canonical_existing = existing
-        .canonicalize()
-        .with_context(|| format!("Failed to resolve {name} at {}.", existing.display()))?;
+    let canonical_existing = match existing.canonicalize() {
+        Ok(canonical) => canonical,
+        // A link to nothing cannot be shown to stay within the root.
+        Err(_)
+            if std::fs::symlink_metadata(existing)
+                .is_ok_and(|metadata| metadata.file_type().is_symlink()) =>
+        {
+            bail!("{name} must stay within the workspace root.")
+        }
+        Err(error) => {
+            return Err(error)
+                .with_context(|| format!("Failed to resolve {name} at {}.", existing.display()))
+        }
+    };
     if !canonical_existing.starts_with(canonical_root) {
         bail!("{name} must stay within the workspace root.");
     }
@@ -134,6 +156,22 @@ mod tests {
         let outside = tempfile::tempdir().unwrap();
         std::os::unix::fs::symlink(outside.path(), root.path().join("linked")).unwrap();
         assert!(resolve_directories(root.path(), [("documents", "linked/data")]).is_err());
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_directory_through_a_link_to_nothing_is_refused() {
+        let root = tempfile::tempdir().unwrap();
+        let outside = tempfile::tempdir().unwrap();
+        std::os::unix::fs::symlink(outside.path().join("missing"), root.path().join("linked"))
+            .unwrap();
+        for configured in ["linked", "linked/data"] {
+            let error = resolve_directories(root.path(), [("documents", configured)]).unwrap_err();
+            assert!(
+                error.to_string().contains("documents"),
+                "{configured}: {error}"
+            );
+        }
     }
 
     #[test]

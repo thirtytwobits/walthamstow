@@ -704,10 +704,20 @@ pub fn foreign_envelope_format(root: &Path) -> AnyhowResult<Option<u32>> {
 /// removed whole and made again; what it held is seeded again from the
 /// workspace files.
 pub fn prepare_cache_root(root: &Path, durability: WriteDurability) -> AnyhowResult<()> {
+    if std::fs::symlink_metadata(root).is_ok_and(|metadata| metadata.file_type().is_symlink()) {
+        return Err(anyhow!(
+            "The collaboration cache {} is a link, which is not followed.",
+            root.display()
+        ));
+    }
     let marker = root.join(FORMAT_MARKER_FILE);
     let current = ENVELOPE_VERSION.to_string();
     if root.try_exists()? {
-        let format = std::fs::read_to_string(&marker).ok();
+        // A marker that is not a regular file marks no format.
+        let format = std::fs::symlink_metadata(&marker)
+            .ok()
+            .filter(|metadata| metadata.file_type().is_file())
+            .and_then(|_| std::fs::read_to_string(&marker).ok());
         if format.as_deref().map(str::trim) == Some(current.as_str())
             && foreign_envelope_format(root)?.is_none()
         {
@@ -1567,5 +1577,16 @@ mod tests {
             2,
             "the append and then its truncation are synced"
         );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_linked_cache_root_is_refused() {
+        let data = tempfile::tempdir().unwrap();
+        let outside = tempfile::tempdir().unwrap();
+        prepare_cache_root(outside.path(), WriteDurability::System).unwrap();
+        let root = data.path().join("collaboration");
+        std::os::unix::fs::symlink(outside.path(), &root).unwrap();
+        assert!(prepare_cache_root(&root, WriteDurability::System).is_err());
     }
 }

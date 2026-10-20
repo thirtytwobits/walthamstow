@@ -563,7 +563,11 @@ mod tests {
 
     fn service(root: &std::path::Path) -> CollaborationService {
         CollaborationService::new(
-            FileCollaborationStorage::new(root, DURABILITY, WallClock::default()),
+            FileCollaborationStorage::new(
+                root,
+                DURABILITY,
+                WallClock::new(|| std::time::UNIX_EPOCH),
+            ),
             NOTE_PLANS,
             CommitPolicy {
                 retained_operations: 8,

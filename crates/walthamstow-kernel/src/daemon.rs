@@ -131,7 +131,7 @@ impl<E> TransportPublisher<E> {
 pub struct Daemon {
     shutdown: CancellationToken,
     tasks: TaskTracker,
-    /// Held while a task is admitted and while shutdown begins, so no task is admitted
+    /// Held while a task is admitted and while stopping begins, so no task is admitted
     /// once it has.
     admission: Mutex<()>,
 }
@@ -144,10 +144,6 @@ impl Daemon {
     /// Signals the daemon's tasks, and all work holding its shutdown token, to stop.
     /// Signalling again does nothing more.
     pub fn shutdown(&self) {
-        let _admission = self
-            .admission
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner);
         self.shutdown.cancel();
     }
 
@@ -165,8 +161,9 @@ impl Daemon {
         self.shutdown.is_cancelled()
     }
 
-    /// Runs `task` on the daemon's behalf, so [`stop`](Self::stop) waits for it. Once
-    /// shutdown has begun the task is refused, and `None` is returned.
+    /// Runs `task` on the daemon's behalf, so [`stop`](Self::stop) waits for it. A task
+    /// offered after shutdown is signalled still runs, and sees the signal; once `stop`
+    /// has begun it is refused, and `None` is returned.
     pub fn spawn<F>(&self, task: F) -> Option<tokio::task::JoinHandle<F::Output>>
     where
         F: std::future::Future + Send + 'static,
@@ -176,7 +173,7 @@ impl Daemon {
             .admission
             .lock()
             .unwrap_or_else(PoisonError::into_inner);
-        if self.shutdown.is_cancelled() {
+        if self.tasks.is_closed() {
             return None;
         }
         Some(self.tasks.spawn(task))
@@ -185,8 +182,14 @@ impl Daemon {
     /// Shuts down, then waits for every task the daemon runs on its own behalf. No task
     /// is admitted once it has begun.
     pub async fn stop(&self) {
-        self.shutdown();
-        self.tasks.close();
+        {
+            let _admission = self
+                .admission
+                .lock()
+                .unwrap_or_else(PoisonError::into_inner);
+            self.shutdown.cancel();
+            self.tasks.close();
+        }
         self.tasks.wait().await;
     }
 }
@@ -301,19 +304,29 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn a_task_offered_once_shutdown_has_begun_is_refused_and_never_runs() {
+    async fn a_task_offered_after_the_signal_runs_and_one_offered_once_stopping_is_refused() {
         let daemon = Daemon::new();
-        let ran = Arc::new(AtomicBool::new(false));
+        let signalled = Arc::new(AtomicBool::new(false));
         daemon.shutdown();
-        let task_ran = ran.clone();
-        assert!(daemon
-            .spawn(async move { task_ran.store(true, Ordering::SeqCst) })
-            .is_none());
+        let task_signalled = signalled.clone();
+        let token = daemon.shutdown_token().clone();
+        daemon
+            .spawn(async move {
+                token.cancelled().await;
+                task_signalled.store(true, Ordering::SeqCst);
+            })
+            .expect("a signalled daemon still admits a task until it stops");
         daemon.stop().await;
-        let task_ran = ran.clone();
+        assert!(
+            signalled.load(Ordering::SeqCst),
+            "stop waits for a task admitted after the signal"
+        );
+
+        let late = Arc::new(AtomicBool::new(false));
+        let task_late = late.clone();
         assert!(daemon
-            .spawn(async move { task_ran.store(true, Ordering::SeqCst) })
+            .spawn(async move { task_late.store(true, Ordering::SeqCst) })
             .is_none());
-        assert!(!ran.load(Ordering::SeqCst));
+        assert!(!late.load(Ordering::SeqCst));
     }
 }

@@ -81,7 +81,8 @@ fn create_dir_all_with(
     let created = missing.iter().rev().try_for_each(|missing| {
         match std::fs::create_dir(missing) {
             Ok(()) => made.push(*missing),
-            Err(error) if error.kind() == io::ErrorKind::AlreadyExists => return Ok(()),
+            // Another caller made it meanwhile, and may not have synced its entry yet.
+            Err(error) if error.kind() == io::ErrorKind::AlreadyExists => {}
             Err(error) => return Err(error),
         }
         sync(parent(missing).expect("a created directory has a parent"))
@@ -257,5 +258,28 @@ mod tests {
         assert!(failed.is_err());
         assert!(theirs.is_dir(), "the other caller's directory stays");
         assert!(!nested.exists(), "this call's directory is removed");
+    }
+
+    #[test]
+    fn a_directory_another_caller_made_meanwhile_is_settled_here_too() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let nested = dir.path().join("a/b/c");
+        let theirs = dir.path().join("a/b");
+        let mut synced = Vec::new();
+        super::create_dir_all_with(&nested, |entry_of| {
+            if synced.is_empty() {
+                std::fs::create_dir(&theirs).expect("another caller makes a/b");
+            }
+            synced.push(entry_of.to_path_buf());
+            Ok(())
+        })
+        .expect("create");
+        assert!(nested.is_dir());
+        assert!(
+            synced
+                .iter()
+                .any(|entry_of| Some(entry_of.as_path()) == theirs.parent()),
+            "{synced:?}"
+        );
     }
 }

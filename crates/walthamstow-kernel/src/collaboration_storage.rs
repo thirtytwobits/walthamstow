@@ -158,6 +158,23 @@ impl FileCollaborationStorage {
     }
 
     /// Syncs the directory holding the envelope at `path`, so a removal there holds.
+    /// `source` as a path, when it names a file in an entity directory under the root and that
+    /// directory is not a link; refused otherwise, so nothing outside the root is read.
+    fn envelope_source<'a>(&self, source: &'a str) -> StoreResult<&'a Path> {
+        let path = Path::new(source);
+        let directory = path
+            .parent()
+            .filter(|directory| directory.parent() == Some(self.root.as_path()))
+            .ok_or_else(|| {
+                StoreError::internal(format!(
+                    "{source} is not an envelope under {}.",
+                    self.root.display()
+                ))
+            })?;
+        refuse_link(directory)?;
+        Ok(path)
+    }
+
     fn sync_entity_dir(&self, path: &Path) -> StoreResult<()> {
         let directory = path
             .parent()
@@ -340,11 +357,11 @@ fn safe_entity_name(entity: &str) -> String {
         .collect()
 }
 
-/// Appends `line` to `audit` after its `complete` bytes, syncing it with `sync`, and calls
-/// `settle_entry` with the stream's first record, so the stream's entry is synced whether the
-/// stream is new or was left empty by a first append that did not finish. An append that fails
-/// is truncated away and the truncation synced, so a record whose append returned an error does
-/// not come back after a loss of power.
+/// Appends `line` to `audit` after its `complete` bytes, syncing it with `sync`, then calls
+/// `settle_entry`, so the stream's entry is synced whether the stream is new, was left empty by
+/// a first append that did not finish, or was replaced by a discard whose sync failed. An append
+/// that fails is truncated away and the truncation synced, so a record whose append returned an
+/// error does not come back after a loss of power.
 fn append_record(
     audit: &mut std::fs::File,
     complete: u64,
@@ -357,13 +374,7 @@ fn append_record(
         .and_then(|()| audit.seek(SeekFrom::Start(complete)))
         .and_then(|_| audit.write_all(line))
         .and_then(|()| sync(audit))
-        .and_then(|()| {
-            if complete == 0 {
-                settle_entry()
-            } else {
-                Ok(())
-            }
-        });
+        .and_then(|()| settle_entry());
     let Err(error) = appended else {
         return Ok(());
     };
@@ -486,7 +497,7 @@ impl CollaborationStoragePort for FileCollaborationStorage {
 
     fn read(&self, source: &str) -> StoreResult<Option<StoredEnvelope>> {
         Ok(
-            read_optional(Path::new(source))?.map(|bytes| StoredEnvelope {
+            read_optional(self.envelope_source(source)?)?.map(|bytes| StoredEnvelope {
                 version: sha256_hex(&bytes),
                 bytes,
             }),
@@ -494,7 +505,7 @@ impl CollaborationStoragePort for FileCollaborationStorage {
     }
 
     fn stamp(&self, source: &str) -> StoreResult<Option<String>> {
-        let metadata = match std::fs::metadata(source) {
+        let metadata = match std::fs::symlink_metadata(self.envelope_source(source)?) {
             Ok(metadata) => metadata,
             Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
             Err(error) => {
@@ -1692,5 +1703,54 @@ mod tests {
                 1
             );
         }
+    }
+
+    #[test]
+    fn every_append_settles_the_streams_entry() {
+        let root = tempfile::tempdir().unwrap();
+        let path = root.path().join(AUDIT_FILE);
+        let mut audit = OpenOptions::new()
+            .create(true)
+            .truncate(false)
+            .read(true)
+            .write(true)
+            .open(&path)
+            .unwrap();
+        let settled = std::cell::Cell::new(0);
+        let mut complete = 0;
+        for line in [&b"{\"record\":1}\n"[..], b"{\"record\":2}\n"] {
+            append_record(
+                &mut audit,
+                complete,
+                line,
+                |_| Ok(()),
+                || {
+                    settled.set(settled.get() + 1);
+                    Ok(())
+                },
+            )
+            .unwrap();
+            complete += line.len() as u64;
+        }
+        assert_eq!(
+            settled.get(),
+            2,
+            "a discard replacing the stream may not be settled"
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn an_envelope_is_not_read_through_a_linked_entity_directory() {
+        let root = tempfile::tempdir().unwrap();
+        let outside = tempfile::tempdir().unwrap();
+        std::fs::write(outside.path().join("envelope.json"), b"outside").unwrap();
+        std::os::unix::fs::symlink(outside.path(), root.path().join("note")).unwrap();
+        let storage = FileCollaborationStorage::new(root.path(), WriteDurability::System, clock());
+        let linked = root.path().join("note/envelope.json");
+        assert!(storage.read(&linked.display().to_string()).is_err());
+        assert!(storage.stamp(&linked.display().to_string()).is_err());
+        let elsewhere = outside.path().join("envelope.json");
+        assert!(storage.read(&elsewhere.display().to_string()).is_err());
     }
 }

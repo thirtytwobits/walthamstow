@@ -4,12 +4,18 @@
 
 use anyhow::{bail, Result};
 use std::collections::BTreeMap;
-use std::path::{Path, PathBuf};
+use std::path::{Component, Path, PathBuf};
 
-/// Refuses `id` unless it is safe as one component of a path: not empty, not hidden and
-/// holding no separator.
+/// Refuses `id` unless it is safe as one component of a path: not empty, not hidden,
+/// holding no separator, and read by the platform as exactly one plain name, not a drive
+/// or other prefix.
 pub fn safe_id(id: &str) -> Result<()> {
-    if id.is_empty() || id.starts_with('.') || id.contains(['/', '\\']) {
+    let mut components = Path::new(id).components();
+    let one_name = matches!(
+        (components.next(), components.next()),
+        (Some(Component::Normal(name)), None) if name == id
+    );
+    if id.is_empty() || id.starts_with('.') || id.contains(['/', '\\']) || !one_name {
         bail!("Invalid resource identity.");
     }
     Ok(())
@@ -58,6 +64,14 @@ mod tests {
         assert!(safe_id("a-note").is_ok());
         for unsafe_id in ["", ".hidden", "a/b", "a\\b", "..", "../escape"] {
             assert!(safe_id(unsafe_id).is_err(), "{unsafe_id:?}");
+        }
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn an_identity_the_platform_reads_as_a_drive_is_refused() {
+        for drive in ["C:escape", "C:"] {
+            assert!(safe_id(drive).is_err(), "{drive:?}");
         }
     }
 

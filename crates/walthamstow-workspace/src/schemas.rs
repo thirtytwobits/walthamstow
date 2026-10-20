@@ -21,21 +21,46 @@ pub fn compile_schema_document(schema: &Value, path: &Path) -> Result<Validator>
     validator_for(schema).map_err(|error| anyhow!("{}: {error}", path.display()))
 }
 
-/// Removes the `$schema` keywords, which the validator does not take, at every depth.
-pub fn normalize_schema_document(value: &mut Value) {
+/// Removes the `$schema` keyword, which the validator does not take, from the schema and
+/// from every subschema within it. Values that are not schemas, such as a property's name or a
+/// `const`, are left as they are.
+pub fn normalize_schema_document(schema: &mut Value) {
+    let Value::Object(map) = schema else {
+        return;
+    };
+    map.remove("$schema");
+    for (keyword, value) in map.iter_mut() {
+        match keyword.as_str() {
+            // One subschema, or in older drafts an array of them.
+            "additionalProperties"
+            | "additionalItems"
+            | "contains"
+            | "else"
+            | "if"
+            | "items"
+            | "not"
+            | "propertyNames"
+            | "then"
+            | "unevaluatedItems"
+            | "unevaluatedProperties" => normalize_subschemas(value),
+            "allOf" | "anyOf" | "oneOf" | "prefixItems" => normalize_subschemas(value),
+            // Subschemas by name; in older drafts a dependency is a schema or a list of names.
+            "$defs" | "definitions" | "dependentSchemas" | "patternProperties" | "properties"
+            | "dependencies" => {
+                if let Value::Object(named) = value {
+                    named.values_mut().for_each(normalize_schema_document);
+                }
+            }
+            _ => {}
+        }
+    }
+}
+
+/// Normalises `value`, a subschema or an array of subschemas.
+fn normalize_subschemas(value: &mut Value) {
     match value {
-        Value::Object(map) => {
-            map.remove("$schema");
-            for entry in map.values_mut() {
-                normalize_schema_document(entry);
-            }
-        }
-        Value::Array(items) => {
-            for item in items {
-                normalize_schema_document(item);
-            }
-        }
-        _ => {}
+        Value::Array(subschemas) => subschemas.iter_mut().for_each(normalize_schema_document),
+        subschema => normalize_schema_document(subschema),
     }
 }
 
@@ -121,5 +146,31 @@ properties:
         let path = Path::new("broken.schema.yaml");
         let error = compile_schema_document(&json!({ "type": 7 }), path).unwrap_err();
         assert!(error.to_string().contains("broken.schema.yaml"));
+    }
+
+    #[test]
+    fn only_subschemas_lose_the_schema_keyword() {
+        let mut schema = json!({
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "type": "object",
+            "properties": {
+                "$schema": { "type": "string" },
+                "named": { "$schema": "https://json-schema.org/draft/2020-12/schema", "type": "string" },
+                "fixed": { "const": { "$schema": "kept" }, "default": { "$schema": "kept" } }
+            },
+            "items": [{ "$schema": "x" }],
+            "anyOf": [{ "$schema": "x", "type": "object" }]
+        });
+        normalize_schema_document(&mut schema);
+        assert!(schema.get("$schema").is_none());
+        assert!(
+            schema["properties"].get("$schema").is_some(),
+            "a property's name is kept"
+        );
+        assert!(schema["properties"]["named"].get("$schema").is_none());
+        assert_eq!(schema["properties"]["fixed"]["const"]["$schema"], "kept");
+        assert_eq!(schema["properties"]["fixed"]["default"]["$schema"], "kept");
+        assert!(schema["items"][0].get("$schema").is_none());
+        assert!(schema["anyOf"][0].get("$schema").is_none());
     }
 }

@@ -94,7 +94,10 @@ pub fn relative_path(root: &Path, file: &Path) -> anyhow::Result<String> {
     {
         anyhow::bail!("{} does not lie within {}.", file.display(), root.display());
     }
-    Ok(relative.to_string_lossy().replace('\\', "/"))
+    let relative = relative
+        .to_str()
+        .ok_or_else(|| anyhow::anyhow!("{} is not named in UTF-8.", file.display()))?;
+    Ok(relative.replace('\\', "/"))
 }
 
 /// Parses a YAML or JSON document into the requested strongly typed shape.
@@ -267,5 +270,14 @@ mod tests {
             assert!(relative_path(root, Path::new(file)).is_err(), "{file}");
         }
         assert!(relative_path(root, Path::new("/workspace/data/world.yaml")).is_ok());
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_file_not_named_in_utf8_has_no_relative_path() {
+        use std::os::unix::ffi::OsStrExt;
+        let root = Path::new("/workspace");
+        let file = root.join(std::ffi::OsStr::from_bytes(b"caf\xe9.json"));
+        assert!(relative_path(root, &file).is_err());
     }
 }

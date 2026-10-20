@@ -81,6 +81,12 @@ impl FileCollaborationStorage {
 
     /// Refuses `entity` when its directory is a link, which the store does not follow.
     fn refuse_linked_entity_dir(&self, entity: &str) -> StoreResult<()> {
+        let name = safe_entity_name(entity);
+        if [QUARANTINE_DIR, FORMAT_MARKER_FILE].contains(&name.as_str()) {
+            return Err(StoreError::internal(format!(
+                "The entity \"{entity}\" maps to {name}, which the store reserves for itself."
+            )));
+        }
         let directory = self.entity_dir(entity);
         match std::fs::symlink_metadata(&directory) {
             Ok(metadata) if metadata.file_type().is_symlink() => {
@@ -246,8 +252,25 @@ fn write_envelope(durability: WriteDurability, path: &Path, bytes: &[u8]) -> Sto
     })
 }
 
-/// The bytes at `path`, or `None` when there is no file.
+/// The bytes at `path`, or `None` when there is no file. A link is refused, which the
+/// store does not follow.
 fn read_optional(path: &Path) -> StoreResult<Option<Vec<u8>>> {
+    match std::fs::symlink_metadata(path) {
+        Ok(metadata) if metadata.file_type().is_symlink() => {
+            return Err(StoreError::internal(format!(
+                "Collaboration state {} is a link, which the store does not follow.",
+                path.display()
+            )))
+        }
+        Ok(_) => {}
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+        Err(error) => {
+            return Err(StoreError::internal(format!(
+                "Could not inspect collaboration state {}: {error}",
+                path.display()
+            )))
+        }
+    }
     match std::fs::read(path) {
         Ok(bytes) => Ok(Some(bytes)),
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(None),
@@ -368,17 +391,24 @@ impl CollaborationStoragePort for FileCollaborationStorage {
         };
         let mut sources = Vec::new();
         for entry in entries {
-            let path = entry
-                .map_err(|error| {
-                    StoreError::internal(format!(
-                        "Could not list collaboration state {}: {error}",
-                        directory.display()
-                    ))
-                })?
-                .path();
-            if path.extension().and_then(|value| value.to_str()) == Some("json") {
-                sources.push(path.display().to_string());
+            let listing = |error: std::io::Error| {
+                StoreError::internal(format!(
+                    "Could not list collaboration state {}: {error}",
+                    directory.display()
+                ))
+            };
+            let entry = entry.map_err(listing)?;
+            let path = entry.path();
+            if path.extension().and_then(|value| value.to_str()) != Some("json") {
+                continue;
             }
+            if !entry.file_type().map_err(listing)?.is_file() {
+                return Err(StoreError::internal(format!(
+                    "Collaboration state {} is not a file; a link is not followed.",
+                    path.display()
+                )));
+            }
+            sources.push(path.display().to_string());
         }
         sources.sort();
         Ok(sources)
@@ -643,10 +673,17 @@ pub fn peer_key(data_dir: &Path, durability: WriteDurability) -> AnyhowResult<Pe
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
             let secret = generate_peer_secret();
             crate::durability::create_dir_all_synced(durability, data_dir)?;
-            write_secret(durability, &path, &secret)
-                .and_then(|()| durability.sync_directory(data_dir))
-                .with_context(|| format!("writing the peer key {}", path.display()))?;
-            secret
+            match install_secret(durability, &path, &secret) {
+                Ok(()) => secret,
+                // Another start made the key first; it is the one to read.
+                Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => {
+                    return peer_key(data_dir, durability)
+                }
+                Err(error) => {
+                    return Err(error)
+                        .with_context(|| format!("writing the peer key {}", path.display()))
+                }
+            }
         }
         Err(error) => return Err(anyhow!("Could not read {}: {error}", path.display())),
     };
@@ -658,6 +695,18 @@ fn generate_peer_secret() -> Vec<u8> {
     let mut secret = vec![0u8; PEER_KEY_MIN_BYTES];
     rand::rng().fill_bytes(&mut secret);
     secret
+}
+
+/// Installs `secret` at `path` whole, or not at all: it is written and synced under a
+/// temporary name, then linked into place, which fails when a key is already there.
+fn install_secret(durability: WriteDurability, path: &Path, secret: &[u8]) -> std::io::Result<()> {
+    let staged = path.with_extension(format!("{}.tmp", uuid::Uuid::new_v4()));
+    let installed =
+        write_secret(durability, &staged, secret).and_then(|()| std::fs::hard_link(&staged, path));
+    let removed = std::fs::remove_file(&staged);
+    installed?;
+    removed?;
+    durability.sync_directory(path.parent().expect("the key lies in the data directory"))
 }
 
 fn write_secret(durability: WriteDurability, path: &Path, secret: &[u8]) -> std::io::Result<()> {
@@ -1195,5 +1244,64 @@ mod tests {
         assert!(storage.compare_and_remove(&document("one"), "any").is_err());
         assert!(storage.sources("Note").is_err());
         assert_eq!(std::fs::read_dir(outside.path()).unwrap().count(), 0);
+    }
+
+    #[test]
+    fn an_entity_whose_directory_the_store_reserves_is_refused() {
+        let root = tempfile::tempdir().unwrap();
+        let storage = FileCollaborationStorage::new(root.path(), WriteDurability::System, clock());
+        storage
+            .preserve(&document("one"), "corrupt", b"evidence")
+            .unwrap();
+        for entity in ["Quarantine", "Envelope-Format", "envelope.format"] {
+            let id = CollaborationDocumentId::new(entity, "one");
+            assert!(
+                storage.compare_and_swap(&id, None, b"x").is_err(),
+                "{entity}"
+            );
+            assert!(storage.sources(entity).is_err(), "{entity}");
+        }
+        assert_eq!(
+            std::fs::read_dir(root.path().join(QUARANTINE_DIR))
+                .unwrap()
+                .count(),
+            1,
+            "the evidence is all quarantine holds"
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_linked_envelope_is_neither_listed_nor_read() {
+        let root = tempfile::tempdir().unwrap();
+        let outside = tempfile::tempdir().unwrap();
+        let storage = FileCollaborationStorage::new(root.path(), WriteDurability::System, clock());
+        storage
+            .compare_and_swap(&document("kept"), None, b"kept")
+            .unwrap();
+        std::fs::write(outside.path().join("foreign.json"), b"{}").unwrap();
+        let linked = root
+            .path()
+            .join(safe_entity_name("Note"))
+            .join("linked.json");
+        std::os::unix::fs::symlink(outside.path().join("foreign.json"), &linked).unwrap();
+        assert!(storage.sources("Note").is_err());
+        assert!(storage.read(&linked.display().to_string()).is_err());
+    }
+
+    #[test]
+    fn a_new_peer_key_appears_whole_and_leaves_nothing_staged() {
+        let data = tempfile::tempdir().unwrap();
+        let stray = data.path().join("peer-key.interrupted.tmp");
+        std::fs::write(&stray, b"ab").unwrap();
+        peer_key(data.path(), WriteDurability::System).unwrap();
+        let text = std::fs::read_to_string(data.path().join(PEER_KEY_FILE)).unwrap();
+        assert!(decode_hex(text.trim()).is_some_and(|key| key.len() >= PEER_KEY_MIN_BYTES));
+        let mut held = std::fs::read_dir(data.path())
+            .unwrap()
+            .map(|entry| entry.unwrap().file_name().to_string_lossy().into_owned())
+            .collect::<Vec<_>>();
+        held.sort();
+        assert_eq!(held, ["peer-key", "peer-key.interrupted.tmp"]);
     }
 }

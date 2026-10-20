@@ -59,6 +59,12 @@ pub fn list_documents(directory: &Path) -> anyhow::Result<Vec<PathBuf>> {
         } else if kind.is_dir() {
             files.extend(list_documents(&path)?);
         } else if supported_document(&path) {
+            if !kind.is_file() {
+                anyhow::bail!(
+                    "{} is not a regular file, which workspace discovery does not read.",
+                    path.display()
+                );
+            }
             files.push(path);
         }
     }
@@ -169,6 +175,26 @@ mod tests {
         assert!(list_documents(&root.path().join("missing"))
             .unwrap()
             .is_empty());
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn listing_refuses_a_document_that_is_not_a_regular_file_and_passes_over_others() {
+        let root = tempfile::tempdir().unwrap();
+        fs::write(root.path().join("kept.yaml"), "").unwrap();
+        let _passed =
+            std::os::unix::net::UnixListener::bind(root.path().join("notes.sock")).unwrap();
+        assert_eq!(
+            list_documents(root.path()).unwrap(),
+            vec![root.path().join("kept.yaml")]
+        );
+        let special = root.path().join("special.yaml");
+        let _refused = std::os::unix::net::UnixListener::bind(&special).unwrap();
+        let error = list_documents(root.path()).unwrap_err();
+        assert!(
+            error.to_string().contains(&special.display().to_string()),
+            "{error}"
+        );
     }
 
     #[cfg(unix)]

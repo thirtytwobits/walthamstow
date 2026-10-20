@@ -5,7 +5,7 @@
 //! publishes, `original/` the files they replace, and `operation.json` the journal that
 //! authorises publication.
 
-use crate::publication::{check_relative_path, publish, Replacement};
+use crate::publication::{check_relative_path, publish, read_regular, Replacement};
 use anyhow::{bail, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
@@ -107,6 +107,9 @@ pub fn finish(
     work: &Path,
     operation: &mut Operation,
 ) -> Result<()> {
+    for path in &operation.paths {
+        check_relative_path(path)?;
+    }
     let mut replacements = Vec::with_capacity(operation.paths.len());
     for path in &operation.paths {
         let (Some(source_hash), Some(target_hash)) = (
@@ -116,7 +119,7 @@ pub fn finish(
             bail!("The upgrade journal omits {}.", path.display());
         };
         if let Some(expected) = source_hash {
-            let original = std::fs::read(work.join("original").join(path))?;
+            let original = read_regular(&work.join("original").join(path))?;
             if sha256_hex(&original) != *expected {
                 bail!("Upgrade original checksum mismatch.");
             }
@@ -150,11 +153,15 @@ pub fn recover(root: &Path, data_dir: &Path, durability: WriteDurability) -> Res
             );
         }
         let path = work.join(JOURNAL_FILE);
-        if !path.exists() {
-            std::fs::remove_dir_all(&work)?;
-            continue;
-        }
-        let mut operation: Operation = serde_json::from_slice(&std::fs::read(path)?)?;
+        let journal = match std::fs::symlink_metadata(&path) {
+            Ok(_) => read_regular(&path)?,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                std::fs::remove_dir_all(&work)?;
+                continue;
+            }
+            Err(error) => return Err(error.into()),
+        };
+        let mut operation: Operation = serde_json::from_slice(&journal)?;
         if operation.status == COMMITTING {
             finish(durability, root, &work, &mut operation)?;
         } else {
@@ -384,5 +391,40 @@ mod tests {
         assert!(prepared_dir(outside.path())
             .join("data/first.json")
             .exists());
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_linked_operation_journal_is_refused_unread() {
+        let workspace = tempfile::tempdir().unwrap();
+        let data = tempfile::tempdir().unwrap();
+        let outside = tempfile::tempdir().unwrap();
+        let work = work_dir(data.path(), "linked-journal").unwrap();
+        std::fs::create_dir_all(&work).unwrap();
+        std::fs::write(outside.path().join(JOURNAL_FILE), b"{}").unwrap();
+        std::os::unix::fs::symlink(outside.path().join(JOURNAL_FILE), work.join(JOURNAL_FILE))
+            .unwrap();
+        let error = recover(workspace.path(), data.path(), DURABILITY).unwrap_err();
+        assert!(error.to_string().contains("not a regular file"), "{error}");
+    }
+
+    #[test]
+    fn a_recovered_path_is_checked_before_its_original_is_read() {
+        let workspace = tempfile::tempdir().unwrap();
+        let data = tempfile::tempdir().unwrap();
+        let work = work_dir(data.path(), "escaping").unwrap();
+        let path = PathBuf::from("/walthamstow-absent/escape.json");
+        let mut operation = Operation {
+            operation_id: "escaping".into(),
+            status: COMMITTING.into(),
+            paths: vec![path.clone()],
+            source_hashes: BTreeMap::from([(path.clone(), Some(sha256_hex(b"original")))]),
+            target_hashes: BTreeMap::from([(path, sha256_hex(b"target"))]),
+        };
+        let error = finish(DURABILITY, workspace.path(), &work, &mut operation).unwrap_err();
+        assert!(
+            error.to_string().contains("Invalid publication path"),
+            "{error}"
+        );
     }
 }

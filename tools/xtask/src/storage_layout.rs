@@ -56,10 +56,12 @@ fn hidden_entries(source: &str) -> Vec<(usize, String)> {
         r#"(?:\.join\(\s*(?:format!\(\s*)?|const\s+([A-Z_]+)\s*:\s*&str\s*=\s*)"(\.[^"]*)""#,
     )
     .expect("hidden entry pattern");
-    let production = source
-        .split("#[cfg(test)]\nmod tests {")
-        .next()
-        .unwrap_or(source);
+    // A checkout may end its lines with CRLF.
+    let tests =
+        regex_lite::Regex::new(r"#\[cfg\(test\)\]\r?\nmod tests \{").expect("tests pattern");
+    let production = tests
+        .find(source)
+        .map_or(source, |found| &source[..found.start()]);
     hidden
         .captures_iter(production)
         // A suffix names no entry of its own.
@@ -120,5 +122,7 @@ mod tests {
             .map(|(_, name)| name)
             .collect();
         assert_eq!(names, [".lifecycle", ".journal-{}", ".records"]);
+        let crlf: Vec<(usize, String)> = hidden_entries(&source.replace('\n', "\r\n"));
+        assert_eq!(crlf, hidden_entries(source));
     }
 }

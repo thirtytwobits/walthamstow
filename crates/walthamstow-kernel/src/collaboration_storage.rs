@@ -152,6 +152,19 @@ impl FileCollaborationStorage {
         ))
     }
 
+    /// Syncs the directory holding the envelope at `path`, so a removal there holds.
+    fn sync_entity_dir(&self, path: &Path) -> StoreResult<()> {
+        let directory = path
+            .parent()
+            .expect("an envelope lies in its entity's directory");
+        self.durability.sync_directory(directory).map_err(|error| {
+            StoreError::internal(format!(
+                "Could not record the removal of {}: {error}",
+                path.display()
+            ))
+        })
+    }
+
     fn with_document_lock<T>(
         &self,
         document: &CollaborationDocumentId,
@@ -486,19 +499,16 @@ impl CollaborationStoragePort for FileCollaborationStorage {
         let path = self.envelope_path(document);
         self.with_document_lock(document, || {
             let current = read_optional(&path)?;
+            if current.is_none() {
+                // An earlier removal may have unlinked it without syncing its directory.
+                self.sync_entity_dir(&path)?;
+                return Ok(false);
+            }
             if current.as_deref().map(sha256_hex).as_deref() != Some(expected) {
                 return Ok(false);
             }
             remove_file_if_exists(&path)?;
-            let directory = path
-                .parent()
-                .expect("an envelope lies in its entity's directory");
-            self.durability.sync_directory(directory).map_err(|error| {
-                StoreError::internal(format!(
-                    "Could not record the removal of {}: {error}",
-                    path.display()
-                ))
-            })?;
+            self.sync_entity_dir(&path)?;
             Ok(true)
         })
     }
@@ -529,11 +539,6 @@ impl CollaborationStoragePort for FileCollaborationStorage {
             line.push(b'\n');
             let path = self.records.join(AUDIT_FILE);
             refuse_irregular(&path)?;
-            let created = !path.try_exists().map_err(|error| {
-                StoreError::internal(format!(
-                    "Could not inspect the collaboration audit stream: {error}"
-                ))
-            })?;
             let mut audit = OpenOptions::new()
                 .create(true)
                 .truncate(false)
@@ -559,7 +564,9 @@ impl CollaborationStoragePort for FileCollaborationStorage {
                 .and_then(|()| self.durability.sync(&audit));
             appended
                 .and_then(|()| {
-                    if created {
+                    // The stream's entry is synced with its first record, whether the stream
+                    // is new or was left empty by a first append that did not finish.
+                    if complete == 0 {
                         self.durability.sync_directory(&self.records)
                     } else {
                         Ok(())
@@ -680,30 +687,18 @@ pub fn prepare_cache_root(root: &Path, durability: WriteDurability) -> AnyhowRes
 /// recorded binding as it was and makes unsent drafts unverifiable.
 pub fn peer_key(data_dir: &Path, durability: WriteDurability) -> AnyhowResult<PeerKey> {
     let path = data_dir.join(PEER_KEY_FILE);
-    let secret = match std::fs::read_to_string(&path) {
-        Ok(text) => decode_hex(text.trim())
-            .filter(|bytes| bytes.len() >= PEER_KEY_MIN_BYTES)
-            .ok_or_else(|| {
-                anyhow!(
-                    "{} does not hold a peer key: expected at least {PEER_KEY_MIN_BYTES} bytes as hex.",
-                    path.display()
-                )
-            })
-            .and_then(|secret| {
-                // A start that installed the key may have stopped before syncing its entry.
-                durability
-                    .sync_directory(data_dir)
-                    .with_context(|| format!("syncing the peer key {}", path.display()))?;
-                Ok(secret)
-            })?,
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+    let secret = match read_secret(data_dir, &path, durability)? {
+        Some(secret) => secret,
+        None => {
             let secret = generate_peer_secret();
             crate::durability::create_dir_all_synced(durability, data_dir)?;
             match install_secret(durability, &path, &secret) {
                 Ok(()) => secret,
                 // Another start made the key first; it is the one to read.
                 Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => {
-                    return peer_key(data_dir, durability)
+                    read_secret(data_dir, &path, durability)?.ok_or_else(|| {
+                        anyhow!("{} was made and removed while starting.", path.display())
+                    })?
                 }
                 Err(error) => {
                     return Err(error)
@@ -711,9 +706,43 @@ pub fn peer_key(data_dir: &Path, durability: WriteDurability) -> AnyhowResult<Pe
                 }
             }
         }
-        Err(error) => return Err(anyhow!("Could not read {}: {error}", path.display())),
     };
     PeerKey::new(&secret).map_err(|error| anyhow!("{}: {}", path.display(), error.message))
+}
+
+/// The key kept at `path`, or `None` when there is none. A link or other entry that is not a
+/// regular file is refused. A key read back has its directory synced, since the start that
+/// installed it may have stopped before syncing its entry.
+fn read_secret(
+    data_dir: &Path,
+    path: &Path,
+    durability: WriteDurability,
+) -> AnyhowResult<Option<Vec<u8>>> {
+    match std::fs::symlink_metadata(path) {
+        Ok(metadata) if !metadata.file_type().is_file() => {
+            return Err(anyhow!(
+                "{} is not a regular file; the peer key is not read through a link.",
+                path.display()
+            ))
+        }
+        Ok(_) => {}
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+        Err(error) => return Err(anyhow!("Could not inspect {}: {error}", path.display())),
+    }
+    let text = std::fs::read_to_string(path)
+        .map_err(|error| anyhow!("Could not read {}: {error}", path.display()))?;
+    let secret = decode_hex(text.trim())
+        .filter(|bytes| bytes.len() >= PEER_KEY_MIN_BYTES)
+        .ok_or_else(|| {
+            anyhow!(
+                "{} does not hold a peer key: expected at least {PEER_KEY_MIN_BYTES} bytes as hex.",
+                path.display()
+            )
+        })?;
+    durability
+        .sync_directory(data_dir)
+        .with_context(|| format!("syncing the peer key {}", path.display()))?;
+    Ok(Some(secret))
 }
 
 fn generate_peer_secret() -> Vec<u8> {
@@ -1398,6 +1427,54 @@ mod tests {
                 error.message.contains("not a regular file"),
                 "{}",
                 error.message
+            );
+        }
+    }
+
+    #[test]
+    fn a_removal_retried_after_the_envelope_is_gone_settles_under_each_durability() {
+        for durability in [WriteDurability::Device, WriteDurability::System] {
+            let root = tempfile::tempdir().unwrap();
+            let storage = FileCollaborationStorage::new(root.path(), durability, clock());
+            let id = document("one");
+            let version = storage
+                .compare_and_swap(&id, None, b"kept")
+                .unwrap()
+                .unwrap();
+            assert!(storage.compare_and_remove(&id, &version).unwrap());
+            assert!(!storage.compare_and_remove(&id, &version).unwrap());
+            assert!(storage.read(&storage.source(&id)).unwrap().is_none());
+        }
+    }
+
+    #[test]
+    fn a_stream_left_empty_takes_its_first_record_under_each_durability() {
+        for durability in [WriteDurability::Device, WriteDurability::System] {
+            let root = tempfile::tempdir().unwrap();
+            std::fs::write(root.path().join(AUDIT_FILE), b"").unwrap();
+            let storage = FileCollaborationStorage::new(root.path(), durability, clock());
+            storage.append_audit(&record("ada", "one", 10)).unwrap();
+            let kept = storage.audit(&CollaborationAuditQuery::default()).unwrap();
+            assert_eq!(kept.len(), 1);
+        }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_peer_key_behind_a_link_is_refused() {
+        let outside = tempfile::tempdir().unwrap();
+        let elsewhere = tempfile::tempdir().unwrap();
+        peer_key(elsewhere.path(), WriteDurability::System).unwrap();
+        for target in [
+            outside.path().join("missing"),
+            elsewhere.path().join(PEER_KEY_FILE),
+        ] {
+            let data = tempfile::tempdir().unwrap();
+            std::os::unix::fs::symlink(&target, data.path().join(PEER_KEY_FILE)).unwrap();
+            assert!(
+                peer_key(data.path(), WriteDurability::System).is_err(),
+                "{}",
+                target.display()
             );
         }
     }

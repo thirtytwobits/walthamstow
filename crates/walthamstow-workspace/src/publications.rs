@@ -8,14 +8,18 @@
 
 use clerkenwell_store::CollaborationDocumentId;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::path::{Path, PathBuf};
-use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
+use std::sync::{Arc, Mutex, MutexGuard, PoisonError, Weak};
 use walthamstow_kernel::journals::Journal;
 use walthamstow_kernel::{KernelError, KernelResult};
 
 /// The journal the marks are kept under.
 pub const JOURNAL: Journal = Journal::new("collaboration-publications");
+
+/// The journals open in this process, by their canonical data directory, so every open of one
+/// shares its marks and the commits under way to them.
+static OPEN: Mutex<BTreeMap<PathBuf, Weak<Inner>>> = Mutex::new(BTreeMap::new());
 
 #[derive(Debug, Clone)]
 pub struct PublicationJournal {
@@ -88,7 +92,9 @@ impl Inner {
 }
 
 impl PublicationJournal {
-    /// The journal under `data_dir`, with every mark a stop left in it.
+    /// The journal under `data_dir`, with every mark a stop left in it. While a journal for
+    /// `data_dir` is open in this process, opening it again returns that journal, which must
+    /// have been opened with the same `durability`.
     pub fn open(
         data_dir: &Path,
         durability: walthamstow_kernel::durability::WriteDurability,
@@ -96,6 +102,20 @@ impl PublicationJournal {
         let root = JOURNAL
             .unlinked_root(data_dir)
             .map_err(|error| internal(&JOURNAL.root(data_dir), error))?;
+        let key = data_dir
+            .canonicalize()
+            .map_err(|error| internal(data_dir, error))?;
+        let mut open = OPEN.lock().unwrap_or_else(PoisonError::into_inner);
+        open.retain(|_, inner| inner.strong_count() > 0);
+        if let Some(inner) = open.get(&key).and_then(Weak::upgrade) {
+            if inner.durability != durability {
+                return Err(internal(
+                    &root,
+                    "the journal is already open with another durability",
+                ));
+            }
+            return Ok(Self { inner });
+        }
         let mut marked = HashMap::new();
         let entries = match std::fs::read_dir(&root) {
             Ok(entries) => Some(entries),
@@ -126,14 +146,14 @@ impl PublicationJournal {
                 Marked { under_way: 0, path },
             );
         }
-        Ok(Self {
-            inner: Arc::new(Inner {
-                root,
-                durability,
-                marked: Mutex::new(marked),
-                finished: tokio::sync::Notify::new(),
-            }),
-        })
+        let inner = Arc::new(Inner {
+            root,
+            durability,
+            marked: Mutex::new(marked),
+            finished: tokio::sync::Notify::new(),
+        });
+        open.insert(key, Arc::downgrade(&inner));
+        Ok(Self { inner })
     }
 
     /// Marks `document` for a commit about to be made to it. The mark stays
@@ -255,6 +275,8 @@ mod tests {
         .unwrap();
         drop(journal.mark(&document("pending")).unwrap());
 
+        drop(journal);
+
         let reopened = PublicationJournal::open(
             data_dir.path(),
             walthamstow_kernel::durability::WriteDurability::System,
@@ -275,6 +297,8 @@ mod tests {
         drop(journal.mark(&document("published")).unwrap());
         journal.clear(&document("published"), || Ok(true)).unwrap();
 
+        drop(journal);
+
         let reopened = PublicationJournal::open(
             data_dir.path(),
             walthamstow_kernel::durability::WriteDurability::System,
@@ -292,6 +316,7 @@ mod tests {
             let journal = PublicationJournal::open(data_dir.path(), durability).unwrap();
             drop(journal.mark(&document("published")).unwrap());
             journal.clear(&document("published"), || Ok(true)).unwrap();
+            drop(journal);
             let reopened = PublicationJournal::open(data_dir.path(), durability).unwrap();
             assert!(reopened.marked().is_empty());
         }
@@ -330,6 +355,7 @@ mod tests {
         journal.clear(&document("behind"), || Ok(false)).unwrap();
 
         assert!(journal.is_marked(&document("behind")));
+        drop(journal);
         assert_eq!(
             PublicationJournal::open(
                 data_dir.path(),
@@ -365,6 +391,7 @@ mod tests {
         let second = CollaborationDocumentId::new("a/b", "c");
         drop(journal.mark(&first).unwrap());
         drop(journal.mark(&second).unwrap());
+        drop(journal);
         let reopened = PublicationJournal::open(data_dir.path(), WriteDurability::System).unwrap();
         assert!(reopened.is_marked(&first) && reopened.is_marked(&second));
         assert_eq!(reopened.count(), 2);
@@ -385,6 +412,7 @@ mod tests {
         assert!(journal.is_marked(&document("kept")));
         journal.clear(&document("kept"), || Ok(true)).unwrap();
         assert!(!earlier.exists());
+        drop(journal);
         let reopened = PublicationJournal::open(data_dir.path(), WriteDurability::System).unwrap();
         assert!(reopened.marked().is_empty());
     }
@@ -439,6 +467,7 @@ mod tests {
             std::fs::remove_file(entry.unwrap().path()).unwrap();
         }
         drop(journal.mark(&document("held")).unwrap());
+        drop(journal);
         let reopened = PublicationJournal::open(data_dir.path(), WriteDurability::System).unwrap();
         assert!(reopened.is_marked(&document("held")));
     }
@@ -472,6 +501,7 @@ mod tests {
                 std::fs::write(entry.unwrap().path(), found).unwrap();
             }
             drop(journal.mark(&document("held")).unwrap());
+            drop(journal);
             let reopened =
                 PublicationJournal::open(data_dir.path(), WriteDurability::System).unwrap();
             assert!(reopened.is_marked(&document("held")));
@@ -495,7 +525,23 @@ mod tests {
         let before = std::fs::read(&target).unwrap();
         drop(journal.mark(&document("held")).unwrap());
         assert_eq!(std::fs::read(&target).unwrap(), before);
+        drop(journal);
         let reopened = PublicationJournal::open(data_dir.path(), WriteDurability::System).unwrap();
         assert!(reopened.is_marked(&document("held")));
+    }
+
+    #[test]
+    fn every_open_of_one_data_directory_shares_the_commits_under_way() {
+        let data_dir = tempfile::tempdir().unwrap();
+        let first = PublicationJournal::open(data_dir.path(), WriteDurability::System).unwrap();
+        let under_way = first.mark(&document("busy")).unwrap();
+        let spelled_otherwise = data_dir.path().join(".");
+        let second = PublicationJournal::open(&spelled_otherwise, WriteDurability::System).unwrap();
+        second.clear(&document("busy"), || Ok(true)).unwrap();
+        assert!(second.is_marked(&document("busy")));
+        drop(under_way);
+        second.clear(&document("busy"), || Ok(true)).unwrap();
+        assert!(!first.is_marked(&document("busy")));
+        assert!(PublicationJournal::open(data_dir.path(), WriteDurability::Device).is_err());
     }
 }

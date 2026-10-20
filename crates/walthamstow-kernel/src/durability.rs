@@ -84,6 +84,12 @@ fn create_dir_all_with(
         ancestor =
             parent(ancestor).ok_or_else(|| io::Error::other("Missing directory ancestor."))?;
     }
+    if !std::fs::metadata(ancestor)?.is_dir() {
+        return Err(io::Error::other(format!(
+            "{} is not a directory.",
+            ancestor.display()
+        )));
+    }
     // Created one at a time, so a failure removes only the directories this call made.
     let mut made = Vec::new();
     let created = missing.iter().rev().try_for_each(|missing| {
@@ -321,5 +327,16 @@ mod tests {
                 .any(|entry_of| Some(entry_of.as_path()) == first.parent()),
             "the second creation made and settled a itself: {waiting:?}"
         );
+    }
+
+    #[test]
+    fn a_file_where_a_directory_goes_is_refused() {
+        for durability in [WriteDurability::Device, WriteDurability::System] {
+            let dir = tempfile::tempdir().expect("tempdir");
+            let file = dir.path().join("plain");
+            std::fs::write(&file, b"x").expect("write");
+            assert!(super::create_dir_all_synced(durability, &file).is_err());
+            assert!(super::create_dir_all_synced(durability, &file.join("below")).is_err());
+        }
     }
 }

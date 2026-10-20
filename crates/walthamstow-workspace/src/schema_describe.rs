@@ -206,11 +206,7 @@ fn type_label(node: &Value, resolved: &Value, root: &Value, active: &mut Vec<Str
     };
     let declared = declared_types(typed);
     if declared.is_empty() {
-        return if node.get("$ref").is_some() {
-            "object".to_string()
-        } else {
-            "any".to_string()
-        };
+        return untyped_label(resolved);
     }
     let mut labels = Vec::with_capacity(declared.len());
     for name in declared {
@@ -227,6 +223,42 @@ fn type_label(node: &Value, resolved: &Value, root: &Value, active: &mut Vec<Str
         labels.push(label);
     }
     labels.join(" or ")
+}
+
+/// The type an untyped schema's structure shows: `object` for one with properties, the types of
+/// its `enum` or `const` values, or `any`.
+fn untyped_label(schema: &Value) -> String {
+    if schema.get("properties").is_some() {
+        return "object".to_string();
+    }
+    let values = match (
+        schema.get("enum").and_then(Value::as_array),
+        schema.get("const"),
+    ) {
+        (Some(values), _) => values.iter().collect(),
+        (None, Some(value)) => vec![value],
+        (None, None) => Vec::new(),
+    };
+    let mut names = Vec::new();
+    for value in values {
+        let name = match value {
+            Value::Null => "null",
+            Value::Bool(_) => "boolean",
+            Value::Number(number) if number.is_i64() || number.is_u64() => "integer",
+            Value::Number(_) => "number",
+            Value::String(_) => "string",
+            Value::Array(_) => "array",
+            Value::Object(_) => "object",
+        };
+        if !names.contains(&name) {
+            names.push(name);
+        }
+    }
+    if names.is_empty() {
+        "any".to_string()
+    } else {
+        names.join(" or ")
+    }
 }
 
 /// The types `node` declares: its `type` name, or each name in its `type` list.
@@ -614,5 +646,33 @@ mod tests {
                 .collect::<Vec<_>>()
         };
         assert_eq!(under("aliased."), under("direct."));
+    }
+
+    #[test]
+    fn an_untyped_reference_is_labelled_by_what_its_target_holds() {
+        let schema = json!({
+            "$defs": {
+                "Status": { "enum": ["draft", "final"] },
+                "Pair": { "properties": { "left": { "type": "string" } } },
+                "Anything": { "description": "no constraint" }
+            },
+            "type": "object",
+            "properties": {
+                "status": { "$ref": "#/$defs/Status" },
+                "pair": { "$ref": "#/$defs/Pair" },
+                "anything": { "$ref": "#/$defs/Anything" }
+            }
+        });
+        let fields = fields(&schema);
+        let label = |path: &str| {
+            fields
+                .iter()
+                .find(|field| field.path == path)
+                .map(|field| field.field_type.clone())
+                .unwrap()
+        };
+        assert!(label("status").contains("string") && !label("status").contains("object"));
+        assert!(label("pair").contains("object"));
+        assert!(!label("anything").contains("object"));
     }
 }

@@ -88,6 +88,12 @@ pub fn relative_path(root: &Path, file: &Path) -> anyhow::Result<String> {
             root.display()
         )
     })?;
+    if relative
+        .components()
+        .any(|component| !matches!(component, std::path::Component::Normal(_)))
+    {
+        anyhow::bail!("{} does not lie within {}.", file.display(), root.display());
+    }
     Ok(relative.to_string_lossy().replace('\\', "/"))
 }
 
@@ -249,5 +255,17 @@ mod tests {
         assert!(list_documents(&root.path().join("missing"))
             .unwrap()
             .is_empty());
+    }
+
+    #[test]
+    fn a_path_that_leaves_the_root_has_no_relative_path() {
+        let root = Path::new("/workspace");
+        for file in [
+            "/workspace/../secret.yaml",
+            "/workspace/data/../../secret.yaml",
+        ] {
+            assert!(relative_path(root, Path::new(file)).is_err(), "{file}");
+        }
+        assert!(relative_path(root, Path::new("/workspace/data/world.yaml")).is_ok());
     }
 }

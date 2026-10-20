@@ -144,9 +144,15 @@ impl PublicationJournal {
             .get(document)
             .map(|marked| marked.path.clone())
             .unwrap_or_else(|| self.inner.path(document));
-        // A mark held in memory whose file a failed clear removed is written again.
+        // A mark held in memory whose file a failed clear removed is written again; one found
+        // in place is settled, since a failed mark may have left it unsynced.
         let kept = path.try_exists().map_err(|error| internal(&path, error))?;
-        if !kept {
+        if kept {
+            self.inner
+                .durability
+                .sync_directory(&self.inner.root)
+                .map_err(|error| internal(&path, error))?;
+        } else {
             let mark = serde_json::to_vec(&Mark {
                 entity: document.entity.clone(),
                 resource_id: document.resource_id.clone(),
@@ -426,5 +432,20 @@ mod tests {
         drop(journal.mark(&document("held")).unwrap());
         let reopened = PublicationJournal::open(data_dir.path(), WriteDurability::System).unwrap();
         assert!(reopened.is_marked(&document("held")));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_mark_found_in_place_is_settled_before_it_is_trusted() {
+        use std::os::unix::fs::PermissionsExt;
+        let data_dir = tempfile::tempdir().unwrap();
+        let journal = PublicationJournal::open(data_dir.path(), WriteDurability::System).unwrap();
+        drop(journal.mark(&document("held")).unwrap());
+        let root = JOURNAL.root(data_dir.path());
+        // Unreadable, the journal directory can still be searched but not opened to sync.
+        std::fs::set_permissions(&root, std::fs::Permissions::from_mode(0o300)).unwrap();
+        let retried = journal.mark(&document("held"));
+        std::fs::set_permissions(&root, std::fs::Permissions::from_mode(0o700)).unwrap();
+        assert!(retried.is_err());
     }
 }

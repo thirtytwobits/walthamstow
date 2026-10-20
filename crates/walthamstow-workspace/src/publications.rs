@@ -28,6 +28,8 @@ pub struct PublicationJournal {
 
 #[derive(Debug)]
 struct Inner {
+    /// The engine data directory the journal lies under.
+    data_dir: PathBuf,
     root: PathBuf,
     /// How far each mark is written before a commit relies on it.
     durability: walthamstow_kernel::durability::WriteDurability,
@@ -79,6 +81,14 @@ fn internal(path: &Path, error: impl std::fmt::Display) -> KernelError {
 impl Inner {
     fn locked(&self) -> MutexGuard<'_, HashMap<CollaborationDocumentId, Marked>> {
         self.marked.lock().unwrap_or_else(PoisonError::into_inner)
+    }
+
+    /// Refuses the journal when a link has replaced its directory since it was opened.
+    fn check_root(&self) -> KernelResult<()> {
+        JOURNAL
+            .unlinked_root(&self.data_dir)
+            .map(drop)
+            .map_err(|error| internal(&self.root, error))
     }
 
     /// Where a new mark for `document` is written: named by a hash of the entity and resource
@@ -147,6 +157,7 @@ impl PublicationJournal {
             );
         }
         let inner = Arc::new(Inner {
+            data_dir: data_dir.to_path_buf(),
             root,
             durability,
             marked: Mutex::new(marked),
@@ -160,6 +171,7 @@ impl PublicationJournal {
     /// at least until the returned commit is dropped.
     pub fn mark(&self, document: &CollaborationDocumentId) -> KernelResult<PendingCommit> {
         let mut marked = self.inner.locked();
+        self.inner.check_root()?;
         let path = marked
             .get(document)
             .map(|marked| marked.path.clone())
@@ -218,6 +230,7 @@ impl PublicationJournal {
         if !published()? {
             return Ok(());
         }
+        self.inner.check_root()?;
         match std::fs::remove_file(&path) {
             Ok(()) => {}
             // An earlier clear removed it, and may not have synced its removal.
@@ -543,5 +556,22 @@ mod tests {
         second.clear(&document("busy"), || Ok(true)).unwrap();
         assert!(!first.is_marked(&document("busy")));
         assert!(PublicationJournal::open(data_dir.path(), WriteDurability::Device).is_err());
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_journal_directory_replaced_by_a_link_is_neither_marked_nor_cleared() {
+        let data_dir = tempfile::tempdir().unwrap();
+        let outside = tempfile::tempdir().unwrap();
+        let journal = PublicationJournal::open(data_dir.path(), WriteDurability::System).unwrap();
+        drop(journal.mark(&document("held")).unwrap());
+        let root = JOURNAL.root(data_dir.path());
+        let moved = data_dir.path().join("moved");
+        std::fs::rename(&root, &moved).unwrap();
+        std::os::unix::fs::symlink(outside.path(), &root).unwrap();
+        assert!(journal.mark(&document("other")).is_err());
+        assert!(journal.clear(&document("held"), || Ok(true)).is_err());
+        assert_eq!(std::fs::read_dir(outside.path()).unwrap().count(), 0);
+        assert_eq!(std::fs::read_dir(&moved).unwrap().count(), 1);
     }
 }

@@ -10,12 +10,35 @@
 
 use std::path::{Path, PathBuf};
 
+/// Whether `name` can name a journal or staging directory: one or more lowercase ASCII
+/// letters, digits, `-` or `_`, and no device name Windows reserves.
+const fn is_directory_name(name: &str) -> bool {
+    let bytes = name.as_bytes();
+    if bytes.is_empty() || crate::files::is_windows_device_name(name) {
+        return false;
+    }
+    let mut index = 0;
+    while index < bytes.len() {
+        if !matches!(bytes[index], b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_') {
+            return false;
+        }
+        index += 1;
+    }
+    true
+}
+
 /// A journal, named by the part of the engine that keeps it.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Journal(&'static str);
 
 impl Journal {
+    /// The journal named `name`, which must be one directory: lowercase ASCII letters, digits,
+    /// `-` and `_`. Any other name panics, which fails the build where the journal is a constant.
     pub const fn new(name: &'static str) -> Self {
+        assert!(
+            is_directory_name(name),
+            "a journal is named by lowercase letters, digits, '-' and '_'"
+        );
         Self(name)
     }
 
@@ -34,7 +57,13 @@ impl Journal {
 pub struct Staging(&'static str);
 
 impl Staging {
+    /// The staging named `name`, which must be one directory: lowercase ASCII letters, digits,
+    /// `-` and `_`. Any other name panics, which fails the build where the staging is a constant.
     pub const fn new(name: &'static str) -> Self {
+        assert!(
+            is_directory_name(name),
+            "staging is named by lowercase letters, digits, '-' and '_'"
+        );
         Self(name)
     }
 
@@ -60,5 +89,29 @@ mod tests {
         }
         assert_ne!(journal, staging);
         assert_ne!(journal, Journal::new("another-operation").root(data_dir));
+    }
+
+    #[test]
+    fn a_name_that_is_not_one_plain_directory_is_refused() {
+        for name in [
+            "",
+            "../outside",
+            "/absolute",
+            "a/b",
+            "Upper",
+            ".hidden",
+            "con",
+        ] {
+            assert!(
+                std::panic::catch_unwind(|| Journal::new(name)).is_err(),
+                "{name:?}"
+            );
+            assert!(
+                std::panic::catch_unwind(|| Staging::new(name)).is_err(),
+                "{name:?}"
+            );
+        }
+        Journal::new("collaboration-publications");
+        Staging::new("session_imports");
     }
 }

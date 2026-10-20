@@ -169,15 +169,18 @@ impl FileCollaborationStorage {
     /// directory is not a link; refused otherwise, so nothing outside the root is read.
     fn envelope_source<'a>(&self, source: &'a str) -> StoreResult<&'a Path> {
         let path = Path::new(source);
-        let directory = path
-            .parent()
-            .filter(|directory| directory.parent() == Some(self.root.as_path()))
-            .ok_or_else(|| {
-                StoreError::internal(format!(
-                    "{source} is not an envelope under {}.",
-                    self.root.display()
-                ))
-            })?;
+        let named = path.strip_prefix(&self.root).is_ok_and(|relative| {
+            relative.components().count() == 2
+                && relative
+                    .components()
+                    .all(|component| matches!(component, std::path::Component::Normal(_)))
+        });
+        let directory = path.parent().filter(|_| named).ok_or_else(|| {
+            StoreError::internal(format!(
+                "{source} is not an envelope under {}.",
+                self.root.display()
+            ))
+        })?;
         refuse_link(directory)?;
         Ok(path)
     }
@@ -1794,5 +1797,23 @@ mod tests {
         use std::os::unix::ffi::OsStrExt;
         let root = Path::new(std::ffi::OsStr::from_bytes(b"/collaboration-\xff"));
         assert!(FileCollaborationStorage::new(root, WriteDurability::System, clock()).is_err());
+    }
+
+    #[test]
+    fn a_source_that_climbs_out_of_the_root_is_refused() {
+        let parent = tempfile::tempdir().unwrap();
+        let root = parent.path().join("collaboration");
+        std::fs::create_dir_all(&root).unwrap();
+        std::fs::write(parent.path().join("secret.json"), b"outside").unwrap();
+        let storage =
+            FileCollaborationStorage::new(&root, WriteDurability::System, clock()).unwrap();
+        for source in [
+            root.join("../secret.json"),
+            root.join("note/../../secret.json"),
+        ] {
+            let source = source.display().to_string();
+            assert!(storage.read(&source).is_err(), "{source}");
+            assert!(storage.stamp(&source).is_err(), "{source}");
+        }
     }
 }

@@ -29,7 +29,8 @@ pub fn walk_describe_schema<F: FnMut(WalkerField)>(schema: &Value, mut emit: F) 
             .into_iter()
             .flatten()
         {
-            defs.insert(format!("#/{section}/{name}"), definition.clone());
+            let token = name.replace('~', "~0").replace('/', "~1");
+            defs.insert(format!("#/{section}/{token}"), definition.clone());
         }
     }
     walk_object_schema(schema, "", &defs, &mut emit, &mut Vec::new());
@@ -344,5 +345,25 @@ mod tests {
         let fields = fields(&schema);
         let street = fields.iter().find(|field| field.path == "home.street");
         assert!(street.is_some_and(|field| !field.description.is_empty()));
+    }
+
+    #[test]
+    fn a_definition_named_with_pointer_characters_is_reached_by_its_escaped_reference() {
+        let object = |field: &str| json!({ "type": "object", "properties": { field: { "type": "string" } } });
+        let schema = json!({
+            "$defs": { "a/b": object("slashed"), "c~d": object("tilded") },
+            "type": "object",
+            "properties": {
+                "first": { "$ref": "#/$defs/a~1b" },
+                "second": { "$ref": "#/$defs/c~0d" }
+            }
+        });
+        let fields = fields(&schema);
+        let paths = fields
+            .iter()
+            .map(|field| field.path.as_str())
+            .collect::<Vec<_>>();
+        assert!(paths.contains(&"first.slashed"), "{paths:?}");
+        assert!(paths.contains(&"second.tilded"), "{paths:?}");
     }
 }

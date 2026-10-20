@@ -79,8 +79,28 @@ impl FileCollaborationStorage {
         self.root.join(safe_entity_name(entity))
     }
 
-    /// Refuses `entity` when its directory names another entity.
+    /// Refuses `entity` when its directory is a link, which the store does not follow.
+    fn refuse_linked_entity_dir(&self, entity: &str) -> StoreResult<()> {
+        let directory = self.entity_dir(entity);
+        match std::fs::symlink_metadata(&directory) {
+            Ok(metadata) if metadata.file_type().is_symlink() => {
+                Err(StoreError::internal(format!(
+                    "The collaboration directory {} is a link, which the store does not follow.",
+                    directory.display()
+                )))
+            }
+            Ok(_) => Ok(()),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
+            Err(error) => Err(StoreError::internal(format!(
+                "Could not inspect collaboration directory {}: {error}",
+                directory.display()
+            ))),
+        }
+    }
+
+    /// Refuses `entity` when its directory is a link or names another entity.
     fn check_entity(&self, entity: &str) -> StoreResult<()> {
+        self.refuse_linked_entity_dir(entity)?;
         let marker = self.entity_dir(entity).join(ENTITY_FILE);
         match read_optional(&marker)? {
             Some(held) if held != entity.as_bytes() => Err(StoreError::internal(format!(
@@ -95,12 +115,14 @@ impl FileCollaborationStorage {
     /// Names `entity` as the one its directory holds before anything is written
     /// there, or refuses it when the directory names another.
     fn claim_entity(&self, entity: &str) -> StoreResult<()> {
+        self.refuse_linked_entity_dir(entity)?;
         let directory = self.entity_dir(entity);
         let marker = directory.join(ENTITY_FILE);
         if read_optional(&marker)?.is_some() {
             return self.check_entity(entity);
         }
         with_lock(
+            self.durability,
             &directory.join(ENTITY_LOCK_FILE),
             "the entity directory",
             || match read_optional(&marker)? {
@@ -130,6 +152,7 @@ impl FileCollaborationStorage {
         operation: impl FnOnce() -> StoreResult<T>,
     ) -> StoreResult<T> {
         with_lock(
+            self.durability,
             &self.lock_path(document),
             &format!("{}/{}", document.entity, document.resource_id),
             operation,
@@ -138,6 +161,7 @@ impl FileCollaborationStorage {
 
     fn with_audit_lock<T>(&self, operation: impl FnOnce() -> StoreResult<T>) -> StoreResult<T> {
         with_lock(
+            self.durability,
             &self.records.join(AUDIT_LOCK_FILE),
             "the audit stream",
             operation,
@@ -177,12 +201,13 @@ impl FileCollaborationStorage {
 }
 
 fn with_lock<T>(
+    durability: WriteDurability,
     lock_path: &Path,
     what: &str,
     operation: impl FnOnce() -> StoreResult<T>,
 ) -> StoreResult<T> {
     if let Some(parent) = lock_path.parent() {
-        std::fs::create_dir_all(parent).map_err(|error| {
+        crate::durability::create_dir_all_synced(durability, parent).map_err(|error| {
             StoreError::internal(format!(
                 "Could not create collaboration storage directory {}: {error}",
                 parent.display()
@@ -454,12 +479,18 @@ impl CollaborationStoragePort for FileCollaborationStorage {
             let mut line = serde_json::to_vec(record)
                 .map_err(|error| StoreError::internal(error.to_string()))?;
             line.push(b'\n');
+            let path = self.records.join(AUDIT_FILE);
+            let created = !path.try_exists().map_err(|error| {
+                StoreError::internal(format!(
+                    "Could not inspect the collaboration audit stream: {error}"
+                ))
+            })?;
             let mut audit = OpenOptions::new()
                 .create(true)
                 .truncate(false)
                 .read(true)
                 .write(true)
-                .open(self.records.join(AUDIT_FILE))
+                .open(&path)
                 .map_err(|error| {
                     StoreError::internal(format!(
                         "Could not open the collaboration audit stream: {error}"
@@ -477,12 +508,20 @@ impl CollaborationStoragePort for FileCollaborationStorage {
                 .and_then(|()| audit.seek(SeekFrom::Start(complete)))
                 .and_then(|_| audit.write_all(&line))
                 .and_then(|()| self.durability.sync(&audit));
-            appended.map_err(|error| {
-                let _ = audit.set_len(complete);
-                StoreError::internal(format!(
-                    "Could not append to the collaboration audit stream: {error}"
-                ))
-            })
+            appended
+                .and_then(|()| {
+                    if created {
+                        self.durability.sync_directory(&self.records)
+                    } else {
+                        Ok(())
+                    }
+                })
+                .map_err(|error| {
+                    let _ = audit.set_len(complete);
+                    StoreError::internal(format!(
+                        "Could not append to the collaboration audit stream: {error}"
+                    ))
+                })
         })
     }
 
@@ -1127,5 +1166,34 @@ mod tests {
             clock_at(UNIX_EPOCH + Duration::from_secs(u32::MAX as u64 * 4)),
         );
         assert!(long_after.stamp(&long_after.source(&id)).unwrap().is_some());
+    }
+
+    #[test]
+    fn the_first_audit_record_in_a_missing_directory_is_kept_under_each_durability() {
+        for durability in [WriteDurability::Device, WriteDurability::System] {
+            let root = tempfile::tempdir().unwrap();
+            let records = root.path().join("journals/collaboration");
+            let storage = FileCollaborationStorage::new(root.path(), durability, clock())
+                .with_records_at(&records);
+            storage.append_audit(&record("ada", "one", 10)).unwrap();
+            let kept = storage.audit(&CollaborationAuditQuery::default()).unwrap();
+            assert_eq!(kept.len(), 1);
+        }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_linked_entity_directory_is_refused_and_nothing_is_written_through_it() {
+        let root = tempfile::tempdir().unwrap();
+        let outside = tempfile::tempdir().unwrap();
+        std::os::unix::fs::symlink(outside.path(), root.path().join(safe_entity_name("Note")))
+            .unwrap();
+        let storage = FileCollaborationStorage::new(root.path(), WriteDurability::System, clock());
+        assert!(storage
+            .compare_and_swap(&document("one"), None, b"kept")
+            .is_err());
+        assert!(storage.compare_and_remove(&document("one"), "any").is_err());
+        assert!(storage.sources("Note").is_err());
+        assert_eq!(std::fs::read_dir(outside.path()).unwrap().count(), 0);
     }
 }

@@ -7,7 +7,9 @@ use std::path::{Component, Path, PathBuf};
 
 /// Resolves each `(name, configured)` directory against `root_dir`. A directory must be a
 /// normalised relative path that stays within the root, and no two may overlap, through a
-/// link within the root or otherwise. A refusal names each directory by its `name`.
+/// link within the root or otherwise. Directories that differ only in case overlap, since a
+/// case-insensitive file system holds them as one. A refusal names each directory by its
+/// `name`.
 pub fn resolve_directories<const N: usize>(
     root_dir: &Path,
     configured: [(&str, &str); N],
@@ -22,6 +24,10 @@ pub fn resolve_directories<const N: usize>(
         resolved.push(directory);
         targets.push(target);
     }
+    let targets = targets
+        .iter()
+        .map(|target| PathBuf::from(target.to_string_lossy().to_lowercase()))
+        .collect::<Vec<_>>();
     for left in 0..N {
         for right in (left + 1)..N {
             if targets[left].starts_with(&targets[right])
@@ -170,6 +176,22 @@ mod tests {
             assert!(
                 error.to_string().contains("documents"),
                 "{configured}: {error}"
+            );
+        }
+    }
+
+    #[test]
+    fn directories_that_differ_only_in_case_overlap() {
+        let root = tempfile::tempdir().unwrap();
+        for configured in [
+            [("upper", "Data"), ("lower", "data")],
+            [("upper", "Data/notes"), ("lower", "data")],
+        ] {
+            let error = resolve_directories(root.path(), configured).unwrap_err();
+            let message = error.to_string();
+            assert!(
+                message.contains("upper") && message.contains("lower"),
+                "{configured:?}: {message}"
             );
         }
     }

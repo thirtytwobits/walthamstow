@@ -22,7 +22,9 @@ pub struct WalkerField {
 /// `<path>[].<field>` entries). Caller-provided `emit` collects.
 pub fn walk_describe_schema<F: FnMut(WalkerField)>(schema: &Value, mut emit: F) {
     let document = with_siblings(schema, resolve_ref(schema, schema));
-    walk_object_schema(&document, "", schema, &mut emit, &mut Vec::new());
+    within(&mut Vec::new(), [ref_name(schema)], |active| {
+        walk_object_schema(&document, "", schema, &mut emit, active)
+    });
 }
 
 /// Walks `node`'s properties. `active` names the references expanded on the way here; one
@@ -506,5 +508,33 @@ mod tests {
         assert!(fields.iter().any(|field| field.path == "list[].name"));
         let extra = fields.iter().find(|field| field.path == "list[].extra");
         assert!(extra.is_some_and(|field| field.required));
+    }
+
+    #[test]
+    fn a_root_reference_to_a_recursive_definition_is_walked_once() {
+        let node = json!({
+            "type": "object",
+            "properties": {
+                "name": { "type": "string" },
+                "child": { "$ref": "#/$defs/Node" }
+            }
+        });
+        let at_root = json!({ "$defs": { "Node": node }, "$ref": "#/$defs/Node" });
+        let as_property = json!({
+            "$defs": { "Node": node },
+            "type": "object",
+            "properties": { "child": { "$ref": "#/$defs/Node" } }
+        });
+        let paths = |schema: &Value| {
+            fields(schema)
+                .into_iter()
+                .map(|field| field.path)
+                .collect::<Vec<_>>()
+        };
+        let nested = paths(&as_property)
+            .into_iter()
+            .filter_map(|path| path.strip_prefix("child.").map(str::to_string))
+            .collect::<Vec<_>>();
+        assert_eq!(paths(&at_root), nested);
     }
 }

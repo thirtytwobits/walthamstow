@@ -61,6 +61,9 @@ pub fn create_dir_all_synced(durability: WriteDurability, directory: &Path) -> i
     create_dir_all_with(directory, |entry_of| durability.sync_directory(entry_of))
 }
 
+/// Held by each directory creation; see [`create_dir_all_with`].
+static CREATING: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
 /// Creates `directory` and every missing ancestor, calling `sync` on the directory holding
 /// each one it creates. When creating or syncing fails, what it created is removed again, so
 /// a retry creates it and syncs it once more.
@@ -68,6 +71,11 @@ fn create_dir_all_with(
     directory: &Path,
     mut sync: impl FnMut(&Path) -> io::Result<()>,
 ) -> io::Result<()> {
+    // One creation at a time, so none relies on a directory another is still settling or
+    // about to remove again.
+    let _creating = CREATING
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
     let directory = present(directory);
     let mut missing = Vec::new();
     let mut ancestor = directory;
@@ -280,6 +288,38 @@ mod tests {
                 .iter()
                 .any(|entry_of| Some(entry_of.as_path()) == theirs.parent()),
             "{synced:?}"
+        );
+    }
+
+    #[test]
+    fn a_creation_begun_while_another_settles_waits_for_it() {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let first = dir.path().join("a");
+        let second = dir.path().join("a/b");
+        let waiting = std::thread::scope(|scope| {
+            let mut waiting = None;
+            let failed = super::create_dir_all_with(&first, |_| {
+                let second = second.clone();
+                waiting = Some(scope.spawn(move || {
+                    let mut synced = Vec::new();
+                    super::create_dir_all_with(&second, |entry_of| {
+                        synced.push(entry_of.to_path_buf());
+                        Ok(())
+                    })
+                    .expect("the second creation");
+                    synced
+                }));
+                Err(std::io::Error::other("the first sync failed"))
+            });
+            assert!(failed.is_err());
+            waiting.expect("spawned").join().expect("joined")
+        });
+        assert!(second.is_dir());
+        assert!(
+            waiting
+                .iter()
+                .any(|entry_of| Some(entry_of.as_path()) == first.parent()),
+            "the second creation made and settled a itself: {waiting:?}"
         );
     }
 }

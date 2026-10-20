@@ -1,0 +1,25 @@
+[package]
+name = "walthamstow-workspace"
+description = "A file-backed workspace of typed collaborative documents: directories, document loading, schemas, mounts and publications"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[dependencies]
+anyhow.workspace = true
+clerkenwell-doc.workspace = true
+clerkenwell-events.workspace = true
+clerkenwell-schema.workspace = true
+clerkenwell-store.workspace = true
+jsonschema.workspace = true
+walthamstow-kernel = { path = "../walthamstow-kernel", version = "0.1.0" }
+schemars.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+serde_yaml.workspace = true
+tokio.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true

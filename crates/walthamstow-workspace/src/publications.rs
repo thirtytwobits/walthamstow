@@ -93,7 +93,9 @@ impl PublicationJournal {
         data_dir: &Path,
         durability: walthamstow_kernel::durability::WriteDurability,
     ) -> KernelResult<Self> {
-        let root = JOURNAL.root(data_dir);
+        let root = JOURNAL
+            .unlinked_root(data_dir)
+            .map_err(|error| internal(&JOURNAL.root(data_dir), error))?;
         let mut marked = HashMap::new();
         let entries = match std::fs::read_dir(&root) {
             Ok(entries) => Some(entries),
@@ -395,6 +397,16 @@ mod tests {
         .unwrap();
         std::os::unix::fs::symlink(outside.path().join("mark.json"), root.join("linked.json"))
             .unwrap();
+        assert!(PublicationJournal::open(data_dir.path(), WriteDurability::System).is_err());
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_linked_publication_journal_is_refused() {
+        let data_dir = tempfile::tempdir().unwrap();
+        let outside = tempfile::tempdir().unwrap();
+        std::fs::create_dir_all(data_dir.path().join("journals")).unwrap();
+        std::os::unix::fs::symlink(outside.path(), JOURNAL.root(data_dir.path())).unwrap();
         assert!(PublicationJournal::open(data_dir.path(), WriteDurability::System).is_err());
     }
 }

@@ -22,7 +22,7 @@ pub fn safe_id(id: &str) -> Result<()> {
 }
 
 /// Whether `name` is a device name Windows reserves in every directory, in any case: CON, PRN,
-/// AUX, NUL, and COM or LPT followed by a digit from 1 to 9.
+/// AUX, NUL, and COM or LPT followed by a digit from 1 to 9 or a superscript ¹, ² or ³.
 pub const fn is_windows_device_name(name: &str) -> bool {
     const fn named(name: &[u8], device: &[u8]) -> bool {
         if name.len() != device.len() {
@@ -41,7 +41,13 @@ pub const fn is_windows_device_name(name: &str) -> bool {
     if named(name, b"con") || named(name, b"prn") || named(name, b"aux") || named(name, b"nul") {
         return true;
     }
-    if name.len() != 4 || !matches!(name[3], b'1'..=b'9') {
+    let numbered = match name.len() {
+        4 => matches!(name[3], b'1'..=b'9'),
+        // ¹, ² and ³ in UTF-8.
+        5 => name[3] == 0xc2 && matches!(name[4], 0xb9 | 0xb2 | 0xb3),
+        _ => false,
+    };
+    if !numbered {
         return false;
     }
     let stem = [name[0], name[1], name[2]];
@@ -124,10 +130,14 @@ mod tests {
 
     #[test]
     fn a_windows_device_name_is_recognised_in_any_case_and_nothing_else_is() {
-        for device in ["con", "PRN", "Aux", "nul", "COM1", "com9", "Lpt1", "lpt9"] {
+        for device in [
+            "con", "PRN", "Aux", "nul", "COM1", "com9", "Lpt1", "lpt9", "COM¹", "com²", "LPT³",
+        ] {
             assert!(is_windows_device_name(device), "{device}");
         }
-        for ordinary in ["console", "com", "com0", "com10", "lpt", "null", "", "co"] {
+        for ordinary in [
+            "console", "com", "com0", "com10", "lpt", "null", "", "co", "com⁴", "lpt¹0", "comé",
+        ] {
             assert!(!is_windows_device_name(ordinary), "{ordinary}");
         }
     }

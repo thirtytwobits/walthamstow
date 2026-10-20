@@ -335,6 +335,41 @@ fn safe_entity_name(entity: &str) -> String {
         .collect()
 }
 
+/// Appends `line` to `audit` after its `complete` bytes, syncing it with `sync`, and calls
+/// `settle_entry` with the stream's first record, so the stream's entry is synced whether the
+/// stream is new or was left empty by a first append that did not finish. An append that fails
+/// is truncated away and the truncation synced, so a record whose append returned an error does
+/// not come back after a loss of power.
+fn append_record(
+    audit: &mut std::fs::File,
+    complete: u64,
+    line: &[u8],
+    sync: impl Fn(&std::fs::File) -> std::io::Result<()>,
+    settle_entry: impl FnOnce() -> std::io::Result<()>,
+) -> std::io::Result<()> {
+    let appended = audit
+        .set_len(complete)
+        .and_then(|()| audit.seek(SeekFrom::Start(complete)))
+        .and_then(|_| audit.write_all(line))
+        .and_then(|()| sync(audit))
+        .and_then(|()| {
+            if complete == 0 {
+                settle_entry()
+            } else {
+                Ok(())
+            }
+        });
+    let Err(error) = appended else {
+        return Ok(());
+    };
+    match audit.set_len(complete).and_then(|()| sync(audit)) {
+        Ok(()) => Err(error),
+        Err(undoing) => Err(std::io::Error::other(format!(
+            "{error}; undoing the append also failed: {undoing}"
+        ))),
+    }
+}
+
 /// `text` as one path component: every character but an ASCII letter, digit, `-`
 /// or `_` becomes `-`.
 fn path_component(text: &str) -> String {
@@ -557,27 +592,18 @@ impl CollaborationStoragePort for FileCollaborationStorage {
                     "Could not read the collaboration audit stream: {error}"
                 ))
             })?;
-            let appended = audit
-                .set_len(complete)
-                .and_then(|()| audit.seek(SeekFrom::Start(complete)))
-                .and_then(|_| audit.write_all(&line))
-                .and_then(|()| self.durability.sync(&audit));
-            appended
-                .and_then(|()| {
-                    // The stream's entry is synced with its first record, whether the stream
-                    // is new or was left empty by a first append that did not finish.
-                    if complete == 0 {
-                        self.durability.sync_directory(&self.records)
-                    } else {
-                        Ok(())
-                    }
-                })
-                .map_err(|error| {
-                    let _ = audit.set_len(complete);
-                    StoreError::internal(format!(
-                        "Could not append to the collaboration audit stream: {error}"
-                    ))
-                })
+            append_record(
+                &mut audit,
+                complete,
+                &line,
+                |file| self.durability.sync(file),
+                || self.durability.sync_directory(&self.records),
+            )
+            .map_err(|error| {
+                StoreError::internal(format!(
+                    "Could not append to the collaboration audit stream: {error}"
+                ))
+            })
         })
     }
 
@@ -612,6 +638,14 @@ impl CollaborationStoragePort for FileCollaborationStorage {
     }
 }
 
+/// Refuses `path`, which is not a regular file or directory the scan reads.
+fn bail_link(path: &Path) -> AnyhowResult<()> {
+    Err(anyhow!(
+        "{} is not a regular file or directory; the scan does not follow or open it.",
+        path.display()
+    ))
+}
+
 /// The format an envelope's bytes declare, when they declare one.
 pub fn declared_envelope_format(bytes: &[u8]) -> Option<u32> {
     #[derive(serde::Deserialize)]
@@ -633,8 +667,13 @@ pub fn foreign_envelope_format(root: &Path) -> AnyhowResult<Option<u32>> {
         Err(error) => return Err(anyhow!("Could not list {}: {error}", root.display())),
     };
     for entity in entities {
-        let entity = entity?.path();
-        if !entity.is_dir()
+        let entity = entity?;
+        let kind = entity.file_type()?;
+        let entity = entity.path();
+        if kind.is_symlink() {
+            bail_link(&entity)?;
+        }
+        if !kind.is_dir()
             || entity
                 .file_name()
                 .is_some_and(|name| name == QUARANTINE_DIR)
@@ -642,9 +681,14 @@ pub fn foreign_envelope_format(root: &Path) -> AnyhowResult<Option<u32>> {
             continue;
         }
         for envelope in std::fs::read_dir(&entity)? {
-            let envelope = envelope?.path();
+            let envelope = envelope?;
+            let kind = envelope.file_type()?;
+            let envelope = envelope.path();
             if envelope.extension().and_then(|value| value.to_str()) != Some("json") {
                 continue;
+            }
+            if !kind.is_file() {
+                bail_link(&envelope)?;
             }
             let format = declared_envelope_format(&std::fs::read(&envelope)?).unwrap_or(0);
             if format != ENVELOPE_VERSION {
@@ -1477,5 +1521,51 @@ mod tests {
                 target.display()
             );
         }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_format_scan_refuses_what_is_not_a_regular_envelope() {
+        let root = tempfile::tempdir().unwrap();
+        let outside = tempfile::tempdir().unwrap();
+        std::fs::create_dir_all(root.path().join("note")).unwrap();
+        std::os::unix::fs::symlink(outside.path(), root.path().join("linked")).unwrap();
+        assert!(foreign_envelope_format(root.path()).is_err());
+        std::fs::remove_file(root.path().join("linked")).unwrap();
+        let short = root.path().join("s");
+        let _special = std::os::unix::net::UnixListener::bind(&short).unwrap();
+        std::fs::rename(&short, root.path().join("note/special.json")).unwrap();
+        assert!(foreign_envelope_format(root.path()).is_err());
+    }
+
+    #[test]
+    fn a_failed_append_is_truncated_away_and_the_truncation_synced() {
+        let root = tempfile::tempdir().unwrap();
+        let path = root.path().join(AUDIT_FILE);
+        let mut audit = OpenOptions::new()
+            .create(true)
+            .truncate(false)
+            .read(true)
+            .write(true)
+            .open(&path)
+            .unwrap();
+        let syncs = std::cell::Cell::new(0);
+        let failed = append_record(
+            &mut audit,
+            0,
+            b"{\"record\":1}\n",
+            |_| {
+                syncs.set(syncs.get() + 1);
+                Ok(())
+            },
+            || Err(std::io::Error::other("the directory sync failed")),
+        );
+        assert!(failed.is_err());
+        assert_eq!(std::fs::metadata(&path).unwrap().len(), 0);
+        assert_eq!(
+            syncs.get(),
+            2,
+            "the append and then its truncation are synced"
+        );
     }
 }

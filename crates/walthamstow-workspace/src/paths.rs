@@ -46,8 +46,9 @@ pub fn resolve_directories<const N: usize>(
         .expect("one resolved directory for each configured one"))
 }
 
-/// The directory `configured` names beneath `root_dir`, and where it leads once every link
-/// on the way to it is followed.
+/// The directory `configured` names beneath `root_dir` with every link inside the root on
+/// the way to it resolved, so a link changed later does not move it, and where it leads in
+/// full.
 fn resolve_directory(
     root_dir: &Path,
     canonical_root: &Path,
@@ -114,7 +115,12 @@ fn resolve_directory(
             .strip_prefix(existing)
             .expect("the deepest existing ancestor prefixes the directory"),
     );
-    Ok((resolved, target))
+    let within_root = root_dir.join(
+        target
+            .strip_prefix(canonical_root)
+            .expect("the target stays within the root"),
+    );
+    Ok((within_root, target))
 }
 
 #[cfg(test)]
@@ -194,6 +200,24 @@ mod tests {
                 "{configured:?}: {message}"
             );
         }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_directory_reached_through_a_link_is_held_where_the_link_led() {
+        let root = tempfile::tempdir().unwrap();
+        let outside = tempfile::tempdir().unwrap();
+        std::fs::create_dir_all(root.path().join("data/real")).unwrap();
+        std::os::unix::fs::symlink(root.path().join("data/real"), root.path().join("alias"))
+            .unwrap();
+        let [notes] = resolve_directories(root.path(), [("notes", "alias/notes")]).unwrap();
+        assert_eq!(notes, root.path().join("data/real/notes"));
+        std::fs::remove_file(root.path().join("alias")).unwrap();
+        std::os::unix::fs::symlink(outside.path(), root.path().join("alias")).unwrap();
+        assert!(
+            notes.starts_with(root.path()),
+            "the held directory does not follow the link"
+        );
     }
 
     #[test]

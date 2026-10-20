@@ -76,7 +76,7 @@ fn walk_object_schema<F: FnMut(WalkerField)>(
                 &resolved
             };
             if let Some(items) = array.get("items") {
-                let item_schema = resolve_ref(items, root);
+                let item_schema = with_siblings(items, resolve_ref(items, root));
                 if matches_object(&item_schema) {
                     let array_path = format!("{field_path}[]");
                     within(active, [ref_name(property), ref_name(items)], |active| {
@@ -483,6 +483,28 @@ mod tests {
         let fields = fields(&schema);
         assert!(fields.iter().any(|field| field.path == "item.name"));
         let extra = fields.iter().find(|field| field.path == "item.extra");
+        assert!(extra.is_some_and(|field| field.required));
+    }
+
+    #[test]
+    fn properties_beside_an_item_reference_are_walked_with_its_target() {
+        let schema = json!({
+            "$defs": { "Base": { "type": "object", "properties": { "name": { "type": "string" } } } },
+            "type": "object",
+            "properties": {
+                "list": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/Base",
+                        "properties": { "extra": { "type": "string" } },
+                        "required": ["extra"]
+                    }
+                }
+            }
+        });
+        let fields = fields(&schema);
+        assert!(fields.iter().any(|field| field.path == "list[].name"));
+        let extra = fields.iter().find(|field| field.path == "list[].extra");
         assert!(extra.is_some_and(|field| field.required));
     }
 }

@@ -218,7 +218,7 @@ fn with_lock<T>(
             ))
         })?;
     }
-    refuse_link(lock_path)?;
+    refuse_irregular(lock_path)?;
     let lock = OpenOptions::new()
         .create(true)
         .truncate(false)
@@ -267,9 +267,27 @@ fn refuse_link(path: &Path) -> StoreResult<()> {
     }
 }
 
-/// The bytes at `path`, or `None` when there is no file. A link is refused.
+/// Refuses `path` when something other than a regular file is there: a link, which the
+/// store does not follow, or a special file, which could block the open.
+fn refuse_irregular(path: &Path) -> StoreResult<()> {
+    match std::fs::symlink_metadata(path) {
+        Ok(metadata) if !metadata.file_type().is_file() => Err(StoreError::internal(format!(
+            "Collaboration state {} is not a regular file; the store does not follow or open it.",
+            path.display()
+        ))),
+        Ok(_) => Ok(()),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
+        Err(error) => Err(StoreError::internal(format!(
+            "Could not inspect collaboration state {}: {error}",
+            path.display()
+        ))),
+    }
+}
+
+/// The bytes at `path`, or `None` when there is no file. Anything but a regular file is
+/// refused.
 fn read_optional(path: &Path) -> StoreResult<Option<Vec<u8>>> {
-    refuse_link(path)?;
+    refuse_irregular(path)?;
     match std::fs::read(path) {
         Ok(bytes) => Ok(Some(bytes)),
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(None),
@@ -510,7 +528,7 @@ impl CollaborationStoragePort for FileCollaborationStorage {
                 .map_err(|error| StoreError::internal(error.to_string()))?;
             line.push(b'\n');
             let path = self.records.join(AUDIT_FILE);
-            refuse_link(&path)?;
+            refuse_irregular(&path)?;
             let created = !path.try_exists().map_err(|error| {
                 StoreError::internal(format!(
                     "Could not inspect the collaboration audit stream: {error}"
@@ -1356,6 +1374,30 @@ mod tests {
             assert_eq!(
                 std::fs::read_to_string(data.path().join(PEER_KEY_FILE)).unwrap(),
                 text
+            );
+        }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_special_file_where_state_is_kept_is_refused_unopened() {
+        let root = tempfile::tempdir().unwrap();
+        let storage = FileCollaborationStorage::new(root.path(), WriteDurability::System, clock());
+        let id = document("one");
+        let source = storage.source(&id);
+        std::fs::create_dir_all(Path::new(&source).parent().unwrap()).unwrap();
+        // A socket's path is limited in length; one bound at a short name is moved into place.
+        let short = root.path().join("s");
+        let _special = std::os::unix::net::UnixListener::bind(&short).unwrap();
+        std::fs::rename(&short, &source).unwrap();
+        for error in [
+            storage.read(&source).unwrap_err(),
+            storage.compare_and_swap(&id, None, b"x").unwrap_err(),
+        ] {
+            assert!(
+                error.message.contains("not a regular file"),
+                "{}",
+                error.message
             );
         }
     }

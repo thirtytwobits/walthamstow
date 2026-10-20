@@ -157,11 +157,15 @@ impl CollaborativeDocuments {
         };
         let document = self.id(resource_id);
         journal.clear(&document, || {
-            Ok(self
+            let accepted = self
                 .service
                 .summary(&document)?
-                .map(|summary| summary.generation)
-                <= generation)
+                .map(|summary| summary.generation);
+            Ok(match (accepted, generation) {
+                (None, None) => true,
+                (Some(accepted), Some(published)) => accepted <= published,
+                (None, Some(_)) | (Some(_), None) => false,
+            })
         })
     }
 
@@ -614,6 +618,27 @@ mod tests {
         documents.published("one", None).unwrap();
         assert!(!documents.publication_pending("one"));
         assert!(!journal().is_marked(&CollaborationDocumentId::new("Note", "one")));
+    }
+
+    #[test]
+    fn a_stale_publication_finishing_after_a_removal_keeps_the_removal_pending() {
+        let store = tempfile::tempdir().unwrap();
+        let data = tempfile::tempdir().unwrap();
+        let journal = PublicationJournal::open(data.path(), DURABILITY).unwrap();
+        let documents = CollaborativeDocuments::new(service(store.path()), &NOTES, Some(journal));
+        documents
+            .bootstrap("one", &note("one"), |_| Ok(()))
+            .unwrap();
+        let stale = documents.summary("one").unwrap().unwrap().generation;
+        documents.remove("one", &writer()).unwrap();
+
+        documents.published("one", Some(stale)).unwrap();
+        assert!(
+            documents.publication_pending("one"),
+            "files written from the removed document do not settle its removal"
+        );
+        documents.published("one", None).unwrap();
+        assert!(!documents.publication_pending("one"));
     }
 
     #[test]

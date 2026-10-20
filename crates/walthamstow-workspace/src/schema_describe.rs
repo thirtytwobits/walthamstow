@@ -21,7 +21,7 @@ pub struct WalkerField {
 /// objects and `$ref`s, expanding arrays of objects into
 /// `<path>[].<field>` entries). Caller-provided `emit` collects.
 pub fn walk_describe_schema<F: FnMut(WalkerField)>(schema: &Value, mut emit: F) {
-    let document = with_siblings(schema, resolve_ref(schema, schema));
+    let document = resolve_ref(schema, schema);
     within(&mut Vec::new(), [ref_name(schema)], |active| {
         walk_object_schema(&document, "", schema, &mut emit, active)
     });
@@ -46,7 +46,7 @@ fn walk_object_schema<F: FnMut(WalkerField)>(
     };
 
     for (name, property) in properties {
-        let resolved = with_siblings(property, resolve_ref(property, root));
+        let resolved = resolve_ref(property, root);
         let field_path = if path.is_empty() {
             name.clone()
         } else {
@@ -66,19 +66,19 @@ fn walk_object_schema<F: FnMut(WalkerField)>(
             allowed_values,
         });
 
-        let raw_type = property
-            .get("type")
-            .and_then(Value::as_str)
-            .or_else(|| resolved.get("type").and_then(Value::as_str))
-            .unwrap_or("");
-        if raw_type == "array" {
+        let typed = if property.get("type").is_some() {
+            property
+        } else {
+            &resolved
+        };
+        if declared_types(typed).contains(&"array") {
             let array = if property.get("items").is_some() {
                 property
             } else {
                 &resolved
             };
             if let Some(items) = array.get("items") {
-                let item_schema = with_siblings(items, resolve_ref(items, root));
+                let item_schema = resolve_ref(items, root);
                 if matches_object(&item_schema) {
                     let array_path = format!("{field_path}[]");
                     within(active, [ref_name(property), ref_name(items)], |active| {
@@ -139,13 +139,10 @@ fn percent_decoded(fragment: &str) -> Option<String> {
     String::from_utf8(decoded).ok()
 }
 
-/// `resolved` with the `properties` and `required` written beside the reference in `node`,
-/// which apply alongside it.
-fn with_siblings(node: &Value, resolved: Value) -> Value {
-    if node.get("$ref").is_none() || node.as_object() == resolved.as_object() {
-        return resolved;
-    }
-    let mut merged = resolved;
+/// `target` with the `properties` and `required` written beside the reference in `node`, which
+/// apply alongside it.
+fn with_siblings(node: &Value, target: Value) -> Value {
+    let mut merged = target;
     let Some(target) = merged.as_object_mut() else {
         return merged;
     };
@@ -180,8 +177,8 @@ fn ref_name(node: &Value) -> Option<&str> {
 }
 
 /// The schema `node` refers to, through any chain of local references resolved as JSON Pointers
-/// into `root`, or `node` when it refers to none. A chain that returns to a reference it passed
-/// stops there.
+/// into `root`, or `node` when it refers to none. The `properties` and `required` beside each
+/// reference on the way are kept. A chain that returns to a reference it passed stops there.
 fn resolve_ref(node: &Value, root: &Value) -> Value {
     let mut resolved = node.clone();
     let mut passed = Vec::new();
@@ -197,7 +194,7 @@ fn resolve_ref(node: &Value, root: &Value) -> Value {
             break;
         }
         passed.push(reference);
-        resolved = target.clone();
+        resolved = with_siblings(&resolved, target.clone());
     }
     resolved
 }
@@ -210,21 +207,37 @@ fn type_label(node: &Value, resolved: &Value, root: &Value, active: &mut Vec<Str
     } else {
         resolved
     };
-    match typed.get("type").and_then(Value::as_str) {
-        Some("array") => {
-            let Some(items) = typed.get("items") else {
-                return "array".to_string();
-            };
-            let item = resolve_ref(items, root);
-            let mut label = "array".to_string();
-            within(active, [ref_name(items)], |active| {
-                label = format!("array of {}", type_label(&item, &item, root, active));
-            });
-            label
-        }
-        Some(declared) => declared.to_string(),
-        None if node.get("$ref").is_some() => "object".to_string(),
-        None => "any".to_string(),
+    let declared = declared_types(typed);
+    if declared.is_empty() {
+        return if node.get("$ref").is_some() {
+            "object".to_string()
+        } else {
+            "any".to_string()
+        };
+    }
+    let mut labels = Vec::with_capacity(declared.len());
+    for name in declared {
+        let items = typed.get("items").filter(|_| name == "array");
+        let Some(items) = items else {
+            labels.push(name.to_string());
+            continue;
+        };
+        let item = resolve_ref(items, root);
+        let mut label = "array".to_string();
+        within(active, [ref_name(items)], |active| {
+            label = format!("array of {}", type_label(&item, &item, root, active));
+        });
+        labels.push(label);
+    }
+    labels.join(" or ")
+}
+
+/// The types `node` declares: its `type` name, or each name in its `type` list.
+fn declared_types(node: &Value) -> Vec<&str> {
+    match node.get("type") {
+        Some(Value::String(name)) => vec![name.as_str()],
+        Some(Value::Array(names)) => names.iter().filter_map(Value::as_str).collect(),
+        _ => Vec::new(),
     }
 }
 
@@ -250,8 +263,7 @@ fn enum_values(node: &Value) -> Vec<String> {
 }
 
 fn matches_object(node: &Value) -> bool {
-    matches!(node.get("type").and_then(Value::as_str), Some("object"))
-        || node.get("properties").is_some()
+    declared_types(node).contains(&"object") || node.get("properties").is_some()
 }
 
 /// Top-level summary text the schema declares (used to populate the
@@ -536,5 +548,45 @@ mod tests {
             .filter_map(|path| path.strip_prefix("child.").map(str::to_string))
             .collect::<Vec<_>>();
         assert_eq!(paths(&at_root), nested);
+    }
+
+    #[test]
+    fn properties_beside_every_reference_in_a_chain_are_walked() {
+        let schema = json!({
+            "$defs": {
+                "Base": { "type": "object", "properties": { "name": { "type": "string" } } },
+                "Alias": {
+                    "$ref": "#/$defs/Base",
+                    "properties": { "alias": { "type": "string" } },
+                    "required": ["alias"]
+                }
+            },
+            "type": "object",
+            "properties": { "item": { "$ref": "#/$defs/Alias" } }
+        });
+        let fields = fields(&schema);
+        assert!(fields.iter().any(|field| field.path == "item.name"));
+        let alias = fields.iter().find(|field| field.path == "item.alias");
+        assert!(alias.is_some_and(|field| field.required));
+    }
+
+    #[test]
+    fn a_type_list_is_walked_and_labelled_by_each_type() {
+        let schema = json!({
+            "type": "object",
+            "properties": {
+                "list": {
+                    "type": ["array", "null"],
+                    "items": { "type": ["object", "null"], "properties": { "name": { "type": "string" } } }
+                },
+                "label": { "type": ["string", "null"] }
+            }
+        });
+        let fields = fields(&schema);
+        assert!(fields.iter().any(|field| field.path == "list[].name"));
+        let list = fields.iter().find(|field| field.path == "list").unwrap();
+        assert!(list.field_type.contains("array of") && list.field_type.contains("null"));
+        let label = fields.iter().find(|field| field.path == "label").unwrap();
+        assert!(label.field_type.contains("string") && label.field_type.contains("null"));
     }
 }

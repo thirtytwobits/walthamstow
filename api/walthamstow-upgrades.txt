@@ -125,6 +125,7 @@ pub fn walthamstow_upgrades::publication::Replacement::vzip(self) -> V
 pub fn walthamstow_upgrades::publication::check_relative_path(path: &std::path::Path) -> anyhow::Result<()>
 pub fn walthamstow_upgrades::publication::file_hash(path: &std::path::Path) -> anyhow::Result<core::option::Option<alloc::string::String>>
 pub fn walthamstow_upgrades::publication::publish(durability: walthamstow_kernel::durability::WriteDurability, live: &std::path::Path, staged: &std::path::Path, replacements: &[walthamstow_upgrades::publication::Replacement]) -> anyhow::Result<()>
+pub fn walthamstow_upgrades::publication::read_regular(path: &std::path::Path) -> anyhow::Result<alloc::vec::Vec<u8>>
 pub mod walthamstow_upgrades::workspace
 pub struct walthamstow_upgrades::workspace::Operation
 pub walthamstow_upgrades::workspace::Operation::operation_id: alloc::string::String

@@ -46,7 +46,7 @@ pub fn work_dir(data_dir: &Path, operation_id: &str) -> Result<PathBuf> {
     if walthamstow_kernel::files::is_windows_device_name(operation_id) {
         bail!("{operation_id} names a Windows device, which no directory can be named.");
     }
-    Ok(JOURNAL.root(data_dir).join(operation_id))
+    Ok(JOURNAL.unlinked_root(data_dir)?.join(operation_id))
 }
 
 /// Where an upgrade stages the files it publishes.
@@ -130,7 +130,7 @@ pub fn finish(
 
 /// Finishes each authorised upgrade and discards staging no journal authorises.
 pub fn recover(root: &Path, data_dir: &Path, durability: WriteDurability) -> Result<()> {
-    let operations = match std::fs::read_dir(JOURNAL.root(data_dir)) {
+    let operations = match std::fs::read_dir(JOURNAL.unlinked_root(data_dir)?) {
         Ok(operations) => operations,
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(()),
         Err(error) => return Err(error.into()),
@@ -418,5 +418,23 @@ mod tests {
             error.to_string().contains("Invalid publication path"),
             "{error}"
         );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_linked_upgrade_journal_is_neither_recovered_nor_written() {
+        let workspace = tempfile::tempdir().unwrap();
+        let outside = tempfile::tempdir().unwrap();
+        for linked in ["journals", "journals/workspace-upgrades"] {
+            let data = tempfile::tempdir().unwrap();
+            let link = data.path().join(linked);
+            std::fs::create_dir_all(link.parent().unwrap()).unwrap();
+            std::os::unix::fs::symlink(outside.path(), &link).unwrap();
+            assert!(
+                recover(workspace.path(), data.path(), DURABILITY).is_err(),
+                "{linked}"
+            );
+            assert!(work_dir(data.path(), "an-upgrade").is_err(), "{linked}");
+        }
     }
 }

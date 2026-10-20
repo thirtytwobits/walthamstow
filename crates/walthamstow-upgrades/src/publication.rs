@@ -99,6 +99,12 @@ pub fn publish(
     let _publishing = PUBLISHING
         .lock()
         .unwrap_or_else(std::sync::PoisonError::into_inner);
+    if std::fs::symlink_metadata(staged)?.file_type().is_symlink() {
+        bail!(
+            "{} is a link, which a publication does not read through.",
+            staged.display()
+        );
+    }
     let mut publications = Vec::new();
     for replacement in replacements {
         check_relative_path(&replacement.path)?;
@@ -329,5 +335,16 @@ mod tests {
             runs.map(|run| run.join().unwrap())
         });
         assert_eq!(outcomes.iter().filter(|published| **published).count(), 1);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_linked_staging_directory_is_not_published() {
+        let (live, staged, replacements) = stage(&[("a.json", Some(b"old a"), b"new a")]);
+        let holder = tempfile::tempdir().unwrap();
+        let linked = holder.path().join("prepared");
+        std::os::unix::fs::symlink(staged.path(), &linked).unwrap();
+        assert!(publish(DURABILITY, live.path(), &linked, &replacements).is_err());
+        assert_eq!(std::fs::read(live.path().join("a.json")).unwrap(), b"old a");
     }
 }

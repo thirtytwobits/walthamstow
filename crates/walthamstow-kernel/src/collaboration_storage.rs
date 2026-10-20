@@ -533,12 +533,10 @@ impl CollaborationStoragePort for FileCollaborationStorage {
         let path = self.envelope_path(document);
         self.with_document_lock(document, || {
             let current = read_optional(&path)?;
-            if current.as_deref() == Some(bytes) && expected != Some(sha256_hex(bytes).as_str()) {
-                // A write that returned an error after its rename landed; it is settled now.
-                self.sync_entity_dir(&path)?;
-                return Ok(Some(sha256_hex(bytes)));
-            }
             if current.as_deref().map(sha256_hex).as_deref() != expected {
+                // What is there may be a write that returned an error after its rename landed;
+                // it is settled before the mismatch is reported.
+                self.sync_entity_dir(&path)?;
                 return Ok(None);
             }
             write_envelope(self.durability, &path, bytes)?;
@@ -1668,21 +1666,23 @@ mod tests {
     }
 
     #[test]
-    fn a_swap_retried_after_its_write_landed_reports_and_settles_it() {
+    fn a_stale_swap_is_refused_even_when_its_bytes_are_in_place() {
         for durability in [WriteDurability::Device, WriteDurability::System] {
             let root = tempfile::tempdir().unwrap();
             let storage = FileCollaborationStorage::new(root.path(), durability, clock());
             let id = document("one");
             let written = storage.compare_and_swap(&id, None, b"landed").unwrap();
             assert!(written.is_some());
-            assert_eq!(
-                storage.compare_and_swap(&id, None, b"landed").unwrap(),
-                written
-            );
+            for stale in [None, Some("stale")] {
+                assert!(storage
+                    .compare_and_swap(&id, stale, b"landed")
+                    .unwrap()
+                    .is_none());
+            }
             assert!(storage
-                .compare_and_swap(&id, None, b"other")
+                .compare_and_swap(&id, written.as_deref(), b"next")
                 .unwrap()
-                .is_none());
+                .is_some());
         }
     }
 

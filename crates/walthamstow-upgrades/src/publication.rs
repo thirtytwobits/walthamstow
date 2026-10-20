@@ -49,6 +49,22 @@ pub fn check_relative_path(path: &Path) -> Result<()> {
     Ok(())
 }
 
+/// The bytes of the regular file at `path`. Anything else there is refused unopened.
+pub fn read_regular(path: &Path) -> Result<Vec<u8>> {
+    if !std::fs::symlink_metadata(path)?.file_type().is_file() {
+        bail!(
+            "{} is not a regular file; it is not opened.",
+            path.display()
+        );
+    }
+    Ok(std::fs::read(path)?)
+}
+
+/// Held from a publication's first check to its last write, so two publications from one
+/// source cannot both pass their fences. One engine owns a workspace, so a lock within the
+/// process is enough.
+static PUBLISHING: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
 /// Refuses `path` beneath `root` when any part of it that exists is a link, so a write to it
 /// cannot leave `root`.
 fn refuse_links(root: &Path, path: &Path) -> Result<()> {
@@ -80,6 +96,9 @@ pub fn publish(
     staged: &Path,
     replacements: &[Replacement],
 ) -> Result<()> {
+    let _publishing = PUBLISHING
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
     let mut publications = Vec::new();
     for replacement in replacements {
         check_relative_path(&replacement.path)?;
@@ -98,7 +117,8 @@ pub fn publish(
                 replacement.path.display()
             );
         }
-        let bytes = std::fs::read(staged.join(&replacement.path))?;
+        refuse_links(staged, &replacement.path)?;
+        let bytes = read_regular(&staged.join(&replacement.path))?;
         if sha256_hex(&bytes) != replacement.target_hash {
             bail!(
                 "The staged {} does not match its journal.",
@@ -261,5 +281,53 @@ mod tests {
         let _special = std::os::unix::net::UnixListener::bind(live.path().join("a.json")).unwrap();
         let error = publish(DURABILITY, live.path(), staged.path(), &replacements).unwrap_err();
         assert!(error.to_string().contains("not a regular file"), "{error}");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_linked_staged_file_is_not_published() {
+        let outside = tempfile::tempdir().unwrap();
+        let (live, staged, replacements) = stage(&[("a.json", Some(b"old a"), b"new a")]);
+        std::fs::write(outside.path().join("a.json"), b"new a").unwrap();
+        std::fs::remove_file(staged.path().join("a.json")).unwrap();
+        std::os::unix::fs::symlink(outside.path().join("a.json"), staged.path().join("a.json"))
+            .unwrap();
+        assert!(publish(DURABILITY, live.path(), staged.path(), &replacements).is_err());
+        assert_eq!(std::fs::read(live.path().join("a.json")).unwrap(), b"old a");
+    }
+
+    #[test]
+    fn two_publications_from_one_source_cannot_both_succeed() {
+        let live = tempfile::tempdir().unwrap();
+        write_synced(DURABILITY, &live.path().join("a.json"), b"old").unwrap();
+        let stage_target = |target: &[u8]| {
+            let staged = tempfile::tempdir().unwrap();
+            write_synced(DURABILITY, &staged.path().join("a.json"), target).unwrap();
+            let replacement = Replacement {
+                path: PathBuf::from("a.json"),
+                source_hash: Some(sha256_hex(b"old")),
+                target_hash: sha256_hex(target),
+            };
+            (staged, replacement)
+        };
+        let (first, first_replacement) = stage_target(b"first");
+        let (second, second_replacement) = stage_target(b"second");
+        let start = std::sync::Barrier::new(2);
+        let outcomes = std::thread::scope(|scope| {
+            let runs = [
+                (first.path(), &first_replacement),
+                (second.path(), &second_replacement),
+            ]
+            .map(|(staged, replacement)| {
+                let start = &start;
+                let live = live.path();
+                scope.spawn(move || {
+                    start.wait();
+                    publish(DURABILITY, live, staged, std::slice::from_ref(replacement)).is_ok()
+                })
+            });
+            runs.map(|run| run.join().unwrap())
+        });
+        assert_eq!(outcomes.iter().filter(|published| **published).count(), 1);
     }
 }

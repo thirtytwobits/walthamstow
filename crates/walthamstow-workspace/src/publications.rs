@@ -34,7 +34,7 @@ struct Inner {
     finished: tokio::sync::Notify,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct Mark {
     entity: String,
@@ -144,21 +144,30 @@ impl PublicationJournal {
             .get(document)
             .map(|marked| marked.path.clone())
             .unwrap_or_else(|| self.inner.path(document));
-        // A mark held in memory whose file a failed clear removed is written again; one found
-        // in place is settled, since a failed mark may have left it unsynced.
-        let kept = path.try_exists().map_err(|error| internal(&path, error))?;
-        if kept {
+        let mark = Mark {
+            entity: document.entity.clone(),
+            resource_id: document.resource_id.clone(),
+        };
+        // A mark found in place is trusted only as a regular file naming `document`, and is
+        // settled first, since a failed mark may have left it unsynced. Anything else there,
+        // or nothing, is written over.
+        let held = match std::fs::symlink_metadata(&path) {
+            Ok(metadata) if metadata.file_type().is_file() => {
+                let bytes = std::fs::read(&path).map_err(|error| internal(&path, error))?;
+                serde_json::from_slice::<Mark>(&bytes).ok()
+            }
+            Ok(_) => None,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => None,
+            Err(error) => return Err(internal(&path, error)),
+        };
+        if held.as_ref() == Some(&mark) {
             self.inner
                 .durability
                 .sync_directory(&self.inner.root)
                 .map_err(|error| internal(&path, error))?;
         } else {
-            let mark = serde_json::to_vec(&Mark {
-                entity: document.entity.clone(),
-                resource_id: document.resource_id.clone(),
-            })
-            .map_err(|error| internal(&path, error))?;
-            walthamstow_kernel::durability::write_synced(self.inner.durability, &path, &mark)
+            let bytes = serde_json::to_vec(&mark).map_err(|error| internal(&path, error))?;
+            walthamstow_kernel::durability::write_synced(self.inner.durability, &path, &bytes)
                 .map_err(|error| internal(&path, error))?;
         }
         marked
@@ -447,5 +456,46 @@ mod tests {
         let retried = journal.mark(&document("held"));
         std::fs::set_permissions(&root, std::fs::Permissions::from_mode(0o700)).unwrap();
         assert!(retried.is_err());
+    }
+
+    #[test]
+    fn a_mark_found_naming_another_document_or_nothing_is_written_over() {
+        for found in [
+            &br#"{"entity":"Note","resource_id":"other"}"#[..],
+            b"not a mark",
+        ] {
+            let data_dir = tempfile::tempdir().unwrap();
+            let journal =
+                PublicationJournal::open(data_dir.path(), WriteDurability::System).unwrap();
+            drop(journal.mark(&document("held")).unwrap());
+            for entry in std::fs::read_dir(JOURNAL.root(data_dir.path())).unwrap() {
+                std::fs::write(entry.unwrap().path(), found).unwrap();
+            }
+            drop(journal.mark(&document("held")).unwrap());
+            let reopened =
+                PublicationJournal::open(data_dir.path(), WriteDurability::System).unwrap();
+            assert!(reopened.is_marked(&document("held")));
+            assert!(!reopened.is_marked(&document("other")));
+        }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_mark_found_as_a_link_is_written_over_and_its_target_left_alone() {
+        let data_dir = tempfile::tempdir().unwrap();
+        let outside = tempfile::tempdir().unwrap();
+        let journal = PublicationJournal::open(data_dir.path(), WriteDurability::System).unwrap();
+        drop(journal.mark(&document("held")).unwrap());
+        let target = outside.path().join("mark.json");
+        for entry in std::fs::read_dir(JOURNAL.root(data_dir.path())).unwrap() {
+            let mark = entry.unwrap().path();
+            std::fs::rename(&mark, &target).unwrap();
+            std::os::unix::fs::symlink(&target, &mark).unwrap();
+        }
+        let before = std::fs::read(&target).unwrap();
+        drop(journal.mark(&document("held")).unwrap());
+        assert_eq!(std::fs::read(&target).unwrap(), before);
+        let reopened = PublicationJournal::open(data_dir.path(), WriteDurability::System).unwrap();
+        assert!(reopened.is_marked(&document("held")));
     }
 }

@@ -327,7 +327,7 @@ mod tests {
     }
 
     #[test]
-    fn a_reference_into_legacy_definitions_is_walked() {
+    fn a_reference_into_draft_7_definitions_is_walked() {
         let schema = json!({
             "$schema": "http://json-schema.org/draft-07/schema#",
             "definitions": {

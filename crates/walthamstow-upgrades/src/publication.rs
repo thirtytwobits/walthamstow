@@ -34,15 +34,13 @@ pub fn file_hash(path: &Path) -> Result<Option<String>> {
     }
 }
 
-/// Refuses `path` unless it is relative and stays beneath the root it is joined to.
+/// Refuses `path` unless it is relative and names a file beneath the root it is joined to
+/// by its normal components alone, so no two spellings name one file.
 pub fn check_relative_path(path: &Path) -> Result<()> {
     if path.as_os_str().is_empty()
-        || path.components().any(|part| {
-            matches!(
-                part,
-                Component::ParentDir | Component::RootDir | Component::Prefix(_)
-            )
-        })
+        || path
+            .components()
+            .any(|part| !matches!(part, Component::Normal(_)))
     {
         bail!("Invalid publication path {}.", path.display());
     }
@@ -105,9 +103,19 @@ pub fn publish(
             staged.display()
         );
     }
-    let mut publications = Vec::new();
+    let mut named = std::collections::BTreeSet::new();
     for replacement in replacements {
         check_relative_path(&replacement.path)?;
+        // A file system that folds case gives paths differing only in case one file.
+        if !named.insert(replacement.path.to_string_lossy().to_lowercase()) {
+            bail!(
+                "{} is replaced more than once in one publication.",
+                replacement.path.display()
+            );
+        }
+    }
+    let mut publications = Vec::new();
+    for replacement in replacements {
         refuse_links(live, &replacement.path)?;
         let live_path = live.join(&replacement.path);
         let current = file_hash(&live_path)?;
@@ -354,5 +362,27 @@ mod tests {
         let absent = live.path().join("never-staged");
         publish(DURABILITY, live.path(), &absent, &[]).unwrap();
         assert!(!absent.exists());
+    }
+
+    #[test]
+    fn a_publication_naming_one_file_twice_is_refused_unwritten() {
+        for (first, second) in [
+            ("a.json", "./a.json"),
+            ("a.json", "A.json"),
+            ("a.json", "a.json"),
+        ] {
+            let (live, staged, mut replacements) = stage(&[(first, Some(b"old"), b"new")]);
+            replacements.push(Replacement {
+                path: PathBuf::from(second),
+                source_hash: Some(sha256_hex(b"old")),
+                target_hash: sha256_hex(b"new"),
+            });
+            let before = contents(live.path());
+            assert!(
+                publish(DURABILITY, live.path(), staged.path(), &replacements).is_err(),
+                "{first} and {second}"
+            );
+            assert_eq!(contents(live.path()), before);
+        }
     }
 }

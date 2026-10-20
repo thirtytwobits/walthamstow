@@ -1192,6 +1192,7 @@ pub struct walthamstow_kernel::journals::Staging(_)
 impl walthamstow_kernel::journals::Staging
 pub const fn walthamstow_kernel::journals::Staging::new(name: &'static str) -> Self
 pub fn walthamstow_kernel::journals::Staging::root(self, data_dir: &std::path::Path) -> std::path::PathBuf
+pub fn walthamstow_kernel::journals::Staging::unlinked_root(self, data_dir: &std::path::Path) -> std::io::error::Result<std::path::PathBuf>
 impl core::clone::Clone for walthamstow_kernel::journals::Staging
 pub fn walthamstow_kernel::journals::Staging::clone(&self) -> walthamstow_kernel::journals::Staging
 impl core::cmp::Eq for walthamstow_kernel::journals::Staging

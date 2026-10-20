@@ -50,19 +50,7 @@ impl Journal {
     /// The journal's directory, refused when it or the `journals` directory holding it is a
     /// link, so what is read from it and written to it stays under `data_dir`.
     pub fn unlinked_root(self, data_dir: &Path) -> std::io::Result<PathBuf> {
-        let journals = data_dir.join("journals");
-        let root = journals.join(self.0);
-        for path in [&journals, &root] {
-            if std::fs::symlink_metadata(path)
-                .is_ok_and(|metadata| metadata.file_type().is_symlink())
-            {
-                return Err(std::io::Error::other(format!(
-                    "{} is a link, which a journal does not follow.",
-                    path.display()
-                )));
-            }
-        }
-        Ok(root)
+        unlinked(&data_dir.join("journals"), self.0)
     }
 }
 
@@ -89,6 +77,26 @@ impl Staging {
     pub fn root(self, data_dir: &Path) -> PathBuf {
         data_dir.join("staging").join(self.0)
     }
+
+    /// The staging directory, refused when it or the `staging` directory holding it is a link,
+    /// so what is staged, promoted or cleaned there stays under `data_dir`.
+    pub fn unlinked_root(self, data_dir: &Path) -> std::io::Result<PathBuf> {
+        unlinked(&data_dir.join("staging"), self.0)
+    }
+}
+
+/// `parent` joined with `name`, refused when either is a link.
+fn unlinked(parent: &Path, name: &str) -> std::io::Result<PathBuf> {
+    let root = parent.join(name);
+    for path in [parent, root.as_path()] {
+        if std::fs::symlink_metadata(path).is_ok_and(|metadata| metadata.file_type().is_symlink()) {
+            return Err(std::io::Error::other(format!(
+                "{} is a link, which the engine does not follow.",
+                path.display()
+            )));
+        }
+    }
+    Ok(root)
 }
 
 #[cfg(test)]
@@ -149,6 +157,25 @@ mod tests {
         assert_eq!(
             journal.unlinked_root(data.path()).unwrap(),
             journal.root(data.path())
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn staging_reached_through_a_link_is_refused() {
+        let staging = Staging::new("an-operation");
+        let outside = tempfile::tempdir().unwrap();
+        for linked in ["staging", "staging/an-operation"] {
+            let data = tempfile::tempdir().unwrap();
+            let link = data.path().join(linked);
+            std::fs::create_dir_all(link.parent().unwrap()).unwrap();
+            std::os::unix::fs::symlink(outside.path(), &link).unwrap();
+            assert!(staging.unlinked_root(data.path()).is_err(), "{linked}");
+        }
+        let data = tempfile::tempdir().unwrap();
+        assert_eq!(
+            staging.unlinked_root(data.path()).unwrap(),
+            staging.root(data.path())
         );
     }
 }

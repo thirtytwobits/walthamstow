@@ -66,6 +66,14 @@ fn resolve_directory(
     {
         bail!("{name} must stay within the workspace root.");
     }
+    // Windows reserves its device names in every directory, with any extension.
+    if relative.components().any(|component| {
+        let component = component.as_os_str().to_string_lossy();
+        let stem = component.split('.').next().unwrap_or_default();
+        walthamstow_kernel::files::is_windows_device_name(stem)
+    }) {
+        bail!("{name} names a Windows device, which no directory can be named.");
+    }
     let normalised = relative
         .components()
         .map(|component| component.as_os_str().to_string_lossy())
@@ -250,5 +258,18 @@ mod tests {
                 "{configured:?}: {message}"
             );
         }
+    }
+
+    #[test]
+    fn a_directory_named_as_a_windows_device_is_refused() {
+        let root = tempfile::tempdir().unwrap();
+        for configured in ["con", "data/AUX", "data/com1/notes", "nul.d"] {
+            let error = resolve_directories(root.path(), [("documents", configured)]).unwrap_err();
+            assert!(
+                error.to_string().contains("documents"),
+                "{configured}: {error}"
+            );
+        }
+        resolve_directories(root.path(), [("documents", "data/console")]).unwrap();
     }
 }

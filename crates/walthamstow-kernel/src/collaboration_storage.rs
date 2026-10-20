@@ -6,10 +6,14 @@
 //! Each envelope is one JSON file under its entity's directory. A write goes
 //! through a temporary file, a sync and a rename under a per-document lock
 //! file, so a reader never sees a partial envelope and two writers never
-//! interleave. The store's records, its audit stream in `audit.ndjson` and
-//! quarantined evidence under `quarantine/`, are kept where the adapter is
-//! told to keep them: beside the envelopes unless another place is given.
+//! interleave. Each entity's directory names the entity it holds in its
+//! `entity` file, so two entities whose names map to one directory are
+//! refused rather than mixed. The store's records, its audit stream in
+//! `audit.ndjson` and quarantined evidence under `quarantine/`, are kept where
+//! the adapter is told to keep them: beside the envelopes unless another place
+//! is given.
 
+use crate::clock::WallClock;
 use crate::durability::WriteDurability;
 use crate::hashing::sha256_hex;
 use anyhow::{anyhow, Context, Result as AnyhowResult};
@@ -20,7 +24,7 @@ use clerkenwell_store::{
 };
 use fs2::FileExt;
 use std::fs::OpenOptions;
-use std::io::Write;
+use std::io::{Read, Seek, SeekFrom, Write};
 use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
@@ -29,6 +33,8 @@ const AUDIT_LOCK_FILE: &str = "audit.lock";
 const QUARANTINE_DIR: &str = "quarantine";
 const FORMAT_MARKER_FILE: &str = "envelope-format";
 const PEER_KEY_FILE: &str = "peer-key";
+const ENTITY_FILE: &str = "entity";
+const ENTITY_LOCK_FILE: &str = "entity.lock";
 
 /// How long a file must have gone unchanged before its metadata alone shows
 /// any later change: a file timestamp can lag the clock by a timer tick, or by
@@ -45,16 +51,19 @@ pub struct FileCollaborationStorage {
     records: PathBuf,
     /// How far each write goes before the store relies on it.
     durability: WriteDurability,
+    /// Where evidence names and metadata stamps read the time.
+    clock: WallClock,
 }
 
 impl FileCollaborationStorage {
     /// Envelopes under `root`, with the store's records beside them, written as
-    /// durably as `durability` asks.
-    pub fn new(root: &Path, durability: WriteDurability) -> Self {
+    /// durably as `durability` asks, reading the time from `clock`.
+    pub fn new(root: &Path, durability: WriteDurability, clock: WallClock) -> Self {
         Self {
             root: root.to_path_buf(),
             records: root.to_path_buf(),
             durability,
+            clock,
         }
     }
 
@@ -68,6 +77,37 @@ impl FileCollaborationStorage {
 
     fn entity_dir(&self, entity: &str) -> PathBuf {
         self.root.join(safe_entity_name(entity))
+    }
+
+    /// Refuses `entity` when its directory names another entity.
+    fn check_entity(&self, entity: &str) -> StoreResult<()> {
+        let marker = self.entity_dir(entity).join(ENTITY_FILE);
+        match read_optional(&marker)? {
+            Some(held) if held != entity.as_bytes() => Err(StoreError::internal(format!(
+                "The collaboration directory {} holds the entity \"{}\", not \"{entity}\".",
+                self.entity_dir(entity).display(),
+                String::from_utf8_lossy(&held)
+            ))),
+            _ => Ok(()),
+        }
+    }
+
+    /// Names `entity` as the one its directory holds before anything is written
+    /// there, or refuses it when the directory names another.
+    fn claim_entity(&self, entity: &str) -> StoreResult<()> {
+        let directory = self.entity_dir(entity);
+        let marker = directory.join(ENTITY_FILE);
+        if read_optional(&marker)?.is_some() {
+            return self.check_entity(entity);
+        }
+        with_lock(
+            &directory.join(ENTITY_LOCK_FILE),
+            "the entity directory",
+            || match read_optional(&marker)? {
+                Some(_) => self.check_entity(entity),
+                None => write_envelope(self.durability, &marker, entity.as_bytes()),
+            },
+        )
     }
 
     fn envelope_path(&self, document: &CollaborationDocumentId) -> PathBuf {
@@ -104,9 +144,18 @@ impl FileCollaborationStorage {
         )
     }
 
+    /// Every audit record the stream holds. A final line without its newline is
+    /// an append that did not finish, and is not a record.
     fn audit_records(&self) -> StoreResult<Vec<CollaborationAuditRecord>> {
-        match std::fs::read_to_string(self.records.join(AUDIT_FILE)) {
-            Ok(contents) => contents
+        match std::fs::read(self.records.join(AUDIT_FILE)) {
+            Ok(bytes) => {
+                let complete = bytes
+                    .iter()
+                    .rposition(|byte| *byte == b'\n')
+                    .map_or(&bytes[..0], |end| &bytes[..=end]);
+                std::str::from_utf8(complete).map_err(|error| {
+                    StoreError::internal(format!("Invalid collaboration audit stream: {error}"))
+                })?
                 .lines()
                 .filter(|line| !line.trim().is_empty())
                 .map(|line| {
@@ -114,7 +163,8 @@ impl FileCollaborationStorage {
                         StoreError::internal(format!("Invalid collaboration audit record: {error}"))
                     })
                 })
-                .collect(),
+                .collect()
+            }
             Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(Vec::new()),
             Err(error) => Err(StoreError::internal(format!(
                 "Could not read the collaboration audit stream: {error}"
@@ -204,6 +254,38 @@ fn safe_entity_name(entity: &str) -> String {
         .collect()
 }
 
+/// `text` as one path component: every character but an ASCII letter, digit, `-`
+/// or `_` becomes `-`.
+fn path_component(text: &str) -> String {
+    text.chars()
+        .map(|character| {
+            if character.is_ascii_alphanumeric() || character == '-' || character == '_' {
+                character
+            } else {
+                '-'
+            }
+        })
+        .collect()
+}
+
+/// How many of `file`'s bytes end with its last newline.
+fn complete_length(file: &mut std::fs::File) -> std::io::Result<u64> {
+    const CHUNK: u64 = 4096;
+    let mut end = file.seek(SeekFrom::End(0))?;
+    let mut buffer = vec![0u8; CHUNK as usize];
+    while end > 0 {
+        let start = end.saturating_sub(CHUNK);
+        let chunk = &mut buffer[..(end - start) as usize];
+        file.seek(SeekFrom::Start(start))?;
+        file.read_exact(chunk)?;
+        if let Some(newline) = chunk.iter().rposition(|byte| *byte == b'\n') {
+            return Ok(start + newline as u64 + 1);
+        }
+        end = start;
+    }
+    Ok(0)
+}
+
 /// When a file last changed, and a stamp of its metadata. The stamp differs
 /// from every earlier stamp of the file once its bytes change, provided the
 /// earlier one was taken at least [`SETTLED_METADATA_AGE`] after the file last
@@ -244,6 +326,7 @@ impl CollaborationStoragePort for FileCollaborationStorage {
     }
 
     fn sources(&self, entity: &str) -> StoreResult<Vec<String>> {
+        self.check_entity(entity)?;
         let directory = self.entity_dir(entity);
         let entries = match std::fs::read_dir(&directory) {
             Ok(entries) => entries,
@@ -293,7 +376,8 @@ impl CollaborationStoragePort for FileCollaborationStorage {
             }
         };
         Ok(metadata_stamp(&metadata).and_then(|(changed, stamp)| {
-            SystemTime::now()
+            self.clock
+                .now()
                 .duration_since(changed)
                 .is_ok_and(|age| age >= SETTLED_METADATA_AGE)
                 .then_some(stamp)
@@ -306,6 +390,7 @@ impl CollaborationStoragePort for FileCollaborationStorage {
         expected: Option<&str>,
         bytes: &[u8],
     ) -> StoreResult<Option<String>> {
+        self.claim_entity(&document.entity)?;
         let path = self.envelope_path(document);
         self.with_document_lock(document, || {
             let current = read_optional(&path)?;
@@ -322,6 +407,7 @@ impl CollaborationStoragePort for FileCollaborationStorage {
         document: &CollaborationDocumentId,
         expected: &str,
     ) -> StoreResult<bool> {
+        self.check_entity(&document.entity)?;
         let path = self.envelope_path(document);
         self.with_document_lock(document, || {
             let current = read_optional(&path)?;
@@ -329,6 +415,15 @@ impl CollaborationStoragePort for FileCollaborationStorage {
                 return Ok(false);
             }
             remove_file_if_exists(&path)?;
+            let directory = path.parent().expect("an envelope lies in its entity's directory");
+            self.durability
+                .sync_directory(directory)
+                .map_err(|error| {
+                    StoreError::internal(format!(
+                        "Could not record the removal of {}: {error}",
+                        path.display()
+                    ))
+                })?;
             Ok(true)
         })
     }
@@ -340,11 +435,12 @@ impl CollaborationStoragePort for FileCollaborationStorage {
         bytes: &[u8],
     ) -> StoreResult<String> {
         let destination = self.records.join(QUARANTINE_DIR).join(format!(
-            "{}-{}-{}-{}.json",
+            "{}-{}-{}-{}-{}.json",
             safe_entity_name(&document.entity),
             sha256_hex(document.resource_id.as_bytes()),
-            chrono::Utc::now().format("%Y%m%dT%H%M%S%.3fZ"),
-            label
+            self.clock.utc().format("%Y%m%dT%H%M%S%.3fZ"),
+            path_component(label),
+            uuid::Uuid::new_v4().simple()
         ));
         write_envelope(self.durability, &destination, bytes)?;
         Ok(destination.display().to_string())
@@ -357,21 +453,33 @@ impl CollaborationStoragePort for FileCollaborationStorage {
             line.push(b'\n');
             let mut audit = OpenOptions::new()
                 .create(true)
-                .append(true)
+                .truncate(false)
+                .read(true)
+                .write(true)
                 .open(self.records.join(AUDIT_FILE))
                 .map_err(|error| {
                     StoreError::internal(format!(
                         "Could not open the collaboration audit stream: {error}"
                     ))
                 })?;
-            audit
-                .write_all(&line)
-                .and_then(|()| self.durability.sync(&audit))
-                .map_err(|error| {
-                    StoreError::internal(format!(
-                        "Could not append to the collaboration audit stream: {error}"
-                    ))
-                })
+            // An append that did not finish was never acknowledged: it goes, and so
+            // does this one if it does not finish.
+            let complete = complete_length(&mut audit).map_err(|error| {
+                StoreError::internal(format!(
+                    "Could not read the collaboration audit stream: {error}"
+                ))
+            })?;
+            let appended = audit
+                .set_len(complete)
+                .and_then(|()| audit.seek(SeekFrom::Start(complete)))
+                .and_then(|_| audit.write_all(&line))
+                .and_then(|()| self.durability.sync(&audit));
+            appended.map_err(|error| {
+                let _ = audit.set_len(complete);
+                StoreError::internal(format!(
+                    "Could not append to the collaboration audit stream: {error}"
+                ))
+            })
         })
     }
 
@@ -492,8 +600,9 @@ pub fn peer_key(data_dir: &Path, durability: WriteDurability) -> AnyhowResult<Pe
             })?,
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
             let secret = generate_peer_secret();
-            std::fs::create_dir_all(data_dir)?;
+            crate::durability::create_dir_all_synced(durability, data_dir)?;
             write_secret(durability, &path, &secret)
+                .and_then(|()| durability.sync_directory(data_dir))
                 .with_context(|| format!("writing the peer key {}", path.display()))?;
             secret
         }
@@ -546,6 +655,15 @@ mod tests {
         CollaborationDocumentId::new("Note", resource_id)
     }
 
+    /// A clock stopped at one moment.
+    fn clock_at(moment: SystemTime) -> WallClock {
+        WallClock::new(move || moment)
+    }
+
+    fn clock() -> WallClock {
+        clock_at(UNIX_EPOCH + Duration::from_secs(1_800_000_000))
+    }
+
     fn record(actor: &str, resource_id: &str, at: u128) -> CollaborationAuditRecord {
         CollaborationAuditRecord {
             actor: Principal::new(actor, ActorKind::Human),
@@ -563,7 +681,7 @@ mod tests {
     #[test]
     fn a_swap_replaces_only_the_version_the_writer_read() {
         let root = tempfile::tempdir().unwrap();
-        let storage = FileCollaborationStorage::new(root.path(), WriteDurability::System);
+        let storage = FileCollaborationStorage::new(root.path(), WriteDurability::System, clock());
         let id = document("one");
         let first = storage.compare_and_swap(&id, None, b"first").unwrap();
         assert!(first.is_some(), "a swap against nothing stored writes");
@@ -591,7 +709,7 @@ mod tests {
     #[test]
     fn a_remove_takes_only_the_version_the_writer_read() {
         let root = tempfile::tempdir().unwrap();
-        let storage = FileCollaborationStorage::new(root.path(), WriteDurability::System);
+        let storage = FileCollaborationStorage::new(root.path(), WriteDurability::System, clock());
         let id = document("one");
         let version = storage
             .compare_and_swap(&id, None, b"kept")
@@ -607,7 +725,7 @@ mod tests {
     #[test]
     fn sources_name_every_stored_envelope_of_an_entity() {
         let root = tempfile::tempdir().unwrap();
-        let storage = FileCollaborationStorage::new(root.path(), WriteDurability::System);
+        let storage = FileCollaborationStorage::new(root.path(), WriteDurability::System, clock());
         for resource_id in ["b", "a", "c"] {
             storage
                 .compare_and_swap(&document(resource_id), None, resource_id.as_bytes())
@@ -629,7 +747,7 @@ mod tests {
     #[test]
     fn preserved_evidence_is_kept_apart_from_the_envelope() {
         let root = tempfile::tempdir().unwrap();
-        let storage = FileCollaborationStorage::new(root.path(), WriteDurability::System);
+        let storage = FileCollaborationStorage::new(root.path(), WriteDurability::System, clock());
         let id = document("one");
         let place = storage.preserve(&id, "quarantine", b"evidence").unwrap();
         assert_eq!(std::fs::read(&place).unwrap(), b"evidence");
@@ -640,7 +758,7 @@ mod tests {
     #[test]
     fn audit_records_are_kept_in_order_and_selected_by_query() {
         let root = tempfile::tempdir().unwrap();
-        let storage = FileCollaborationStorage::new(root.path(), WriteDurability::System);
+        let storage = FileCollaborationStorage::new(root.path(), WriteDurability::System, clock());
         assert!(storage
             .audit(&CollaborationAuditQuery::default())
             .unwrap()
@@ -680,7 +798,7 @@ mod tests {
     #[test]
     fn discarding_audit_records_keeps_those_from_the_cutoff_on() {
         let root = tempfile::tempdir().unwrap();
-        let storage = FileCollaborationStorage::new(root.path(), WriteDurability::System);
+        let storage = FileCollaborationStorage::new(root.path(), WriteDurability::System, clock());
         storage.append_audit(&record("ada", "one", 10)).unwrap();
         storage.append_audit(&record("ada", "one", 20)).unwrap();
         storage.append_audit(&record("ada", "one", 30)).unwrap();
@@ -710,7 +828,7 @@ mod tests {
             !root.join("note/old.json").exists(),
             "a root without this build's marker is removed whole"
         );
-        let storage = FileCollaborationStorage::new(&root, WriteDurability::System);
+        let storage = FileCollaborationStorage::new(&root, WriteDurability::System, clock());
         let current = format!("{{\"envelope_version\":{ENVELOPE_VERSION}}}");
         storage
             .compare_and_swap(&document("kept"), None, current.as_bytes())
@@ -749,7 +867,7 @@ mod tests {
     fn records_go_where_the_adapter_is_told_and_leave_the_envelopes_alone() {
         let root = tempfile::tempdir().unwrap();
         let records = tempfile::tempdir().unwrap();
-        let storage = FileCollaborationStorage::new(root.path(), WriteDurability::System)
+        let storage = FileCollaborationStorage::new(root.path(), WriteDurability::System, clock())
             .with_records_at(records.path());
         storage
             .compare_and_swap(&document("one"), None, b"kept")
@@ -791,7 +909,7 @@ mod tests {
             foreign_envelope_format(&root.path().join("absent")).unwrap(),
             None
         );
-        let storage = FileCollaborationStorage::new(root.path(), WriteDurability::System);
+        let storage = FileCollaborationStorage::new(root.path(), WriteDurability::System, clock());
         let current = format!("{{\"envelope_version\":{ENVELOPE_VERSION}}}");
         storage
             .compare_and_swap(&document("current"), None, current.as_bytes())
@@ -860,5 +978,148 @@ mod tests {
             peer_key(data.path(), WriteDurability::System).is_err(),
             "a short key is refused"
         );
+    }
+    #[test]
+    fn a_removal_holds_under_each_durability() {
+        for durability in [WriteDurability::Device, WriteDurability::System] {
+            let root = tempfile::tempdir().unwrap();
+            let storage = FileCollaborationStorage::new(root.path(), durability, clock());
+            let id = document("one");
+            let version = storage
+                .compare_and_swap(&id, None, b"kept")
+                .unwrap()
+                .unwrap();
+            assert!(storage.compare_and_remove(&id, &version).unwrap());
+            assert!(storage.read(&storage.source(&id)).unwrap().is_none());
+            assert!(storage.sources("Note").unwrap().is_empty());
+        }
+    }
+
+    #[test]
+    fn evidence_preserved_twice_at_one_moment_under_one_label_is_kept_twice() {
+        let root = tempfile::tempdir().unwrap();
+        let storage = FileCollaborationStorage::new(root.path(), WriteDurability::System, clock());
+        let id = document("one");
+        let first = storage.preserve(&id, "corrupt", b"first").unwrap();
+        let second = storage.preserve(&id, "corrupt", b"second").unwrap();
+        assert_ne!(first, second);
+        assert_eq!(std::fs::read(&first).unwrap(), b"first");
+        assert_eq!(std::fs::read(&second).unwrap(), b"second");
+    }
+
+    #[test]
+    fn a_label_cannot_lead_evidence_out_of_quarantine() {
+        let root = tempfile::tempdir().unwrap();
+        let storage = FileCollaborationStorage::new(root.path(), WriteDurability::System, clock());
+        let quarantine = root.path().join(QUARANTINE_DIR);
+        for label in ["x/../../../outside", "..", "a\\b", "/absolute"] {
+            let place = PathBuf::from(storage.preserve(&document("one"), label, b"kept").unwrap());
+            assert_eq!(place.parent(), Some(quarantine.as_path()), "{label:?}");
+            assert_eq!(std::fs::read(&place).unwrap(), b"kept");
+        }
+        let held = std::fs::read_dir(root.path())
+            .unwrap()
+            .map(|entry| entry.unwrap().file_name())
+            .collect::<Vec<_>>();
+        assert_eq!(held, [std::ffi::OsString::from(QUARANTINE_DIR)]);
+    }
+
+    #[test]
+    fn a_torn_audit_line_hides_no_record_and_the_next_append_drops_it() {
+        let root = tempfile::tempdir().unwrap();
+        let storage = FileCollaborationStorage::new(root.path(), WriteDurability::System, clock());
+        storage.append_audit(&record("ada", "one", 10)).unwrap();
+        storage.append_audit(&record("bob", "two", 20)).unwrap();
+        let stream = root.path().join(AUDIT_FILE);
+        let mut torn = OpenOptions::new().append(true).open(&stream).unwrap();
+        torn.write_all(br#"{"actor":{"id":"cy"#).unwrap();
+        drop(torn);
+
+        let read = |storage: &FileCollaborationStorage| {
+            storage
+                .audit(&CollaborationAuditQuery::default())
+                .unwrap()
+                .iter()
+                .map(|record| record.timestamp_unix_ms)
+                .collect::<Vec<_>>()
+        };
+        assert_eq!(read(&storage), vec![10, 20]);
+        storage.append_audit(&record("cy", "three", 30)).unwrap();
+        assert_eq!(read(&storage), vec![10, 20, 30]);
+        let text = std::fs::read_to_string(&stream).unwrap();
+        assert!(text.ends_with('\n'));
+        assert!(text
+            .lines()
+            .all(|line| serde_json::from_str::<CollaborationAuditRecord>(line).is_ok()));
+    }
+
+    #[test]
+    fn a_new_peer_key_in_a_missing_directory_is_kept_under_each_durability() {
+        for durability in [WriteDurability::Device, WriteDurability::System] {
+            let data = tempfile::tempdir().unwrap();
+            let data_dir = data.path().join("engine/data");
+            peer_key(&data_dir, durability).unwrap();
+            let text = std::fs::read_to_string(data_dir.join(PEER_KEY_FILE)).unwrap();
+            peer_key(&data_dir, durability).unwrap();
+            assert_eq!(
+                std::fs::read_to_string(data_dir.join(PEER_KEY_FILE)).unwrap(),
+                text
+            );
+        }
+    }
+
+    #[test]
+    fn two_entities_whose_names_share_a_directory_are_refused() {
+        let root = tempfile::tempdir().unwrap();
+        let storage = FileCollaborationStorage::new(root.path(), WriteDurability::System, clock());
+        let kept = storage
+            .compare_and_swap(&document("one"), None, b"kept")
+            .unwrap()
+            .unwrap();
+        let other = CollaborationDocumentId::new("note", "one");
+        assert!(storage.compare_and_swap(&other, None, b"other").is_err());
+        assert!(storage.compare_and_remove(&other, &kept).is_err());
+        assert!(storage.sources("note").is_err());
+        let stored = storage.read(&storage.source(&document("one"))).unwrap();
+        assert_eq!(stored.unwrap().bytes, b"kept");
+        assert_eq!(storage.sources("Note").unwrap().len(), 1);
+    }
+
+    #[test]
+    fn a_directory_that_names_no_entity_is_claimed_by_its_first_writer() {
+        let root = tempfile::tempdir().unwrap();
+        let storage = FileCollaborationStorage::new(root.path(), WriteDurability::System, clock());
+        let directory = root.path().join(safe_entity_name("Note"));
+        std::fs::create_dir_all(&directory).unwrap();
+        assert!(storage.sources("Note").unwrap().is_empty());
+        assert!(!directory.join(ENTITY_FILE).exists(), "a read writes nothing");
+        storage
+            .compare_and_swap(&document("one"), None, b"kept")
+            .unwrap()
+            .unwrap();
+        assert!(storage
+            .compare_and_swap(&CollaborationDocumentId::new("note", "two"), None, b"x")
+            .is_err());
+    }
+
+    #[test]
+    fn a_stamp_is_given_only_once_the_storage_clock_says_the_file_has_settled() {
+        let root = tempfile::tempdir().unwrap();
+        let id = document("one");
+        FileCollaborationStorage::new(root.path(), WriteDurability::System, clock())
+            .compare_and_swap(&id, None, b"kept")
+            .unwrap();
+        let before = FileCollaborationStorage::new(
+            root.path(),
+            WriteDurability::System,
+            clock_at(UNIX_EPOCH),
+        );
+        assert!(before.stamp(&before.source(&id)).unwrap().is_none());
+        let long_after = FileCollaborationStorage::new(
+            root.path(),
+            WriteDurability::System,
+            clock_at(UNIX_EPOCH + Duration::from_secs(u32::MAX as u64 * 4)),
+        );
+        assert!(long_after.stamp(&long_after.source(&id)).unwrap().is_some());
     }
 }

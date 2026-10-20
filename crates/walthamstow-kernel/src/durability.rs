@@ -37,24 +37,30 @@ impl WriteDurability {
     }
 }
 
+/// Creates `directory` and every missing ancestor, each new entry durable as
+/// `durability` asks once it returns.
+pub fn create_dir_all_synced(durability: WriteDurability, directory: &Path) -> io::Result<()> {
+    let mut missing = Vec::new();
+    let mut ancestor = directory;
+    while !ancestor.try_exists()? {
+        missing.push(ancestor);
+        ancestor = ancestor
+            .parent()
+            .ok_or_else(|| io::Error::other("Missing directory ancestor."))?;
+    }
+    std::fs::create_dir_all(directory)?;
+    for created in missing.into_iter().rev() {
+        durability.sync_directory(created.parent().expect("a created directory has a parent"))?;
+    }
+    Ok(())
+}
+
 /// Writes `bytes` to `path` by a rename, durable as `durability` asks once it
 /// returns, with any directory it had to create.
 pub fn write_synced(durability: WriteDurability, path: &Path, bytes: &[u8]) -> anyhow::Result<()> {
     use std::io::Write;
     if let Some(parent) = path.parent() {
-        let mut missing = Vec::new();
-        let mut ancestor = parent;
-        while !ancestor.try_exists()? {
-            missing.push(ancestor);
-            ancestor = ancestor
-                .parent()
-                .ok_or_else(|| anyhow::anyhow!("Missing directory ancestor."))?;
-        }
-        std::fs::create_dir_all(parent)?;
-        // Persist each new directory entry before relying on files beneath it.
-        for directory in missing.into_iter().rev() {
-            durability.sync_directory(directory.parent().expect("directory ancestor"))?;
-        }
+        create_dir_all_synced(durability, parent)?;
     }
     let tmp = path.with_extension(format!("{}.tmp", uuid::Uuid::new_v4()));
     let mut file = std::fs::OpenOptions::new()
@@ -74,6 +80,19 @@ pub fn write_synced(durability: WriteDurability, path: &Path, bytes: &[u8]) -> a
 mod tests {
     use super::WriteDurability;
     use std::io::Write;
+
+    #[test]
+    fn each_durability_creates_every_missing_directory_and_keeps_existing_ones() {
+        for durability in [WriteDurability::Device, WriteDurability::System] {
+            let dir = tempfile::tempdir().expect("tempdir");
+            let nested = dir.path().join("a/b/c");
+            super::create_dir_all_synced(durability, &nested).expect("create");
+            assert!(nested.is_dir());
+            std::fs::write(nested.join("kept"), b"kept").expect("write");
+            super::create_dir_all_synced(durability, &nested).expect("create again");
+            assert_eq!(std::fs::read(nested.join("kept")).expect("read"), b"kept");
+        }
+    }
 
     #[test]
     fn each_durability_keeps_what_was_written_to_a_file_and_a_directory() {

@@ -18,10 +18,17 @@ pub struct Replacement {
     pub target_hash: String,
 }
 
-/// The hash of the file at `path`, or `None` when there is none.
+/// The hash of the file at `path`, or `None` when there is none. Anything there but a regular
+/// file is refused unopened.
 pub fn file_hash(path: &Path) -> Result<Option<String>> {
-    match std::fs::read(path) {
-        Ok(bytes) => Ok(Some(sha256_hex(&bytes))),
+    match std::fs::symlink_metadata(path) {
+        Ok(metadata) if !metadata.file_type().is_file() => {
+            bail!(
+                "{} is not a regular file; it is not opened.",
+                path.display()
+            )
+        }
+        Ok(_) => Ok(Some(sha256_hex(&std::fs::read(path)?))),
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(None),
         Err(error) => Err(error.into()),
     }
@@ -245,5 +252,14 @@ mod tests {
                 b"old a"
             );
         }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_special_live_file_refuses_the_publication_unopened() {
+        let (live, staged, replacements) = stage(&[("a.json", None, b"new a")]);
+        let _special = std::os::unix::net::UnixListener::bind(live.path().join("a.json")).unwrap();
+        let error = publish(DURABILITY, live.path(), staged.path(), &replacements).unwrap_err();
+        assert!(error.to_string().contains("not a regular file"), "{error}");
     }
 }

@@ -88,6 +88,10 @@ pub fn resolve_mount_path(root: &Path, requested_path: &str) -> KernelResult<Pat
         }
     }
 
+    let rest = joined
+        .strip_prefix(ancestor)
+        .expect("the deepest entry present prefixes the path")
+        .to_path_buf();
     let ancestor = match ancestor.canonicalize() {
         Ok(ancestor) => ancestor,
         // A link to nothing cannot be shown to stay within the mount.
@@ -103,7 +107,8 @@ pub fn resolve_mount_path(root: &Path, requested_path: &str) -> KernelResult<Pat
             "Mount paths must stay within the mount root.",
         ));
     }
-    Ok(joined)
+    // Held where the links on the way lead now, so a link changed later does not move it.
+    Ok(ancestor.join(rest))
 }
 
 fn is_link(path: &Path) -> bool {
@@ -218,7 +223,11 @@ mod tests {
             .expect("missing in-root descendant resolves");
         assert_eq!(
             missing,
-            dir.path().join("data/assets/album/generated/new.png")
+            dir.path()
+                .join("data/assets/album")
+                .canonicalize()
+                .expect("canonical album")
+                .join("generated/new.png")
         );
 
         let traversal = resolve_mount_path(&mount_root_dir, "../secrets.txt")
@@ -257,6 +266,24 @@ mod tests {
             let error = resolve_mount_path(&mount_root_dir, requested).expect_err(requested);
             assert_eq!(error.code, "invalid_request", "{requested}");
         }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_missing_path_through_a_link_is_held_where_the_link_led() {
+        let dir = make_root();
+        let mount_root_dir = dir.path().join("data/assets");
+        std::os::unix::fs::symlink(mount_root_dir.join("album"), mount_root_dir.join("alias"))
+            .expect("symlink");
+        let held = resolve_mount_path(&mount_root_dir, "alias/new/upload.png").expect("resolves");
+        let album = mount_root_dir.join("album").canonicalize().expect("album");
+        assert_eq!(held, album.join("new/upload.png"));
+        std::fs::remove_file(mount_root_dir.join("alias")).expect("unlink");
+        std::os::unix::fs::symlink(dir.path(), mount_root_dir.join("alias")).expect("retarget");
+        assert!(
+            held.starts_with(&album),
+            "the held path does not follow the link"
+        );
     }
 
     #[cfg(unix)]

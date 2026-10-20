@@ -571,7 +571,8 @@ mod tests {
                 root,
                 DURABILITY,
                 WallClock::new(|| std::time::UNIX_EPOCH),
-            ),
+            )
+            .unwrap(),
             NOTE_PLANS,
             CommitPolicy {
                 retained_operations: 8,

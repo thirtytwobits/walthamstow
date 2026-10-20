@@ -249,7 +249,7 @@ pub fn walthamstow_kernel::clock::WallClock::vzip(self) -> V
 pub mod walthamstow_kernel::collaboration_storage
 pub struct walthamstow_kernel::collaboration_storage::FileCollaborationStorage
 impl walthamstow_kernel::collaboration_storage::FileCollaborationStorage
-pub fn walthamstow_kernel::collaboration_storage::FileCollaborationStorage::new(root: &std::path::Path, durability: walthamstow_kernel::durability::WriteDurability, clock: walthamstow_kernel::clock::WallClock) -> Self
+pub fn walthamstow_kernel::collaboration_storage::FileCollaborationStorage::new(root: &std::path::Path, durability: walthamstow_kernel::durability::WriteDurability, clock: walthamstow_kernel::clock::WallClock) -> anyhow::Result<Self>
 pub fn walthamstow_kernel::collaboration_storage::FileCollaborationStorage::with_records_at(self, records: &std::path::Path) -> Self
 impl clerkenwell_store::CollaborationStoragePort for walthamstow_kernel::collaboration_storage::FileCollaborationStorage
 pub fn walthamstow_kernel::collaboration_storage::FileCollaborationStorage::append_audit(&self, record: &clerkenwell_store::CollaborationAuditRecord) -> clerkenwell_store::error::StoreResult<()>

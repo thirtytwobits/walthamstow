@@ -46,6 +46,17 @@ pub fn resolve_directories<const N: usize>(
         .expect("one resolved directory for each configured one"))
 }
 
+/// Whether Windows can name a directory `component`: no character it reserves, no trailing
+/// dot or space, which it strips, and no device name, with or without an extension.
+fn windows_names(component: &str) -> bool {
+    let stem = component.split('.').next().unwrap_or_default();
+    !component
+        .chars()
+        .any(|character| character.is_ascii_control() || "<>:\"|?*".contains(character))
+        && !component.ends_with(['.', ' '])
+        && !walthamstow_kernel::files::is_windows_device_name(stem)
+}
+
 /// The directory `configured` names beneath `root_dir` with every link inside the root on
 /// the way to it resolved, so a link changed later does not move it, and where it leads in
 /// full.
@@ -66,13 +77,11 @@ fn resolve_directory(
     {
         bail!("{name} must stay within the workspace root.");
     }
-    // Windows reserves its device names in every directory, with any extension.
-    if relative.components().any(|component| {
-        let component = component.as_os_str().to_string_lossy();
-        let stem = component.split('.').next().unwrap_or_default();
-        walthamstow_kernel::files::is_windows_device_name(stem)
-    }) {
-        bail!("{name} names a Windows device, which no directory can be named.");
+    if relative
+        .components()
+        .any(|component| !windows_names(&component.as_os_str().to_string_lossy()))
+    {
+        bail!("{name} has a directory name Windows does not allow.");
     }
     let normalised = relative
         .components()
@@ -261,9 +270,20 @@ mod tests {
     }
 
     #[test]
-    fn a_directory_named_as_a_windows_device_is_refused() {
+    fn a_directory_name_windows_does_not_allow_is_refused() {
         let root = tempfile::tempdir().unwrap();
-        for configured in ["con", "data/AUX", "data/com1/notes", "nul.d"] {
+        for configured in [
+            "con",
+            "data/AUX",
+            "data/com1/notes",
+            "nul.d",
+            "media?",
+            "media.",
+            "media ",
+            "data/a:b",
+            "x<y",
+            "tab\tname",
+        ] {
             let error = resolve_directories(root.path(), [("documents", configured)]).unwrap_err();
             assert!(
                 error.to_string().contains("documents"),
@@ -271,5 +291,6 @@ mod tests {
             );
         }
         resolve_directories(root.path(), [("documents", "data/console")]).unwrap();
+        resolve_directories(root.path(), [("documents", ".media/v1.2")]).unwrap();
     }
 }

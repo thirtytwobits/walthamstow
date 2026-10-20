@@ -58,19 +58,34 @@ fn open_directory(directory: &Path) -> io::Result<File> {
 /// Creates `directory` and every missing ancestor, each new entry durable as
 /// `durability` asks once it returns.
 pub fn create_dir_all_synced(durability: WriteDurability, directory: &Path) -> io::Result<()> {
+    let directory = present(directory);
     let mut missing = Vec::new();
     let mut ancestor = directory;
     while !ancestor.try_exists()? {
         missing.push(ancestor);
-        ancestor = ancestor
-            .parent()
-            .ok_or_else(|| io::Error::other("Missing directory ancestor."))?;
+        ancestor =
+            parent(ancestor).ok_or_else(|| io::Error::other("Missing directory ancestor."))?;
     }
     std::fs::create_dir_all(directory)?;
     for created in missing.into_iter().rev() {
-        durability.sync_directory(created.parent().expect("a created directory has a parent"))?;
+        durability.sync_directory(parent(created).expect("a created directory has a parent"))?;
     }
     Ok(())
+}
+
+/// `path`, with the empty path read as the current directory.
+fn present(path: &Path) -> &Path {
+    if path.as_os_str().is_empty() {
+        Path::new(".")
+    } else {
+        path
+    }
+}
+
+/// The directory holding `path`: the current directory for a relative path of one
+/// component.
+fn parent(path: &Path) -> Option<&Path> {
+    path.parent().map(present)
 }
 
 /// Writes `bytes` to `path` by a rename, durable as `durability` asks once it
@@ -78,8 +93,8 @@ pub fn create_dir_all_synced(durability: WriteDurability, directory: &Path) -> i
 /// permissions.
 pub fn write_synced(durability: WriteDurability, path: &Path, bytes: &[u8]) -> anyhow::Result<()> {
     use std::io::Write;
-    if let Some(parent) = path.parent() {
-        create_dir_all_synced(durability, parent)?;
+    if let Some(directory) = parent(path) {
+        create_dir_all_synced(durability, directory)?;
     }
     let tmp = path.with_extension(format!("{}.tmp", uuid::Uuid::new_v4()));
     let mut file = std::fs::OpenOptions::new()
@@ -94,8 +109,8 @@ pub fn write_synced(durability: WriteDurability, path: &Path, bytes: &[u8]) -> a
     file.write_all(bytes)?;
     durability.sync(&file)?;
     std::fs::rename(&tmp, path)?;
-    if let Some(parent) = path.parent() {
-        durability.sync_directory(parent)?;
+    if let Some(directory) = parent(path) {
+        durability.sync_directory(directory)?;
     }
     Ok(())
 }

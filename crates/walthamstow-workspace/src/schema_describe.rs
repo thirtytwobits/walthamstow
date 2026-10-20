@@ -1,9 +1,7 @@
-//! Shared JSON-Schema walker used by every `*.describe` verb to flatten
-//! a workspace document's schema into per-field guidance entries.
+//! Copyright (c) Scott A Dixon
 //!
-//! Each resource registers a wrapping type with the same shape as
-//! `WalkerField`. The conversion is `From`-driven so resource-specific
-//! types stay clean while the walking logic is defined once here.
+//! A walk of a document's JSON Schema into one guidance entry per field, which a product
+//! maps into its own description types.
 
 use serde_json::Value;
 

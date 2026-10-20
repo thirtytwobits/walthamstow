@@ -14,6 +14,9 @@ use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 use walthamstow_kernel::journals::Journal;
 use walthamstow_kernel::{KernelError, KernelResult};
 
+/// The journal the marks are kept under.
+pub const JOURNAL: Journal = Journal::new("collaboration-publications");
+
 #[derive(Debug, Clone)]
 pub struct PublicationJournal {
     inner: Arc<Inner>,
@@ -79,7 +82,7 @@ impl PublicationJournal {
         data_dir: &Path,
         durability: walthamstow_kernel::durability::WriteDurability,
     ) -> KernelResult<Self> {
-        let root = Journal::CollaborationPublications.root(data_dir);
+        let root = JOURNAL.root(data_dir);
         let mut marked = HashMap::new();
         let entries = match std::fs::read_dir(&root) {
             Ok(entries) => Some(entries),
@@ -180,7 +183,7 @@ mod tests {
     use super::*;
 
     fn document(resource_id: &str) -> CollaborationDocumentId {
-        CollaborationDocumentId::new("Story", resource_id)
+        CollaborationDocumentId::new("Note", resource_id)
     }
 
     #[test]

@@ -55,7 +55,7 @@ mod tests {
 
     #[test]
     fn an_identity_is_safe_only_as_one_visible_path_component() {
-        assert!(safe_id("case-story").is_ok());
+        assert!(safe_id("a-note").is_ok());
         for unsafe_id in ["", ".hidden", "a/b", "a\\b", "..", "../escape"] {
             assert!(safe_id(unsafe_id).is_err(), "{unsafe_id:?}");
         }

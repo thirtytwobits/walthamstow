@@ -14,6 +14,9 @@ use walthamstow_kernel::durability::{write_synced, WriteDurability};
 use walthamstow_kernel::hashing::sha256_hex;
 use walthamstow_kernel::journals::Journal;
 
+/// The journal every workspace upgrade works under.
+pub const JOURNAL: Journal = Journal::new("workspace-upgrades");
+
 const JOURNAL_FILE: &str = "operation.json";
 const COMMITTING: &str = "committing";
 const COMPLETE: &str = "complete";
@@ -31,7 +34,7 @@ pub struct Operation {
 
 /// The directory an upgrade works in.
 pub fn work_dir(data_dir: &Path, operation_id: &str) -> PathBuf {
-    Journal::WorkspaceUpgrades.root(data_dir).join(operation_id)
+    JOURNAL.root(data_dir).join(operation_id)
 }
 
 /// Where an upgrade stages the files it publishes.
@@ -107,7 +110,7 @@ pub fn finish(
 
 /// Finishes each authorised upgrade and discards staging no journal authorises.
 pub fn recover(root: &Path, data_dir: &Path, durability: WriteDurability) -> Result<()> {
-    let operations = Journal::WorkspaceUpgrades.root(data_dir);
+    let operations = JOURNAL.root(data_dir);
     if !operations.exists() {
         return Ok(());
     }
@@ -158,11 +161,11 @@ mod tests {
             let root = workspace.path();
             let work = work_dir(data.path(), "authorised");
             let paths = [
-                PathBuf::from("data/story.json"),
-                PathBuf::from("data/ui.json"),
+                PathBuf::from("data/first.json"),
+                PathBuf::from("data/second.json"),
             ];
-            let originals = [b"original story".as_slice(), b"original ui".as_slice()];
-            let targets = [b"upgraded story".as_slice(), b"upgraded ui".as_slice()];
+            let originals = [b"original first".as_slice(), b"original second".as_slice()];
+            let targets = [b"upgraded first".as_slice(), b"upgraded second".as_slice()];
             let sources = paths.iter().cloned().zip(originals.map(<[u8]>::to_vec));
             let changes = paths.iter().cloned().zip(targets.map(<[u8]>::to_vec));
             for (index, path) in paths.iter().enumerate() {
@@ -223,7 +226,7 @@ mod tests {
         let work = work_dir(data.path(), "abandoned");
         write_synced(
             DURABILITY,
-            &prepared_dir(&work).join("data/story.json"),
+            &prepared_dir(&work).join("data/first.json"),
             b"staged",
         )
         .unwrap();
@@ -236,7 +239,7 @@ mod tests {
         let workspace = tempfile::tempdir().unwrap();
         let data = tempfile::tempdir().unwrap();
         let work = work_dir(data.path(), "tampered");
-        let path = PathBuf::from("data/story.json");
+        let path = PathBuf::from("data/first.json");
         let (original, target) = (b"original".to_vec(), b"upgraded".to_vec());
         write_synced(DURABILITY, &workspace.path().join(&path), &original).unwrap();
         write_synced(DURABILITY, &prepared_dir(&work).join(&path), &target).unwrap();

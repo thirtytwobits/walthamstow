@@ -7,8 +7,7 @@ use std::fs::File;
 use std::io;
 use std::path::Path;
 
-/// How far a durable write goes before the engine relies on it:
-/// `general.writeDurability` in `engine.yaml`.
+/// How far a durable write goes before the engine relies on it.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum WriteDurability {

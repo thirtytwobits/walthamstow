@@ -543,13 +543,13 @@ mod tests {
     use clerkenwell_store::{CollaborationAuditEvent, CollaborationRecoveryAction};
 
     fn document(resource_id: &str) -> CollaborationDocumentId {
-        CollaborationDocumentId::new("Story", resource_id)
+        CollaborationDocumentId::new("Note", resource_id)
     }
 
     fn record(actor: &str, resource_id: &str, at: u128) -> CollaborationAuditRecord {
         CollaborationAuditRecord {
             actor: Principal::new(actor, ActorKind::Human),
-            entity: "Story".into(),
+            entity: "Note".into(),
             resource_id: resource_id.into(),
             timestamp_unix_ms: at,
             event: CollaborationAuditEvent::Recovery {
@@ -601,7 +601,7 @@ mod tests {
         assert!(storage.read(&storage.source(&id)).unwrap().is_some());
         assert!(storage.compare_and_remove(&id, &version).unwrap());
         assert!(storage.read(&storage.source(&id)).unwrap().is_none());
-        assert!(storage.sources("Story").unwrap().is_empty());
+        assert!(storage.sources("Note").unwrap().is_empty());
     }
 
     #[test]
@@ -614,9 +614,9 @@ mod tests {
                 .unwrap();
         }
         storage
-            .compare_and_swap(&CollaborationDocumentId::new("World", "w"), None, b"w")
+            .compare_and_swap(&CollaborationDocumentId::new("Folder", "w"), None, b"w")
             .unwrap();
-        let sources = storage.sources("Story").unwrap();
+        let sources = storage.sources("Note").unwrap();
         assert_eq!(sources.len(), 3);
         let mut sorted = sources.clone();
         sorted.sort();
@@ -634,7 +634,7 @@ mod tests {
         let place = storage.preserve(&id, "quarantine", b"evidence").unwrap();
         assert_eq!(std::fs::read(&place).unwrap(), b"evidence");
         assert!(storage.read(&storage.source(&id)).unwrap().is_none());
-        assert!(storage.sources("Story").unwrap().is_empty());
+        assert!(storage.sources("Note").unwrap().is_empty());
     }
 
     #[test]
@@ -703,11 +703,11 @@ mod tests {
     fn a_cache_root_in_another_format_is_removed_and_one_in_this_format_kept() {
         let data = tempfile::tempdir().unwrap();
         let root = data.path().join("collaboration");
-        std::fs::create_dir_all(root.join("story")).unwrap();
-        std::fs::write(root.join("story/old.json"), b"{}").unwrap();
+        std::fs::create_dir_all(root.join("note")).unwrap();
+        std::fs::write(root.join("note/old.json"), b"{}").unwrap();
         prepare_cache_root(&root, WriteDurability::System).unwrap();
         assert!(
-            !root.join("story/old.json").exists(),
+            !root.join("note/old.json").exists(),
             "a root without this build's marker is removed whole"
         );
         let storage = FileCollaborationStorage::new(&root, WriteDurability::System);

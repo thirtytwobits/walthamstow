@@ -10,10 +10,9 @@ use serde_json::Value;
 
 /// A normalised kernel failure, suitable for transport across crate boundaries.
 ///
-/// The optional `data` field carries structured detail that an
-/// out-of-band caller (editor, CLI) can branch on programmatically —
-/// e.g. a conflict error includes the engine's current document plus
-/// etag so the client can compute the diff without an extra round trip.
+/// The optional `data` field carries structured detail a caller can branch
+/// on: a conflict can carry the current document and its etag, so the caller
+/// can resolve it without another read.
 #[derive(Debug, Clone)]
 pub struct KernelError {
     pub code: &'static str,
@@ -22,7 +21,7 @@ pub struct KernelError {
 }
 
 impl KernelError {
-    /// Builds a not-found error for missing sessions, characters, mounts, or assets.
+    /// Builds a not-found error for something the request names that does not exist.
     pub fn not_found(message: impl Into<String>) -> Self {
         Self {
             code: "not_found",
@@ -49,15 +48,6 @@ impl KernelError {
         }
     }
 
-    /// Builds an interruption outcome for an accepted activation task.
-    pub fn interrupted(message: impl Into<String>) -> Self {
-        Self {
-            code: "interrupted",
-            message: message.into(),
-            data: None,
-        }
-    }
-
     /// Builds a generic internal error for unexpected failures.
     pub fn internal(message: impl Into<String>) -> Self {
         Self {
@@ -67,19 +57,8 @@ impl KernelError {
         }
     }
 
-    /// Builds a retryable rate-limit error for provider 429 / rate_limit_exceeded responses.
-    pub fn rate_limit(message: impl Into<String>) -> Self {
-        Self {
-            code: "rate_limit",
-            message: message.into(),
-            data: None,
-        }
-    }
-
-    /// Builds a conflict error for optimistic-concurrency mismatches —
-    /// caller supplied an `expected_etag` that no longer matches the
-    /// engine's current revision. The `data` payload carries the
-    /// engine's current state plus etag so the caller can resolve.
+    /// Builds a conflict error for an optimistic-concurrency mismatch: the
+    /// revision the caller expected is no longer current.
     pub fn conflict(message: impl Into<String>) -> Self {
         Self {
             code: "conflict",
@@ -88,11 +67,8 @@ impl KernelError {
         }
     }
 
-    /// Attaches a structured data payload that propagates to the
-    /// transport layer's error envelope (`engine_error_data` on the
-    /// CLI side, `error.data` on the JSON-RPC wire). Intended for
-    /// recoverable errors where the caller needs more than a message
-    /// to decide what to do next — conflicts are the motivating case.
+    /// Attaches structured data for a caller that needs more than the
+    /// message to decide what to do next.
     pub fn with_data(mut self, data: Value) -> Self {
         self.data = Some(data);
         self
@@ -163,15 +139,14 @@ mod tests {
 
     #[test]
     fn constructors_preserve_codes_and_messages() {
-        let not_found = KernelError::not_found("Missing session.");
+        let not_found = KernelError::not_found("Missing document.");
         let invalid = KernelError::invalid_request("Bad payload.");
         let cancelled = KernelError::cancelled("Cancelled by caller.");
         let internal = KernelError::internal("Unexpected failure.");
         let conflict = KernelError::conflict("Etag mismatch.");
-        let rate_limit = KernelError::rate_limit("Slow down.");
 
         assert_eq!(not_found.code, "not_found");
-        assert_eq!(not_found.message, "Missing session.");
+        assert_eq!(not_found.message, "Missing document.");
         assert_eq!(invalid.code, "invalid_request");
         assert_eq!(invalid.message, "Bad payload.");
         assert_eq!(cancelled.code, "cancelled");
@@ -180,8 +155,6 @@ mod tests {
         assert_eq!(internal.message, "Unexpected failure.");
         assert_eq!(conflict.code, "conflict");
         assert_eq!(conflict.message, "Etag mismatch.");
-        assert_eq!(rate_limit.code, "rate_limit");
-        assert_eq!(rate_limit.message, "Slow down.");
         // All constructors default to no structured data; with_data
         // attaches a payload for callers that need to branch on it.
         assert!(not_found.data.is_none());
@@ -192,7 +165,7 @@ mod tests {
 
     #[test]
     fn a_reason_joins_the_data_and_reads_back() {
-        let reason = crate::reason_codes::STALE_WRITE;
+        let reason = "a_reason";
         let bare = KernelError::conflict("x").with_reason(reason);
         assert_eq!(bare.reason_code(), Some(reason));
 

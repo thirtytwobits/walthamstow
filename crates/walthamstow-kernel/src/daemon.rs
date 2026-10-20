@@ -138,7 +138,7 @@ impl Daemon {
         Self::default()
     }
 
-    /// Signals the daemon's tasks and every flow execution to stop. Signalling again does
+    /// Signals the daemon's tasks, and all work holding its shutdown token, to stop. Signalling again does
     /// nothing more.
     pub fn shutdown(&self) {
         self.shutdown.cancel();

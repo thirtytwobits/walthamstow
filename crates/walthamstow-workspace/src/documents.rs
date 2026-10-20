@@ -101,10 +101,10 @@ mod tests {
     #[test]
     fn relative_path_uses_forward_slashes_and_rejects_paths_outside_the_root() {
         let root = Path::new("/tmp/workspace");
-        let file = Path::new("/tmp/workspace/data/characters/hero.yaml");
+        let file = Path::new("/tmp/workspace/data/notes/first.yaml");
         assert_eq!(
             relative_path(root, file).expect("relative path"),
-            "data/characters/hero.yaml"
+            "data/notes/first.yaml"
         );
 
         let outside = Path::new("/tmp/elsewhere/hero.yaml");

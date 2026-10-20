@@ -21,7 +21,7 @@ pub struct WalkerField {
 /// objects and `$ref`s, expanding arrays of objects into
 /// `<path>[].<field>` entries). Caller-provided `emit` collects.
 pub fn walk_describe_schema<F: FnMut(WalkerField)>(schema: &Value, mut emit: F) {
-    let document = resolve_ref(schema, schema);
+    let document = with_siblings(schema, resolve_ref(schema, schema));
     walk_object_schema(&document, "", schema, &mut emit, &mut Vec::new());
 }
 
@@ -44,7 +44,7 @@ fn walk_object_schema<F: FnMut(WalkerField)>(
     };
 
     for (name, property) in properties {
-        let resolved = resolve_ref(property, root);
+        let resolved = with_siblings(property, resolve_ref(property, root));
         let field_path = if path.is_empty() {
             name.clone()
         } else {
@@ -111,6 +111,67 @@ fn within<'a>(
     active.truncate(depth);
 }
 
+/// `fragment` with its percent-encoded bytes decoded, as a URI fragment is read before its
+/// JSON Pointer; `None` when it does not decode to UTF-8.
+fn percent_decoded(fragment: &str) -> Option<String> {
+    let bytes = fragment.as_bytes();
+    let mut decoded = Vec::with_capacity(bytes.len());
+    let mut index = 0;
+    while index < bytes.len() {
+        let hex = bytes
+            .get(index + 1..index + 3)
+            .filter(|_| bytes[index] == b'%')
+            .and_then(|hex| std::str::from_utf8(hex).ok())
+            .and_then(|hex| u8::from_str_radix(hex, 16).ok());
+        match hex {
+            Some(byte) => {
+                decoded.push(byte);
+                index += 3;
+            }
+            None => {
+                decoded.push(bytes[index]);
+                index += 1;
+            }
+        }
+    }
+    String::from_utf8(decoded).ok()
+}
+
+/// `resolved` with the `properties` and `required` written beside the reference in `node`,
+/// which apply alongside it.
+fn with_siblings(node: &Value, resolved: Value) -> Value {
+    if node.get("$ref").is_none() || node.as_object() == resolved.as_object() {
+        return resolved;
+    }
+    let mut merged = resolved;
+    let Some(target) = merged.as_object_mut() else {
+        return merged;
+    };
+    if let Some(properties) = node.get("properties").and_then(Value::as_object) {
+        let held = target
+            .entry("properties")
+            .or_insert_with(|| Value::Object(serde_json::Map::new()));
+        if let Some(held) = held.as_object_mut() {
+            held.extend(properties.clone());
+        }
+    }
+    if let Some(required) = node.get("required").and_then(Value::as_array) {
+        let held = target
+            .entry("required")
+            .or_insert_with(|| Value::Array(Vec::new()));
+        if let Some(held) = held.as_array_mut() {
+            held.extend(
+                required
+                    .iter()
+                    .filter(|name| !held.contains(name))
+                    .cloned()
+                    .collect::<Vec<_>>(),
+            );
+        }
+    }
+    merged
+}
+
 /// The reference `node` makes, when it makes one.
 fn ref_name(node: &Value) -> Option<&str> {
     node.get("$ref")?.as_str()
@@ -125,7 +186,8 @@ fn resolve_ref(node: &Value, root: &Value) -> Value {
     while let Some(reference) = ref_name(&resolved).map(str::to_string) {
         let Some(target) = reference
             .strip_prefix('#')
-            .and_then(|pointer| root.pointer(pointer))
+            .and_then(percent_decoded)
+            .and_then(|pointer| root.pointer(&pointer))
         else {
             break;
         };
@@ -392,5 +454,35 @@ mod tests {
         });
         let fields = fields(&schema);
         assert!(fields.iter().any(|field| field.path == "title"));
+    }
+
+    #[test]
+    fn a_percent_encoded_reference_reaches_its_definition() {
+        let schema = json!({
+            "$defs": { "a b": { "type": "object", "properties": { "inner": { "type": "string" } } } },
+            "type": "object",
+            "properties": { "spaced": { "$ref": "#/$defs/a%20b" } }
+        });
+        let fields = fields(&schema);
+        assert!(fields.iter().any(|field| field.path == "spaced.inner"));
+    }
+
+    #[test]
+    fn properties_beside_a_reference_are_walked_with_its_target() {
+        let schema = json!({
+            "$defs": { "Base": { "type": "object", "properties": { "name": { "type": "string" } } } },
+            "type": "object",
+            "properties": {
+                "item": {
+                    "$ref": "#/$defs/Base",
+                    "properties": { "extra": { "type": "string" } },
+                    "required": ["extra"]
+                }
+            }
+        });
+        let fields = fields(&schema);
+        assert!(fields.iter().any(|field| field.path == "item.name"));
+        let extra = fields.iter().find(|field| field.path == "item.extra");
+        assert!(extra.is_some_and(|field| field.required));
     }
 }

@@ -17,6 +17,9 @@ A product registers into the kernel. It supplies its entities, validators and ev
 its own error, which converts from `KernelError`. Walthamstow builds on Clerkenwell and on no
 product or dataflow framework; `cargo xtask boundaries` enforces it.
 
+[docs/contract.md](docs/contract.md) states what Walthamstow guarantees, to whom, and the threat
+model it holds to.
+
 ## Using it
 
 Take the crates from a release tag:

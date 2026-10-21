@@ -6,6 +6,8 @@
 - Durable content lives in a product's workspace paths and journals in the data directory.
   Production code creates no hidden entry but the transient staging `cargo xtask storage-layout`
   lists.
+- `docs/contract.md` states what Walthamstow guarantees. A change to a guarantee changes it in
+  the same pull request, and a review finding is judged against it.
 - Run `cargo xtask check` before finishing. Run Cargo commands one at a time.
 - A public API change reviews its snapshot diff and runs `cargo xtask api --update`.
 - Tests never sleep, set a timer or read the wall clock, and are never retried. Code under test

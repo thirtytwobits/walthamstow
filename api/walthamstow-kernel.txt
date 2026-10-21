@@ -250,7 +250,7 @@ pub mod walthamstow_kernel::collaboration_storage
 pub struct walthamstow_kernel::collaboration_storage::FileCollaborationStorage
 impl walthamstow_kernel::collaboration_storage::FileCollaborationStorage
 pub fn walthamstow_kernel::collaboration_storage::FileCollaborationStorage::new(root: &std::path::Path, durability: walthamstow_kernel::durability::WriteDurability, clock: walthamstow_kernel::clock::WallClock) -> anyhow::Result<Self>
-pub fn walthamstow_kernel::collaboration_storage::FileCollaborationStorage::with_records_at(self, records: &std::path::Path) -> Self
+pub fn walthamstow_kernel::collaboration_storage::FileCollaborationStorage::with_records_at(self, records: &std::path::Path) -> anyhow::Result<Self>
 impl clerkenwell_store::CollaborationStoragePort for walthamstow_kernel::collaboration_storage::FileCollaborationStorage
 pub fn walthamstow_kernel::collaboration_storage::FileCollaborationStorage::append_audit(&self, record: &clerkenwell_store::CollaborationAuditRecord) -> clerkenwell_store::error::StoreResult<()>
 pub fn walthamstow_kernel::collaboration_storage::FileCollaborationStorage::audit(&self, query: &clerkenwell_store::CollaborationAuditQuery) -> clerkenwell_store::error::StoreResult<alloc::vec::Vec<clerkenwell_store::CollaborationAuditRecord>>

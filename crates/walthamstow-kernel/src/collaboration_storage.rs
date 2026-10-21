@@ -76,10 +76,17 @@ impl FileCollaborationStorage {
 
     /// The same envelopes, with the store's records kept under `records`
     /// instead: a journal directory, when the envelopes sit among authored
-    /// content.
-    pub fn with_records_at(mut self, records: &Path) -> Self {
+    /// content. A `records` that is not UTF-8 is refused, since evidence is
+    /// reported by its path as text.
+    pub fn with_records_at(mut self, records: &Path) -> AnyhowResult<Self> {
+        if records.to_str().is_none() {
+            return Err(anyhow!(
+                "The collaboration records {} are not in a UTF-8 directory, so their evidence cannot be named.",
+                records.display()
+            ));
+        }
         self.records = records.to_path_buf();
-        self
+        Ok(self)
     }
 
     fn entity_dir(&self, entity: &str) -> PathBuf {
@@ -170,10 +177,15 @@ impl FileCollaborationStorage {
     fn envelope_source<'a>(&self, source: &'a str) -> StoreResult<&'a Path> {
         let path = Path::new(source);
         let named = path.strip_prefix(&self.root).is_ok_and(|relative| {
-            relative.components().count() == 2
-                && relative
-                    .components()
-                    .all(|component| matches!(component, std::path::Component::Normal(_)))
+            let mut names = relative.components().map(|component| match component {
+                std::path::Component::Normal(name) => name.to_str(),
+                _ => None,
+            });
+            matches!(
+                (names.next(), names.next(), names.next()),
+                (Some(Some(directory)), Some(Some(file)), None)
+                    if is_entity_directory(directory) && is_envelope_file(file)
+            )
         });
         let directory = path.parent().filter(|_| named).ok_or_else(|| {
             StoreError::internal(format!(
@@ -352,6 +364,27 @@ fn remove_file_if_exists(path: &Path) -> StoreResult<()> {
             path.display()
         ))),
     }
+}
+
+/// Whether `name` is a directory [`safe_entity_name`] gives an entity the store accepts.
+fn is_entity_directory(name: &str) -> bool {
+    !name.is_empty()
+        && name
+            .bytes()
+            .all(|byte| matches!(byte, b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_'))
+        && ![QUARANTINE_DIR, FORMAT_MARKER_FILE].contains(&name)
+        && !crate::files::is_windows_device_name(name)
+}
+
+/// Whether `name` is an envelope's file: the SHA-256 of a resource id, in lowercase hex, and
+/// `.json`.
+fn is_envelope_file(name: &str) -> bool {
+    name.strip_suffix(".json").is_some_and(|hash| {
+        hash.len() == 64
+            && hash
+                .bytes()
+                .all(|byte| matches!(byte, b'0'..=b'9' | b'a'..=b'f'))
+    })
 }
 
 fn safe_entity_name(entity: &str) -> String {
@@ -1126,7 +1159,8 @@ mod tests {
         let records = tempfile::tempdir().unwrap();
         let storage = FileCollaborationStorage::new(root.path(), WriteDurability::System, clock())
             .unwrap()
-            .with_records_at(records.path());
+            .with_records_at(records.path())
+            .unwrap();
         storage
             .compare_and_swap(&document("one"), None, b"kept")
             .unwrap();
@@ -1400,7 +1434,8 @@ mod tests {
             let records = root.path().join("journals/collaboration");
             let storage = FileCollaborationStorage::new(root.path(), durability, clock())
                 .unwrap()
-                .with_records_at(&records);
+                .with_records_at(&records)
+                .unwrap();
             storage.append_audit(&record("ada", "one", 10)).unwrap();
             let kept = storage.audit(&CollaborationAuditQuery::default()).unwrap();
             assert_eq!(kept.len(), 1);
@@ -1685,7 +1720,8 @@ mod tests {
         let records = root.path().join("records");
         let storage = FileCollaborationStorage::new(root.path(), WriteDurability::System, clock())
             .unwrap()
-            .with_records_at(&records);
+            .with_records_at(&records)
+            .unwrap();
         assert!(storage
             .audit(&CollaborationAuditQuery::default())
             .unwrap()
@@ -1815,5 +1851,50 @@ mod tests {
             assert!(storage.read(&source).is_err(), "{source}");
             assert!(storage.stamp(&source).is_err(), "{source}");
         }
+    }
+
+    #[test]
+    fn only_a_source_the_layout_generates_is_read() {
+        let root = tempfile::tempdir().unwrap();
+        let storage =
+            FileCollaborationStorage::new(root.path(), WriteDurability::System, clock()).unwrap();
+        let id = document("one");
+        storage.compare_and_swap(&id, None, b"envelope").unwrap();
+        let source = storage.source(&id);
+        assert!(storage.read(&source).unwrap().is_some());
+        let note = root.path().join("note");
+        std::fs::create_dir_all(root.path().join(QUARANTINE_DIR)).unwrap();
+        let hash = sha256_hex(b"one");
+        std::fs::write(
+            root.path()
+                .join(QUARANTINE_DIR)
+                .join(format!("{hash}.json")),
+            b"evidence",
+        )
+        .unwrap();
+        for crafted in [
+            root.path()
+                .join(QUARANTINE_DIR)
+                .join(format!("{hash}.json")),
+            note.join(ENTITY_FILE),
+            note.join(format!("{hash}.lock")),
+            note.join("not-a-hash.json"),
+            note.join(format!("{}.json", hash.to_uppercase())),
+        ] {
+            let crafted = crafted.display().to_string();
+            assert!(storage.read(&crafted).is_err(), "{crafted}");
+            assert!(storage.stamp(&crafted).is_err(), "{crafted}");
+        }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn records_that_are_not_utf8_are_refused() {
+        use std::os::unix::ffi::OsStrExt;
+        let root = tempfile::tempdir().unwrap();
+        let records = Path::new(std::ffi::OsStr::from_bytes(b"/records-\xff"));
+        let storage =
+            FileCollaborationStorage::new(root.path(), WriteDurability::System, clock()).unwrap();
+        assert!(storage.with_records_at(records).is_err());
     }
 }

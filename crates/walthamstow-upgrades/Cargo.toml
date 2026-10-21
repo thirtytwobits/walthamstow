@@ -1,0 +1,17 @@
+[package]
+name = "walthamstow-upgrades"
+description = "Explicit, journaled and recoverable upgrades of a workspace's documents"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[dependencies]
+anyhow.workspace = true
+walthamstow-kernel = { path = "../walthamstow-kernel", version = "0.1.0" }
+serde.workspace = true
+serde_json.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true

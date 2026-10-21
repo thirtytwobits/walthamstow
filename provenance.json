@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "source_repository": "https://github.com/scottdarch/primrosehill",
+  "extractions": [
+    {
+      "release": "0.1.0",
+      "source_commit": "c7e9885a3924297c228f8af7368d22119687bd61",
+      "source_paths": [
+        "engine/crates/primrose-kernel",
+        "engine/crates/primrose-workspace",
+        "engine/crates/primrose-upgrades"
+      ]
+    }
+  ]
+}

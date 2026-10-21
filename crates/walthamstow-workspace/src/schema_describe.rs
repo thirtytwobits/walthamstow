@@ -52,12 +52,9 @@ fn walk_object_schema<F: FnMut(WalkerField)>(
         } else {
             format!("{path}.{name}")
         };
-        let field_type = type_label(property, &resolved, root, &mut Vec::new());
-        let description = description_for(property, &resolved);
-        let allowed_values = match enum_values(property) {
-            direct if direct.is_empty() => enum_values(&resolved),
-            direct => direct,
-        };
+        let field_type = type_label(&resolved, root, &mut Vec::new());
+        let description = description_for(&resolved);
+        let allowed_values = enum_values(&resolved);
         emit(WalkerField {
             path: field_path.clone(),
             field_type,
@@ -66,18 +63,8 @@ fn walk_object_schema<F: FnMut(WalkerField)>(
             allowed_values,
         });
 
-        let typed = if property.get("type").is_some() {
-            property
-        } else {
-            &resolved
-        };
-        if declared_types(typed).contains(&"array") {
-            let array = if property.get("items").is_some() {
-                property
-            } else {
-                &resolved
-            };
-            if let Some(items) = array.get("items") {
+        if declared_types(&resolved).contains(&"array") {
+            if let Some(items) = resolved.get("items") {
                 let (item_schema, item_passed) = resolve_ref(items, root);
                 if matches_object(&item_schema) {
                     let array_path = format!("{field_path}[]");
@@ -142,6 +129,11 @@ fn with_siblings(node: &Value, target: Value) -> Value {
     let Some(target) = merged.as_object_mut() else {
         return merged;
     };
+    for keyword in NEAREST_KEYWORDS {
+        if let Some(value) = node.get(keyword) {
+            target.insert(keyword.to_string(), value.clone());
+        }
+    }
     if let Some(properties) = node.get("properties").and_then(Value::as_object) {
         let held = target
             .entry("properties")
@@ -167,6 +159,9 @@ fn with_siblings(node: &Value, target: Value) -> Value {
     merged
 }
 
+/// The keywords beside a reference that replace the target's own: the nearest one wins.
+const NEAREST_KEYWORDS: [&str; 5] = ["type", "items", "enum", "const", "description"];
+
 /// The reference `node` makes, when it makes one.
 fn ref_name(node: &Value) -> Option<&str> {
     node.get("$ref")?.as_str()
@@ -174,8 +169,9 @@ fn ref_name(node: &Value) -> Option<&str> {
 
 /// The schema `node` refers to, through any chain of local references resolved as JSON Pointers
 /// into `root`, or `node` when it refers to none, with each reference passed on the way. The
-/// `properties` and `required` beside each reference are kept. A chain that returns to a
-/// reference it passed stops there.
+/// keywords beside each reference are kept: [`NEAREST_KEYWORDS`] replace the target's, and
+/// `properties` and `required` accumulate. A chain that returns to a reference it passed stops
+/// there.
 fn resolve_ref(node: &Value, root: &Value) -> (Value, Vec<String>) {
     let mut resolved = node.clone();
     let mut passed = Vec::new();
@@ -196,21 +192,16 @@ fn resolve_ref(node: &Value, root: &Value) -> (Value, Vec<String>) {
     (resolved, passed)
 }
 
-/// `node`'s type, naming an array's item type. `active` names the item references being
+/// `schema`'s type, naming an array's item type. `active` names the item references being
 /// labelled; one met again is labelled as a bare array.
-fn type_label(node: &Value, resolved: &Value, root: &Value, active: &mut Vec<String>) -> String {
-    let typed = if node.get("type").is_some() {
-        node
-    } else {
-        resolved
-    };
-    let declared = declared_types(typed);
+fn type_label(schema: &Value, root: &Value, active: &mut Vec<String>) -> String {
+    let declared = declared_types(schema);
     if declared.is_empty() {
-        return untyped_label(resolved);
+        return untyped_label(schema);
     }
     let mut labels = Vec::with_capacity(declared.len());
     for name in declared {
-        let items = typed.get("items").filter(|_| name == "array");
+        let items = schema.get("items").filter(|_| name == "array");
         let Some(items) = items else {
             labels.push(name.to_string());
             continue;
@@ -218,7 +209,7 @@ fn type_label(node: &Value, resolved: &Value, root: &Value, active: &mut Vec<Str
         let (item, passed) = resolve_ref(items, root);
         let mut label = "array".to_string();
         within(active, &passed, |active| {
-            label = format!("array of {}", type_label(&item, &item, root, active));
+            label = format!("array of {}", type_label(&item, root, active));
         });
         labels.push(label);
     }
@@ -270,10 +261,10 @@ fn declared_types(node: &Value) -> Vec<&str> {
     }
 }
 
-fn description_for(node: &Value, resolved: &Value) -> String {
-    node.get("description")
+fn description_for(schema: &Value) -> String {
+    schema
+        .get("description")
         .and_then(Value::as_str)
-        .or_else(|| resolved.get("description").and_then(Value::as_str))
         .map(|text| text.trim().to_string())
         .unwrap_or_default()
 }
@@ -674,5 +665,32 @@ mod tests {
         assert!(label("status").contains("string") && !label("status").contains("object"));
         assert!(label("pair").contains("object"));
         assert!(!label("anything").contains("object"));
+    }
+
+    #[test]
+    fn keywords_beside_every_reference_in_a_chain_apply_nearest_first() {
+        let schema = json!({
+            "$defs": {
+                "Base": { "type": "string", "description": "base" },
+                "Alias": {
+                    "$ref": "#/$defs/Base",
+                    "enum": ["draft", "final"],
+                    "description": "alias"
+                }
+            },
+            "type": "object",
+            "properties": {
+                "described": { "$ref": "#/$defs/Alias", "description": "outer" },
+                "plain": { "$ref": "#/$defs/Alias" }
+            }
+        });
+        let fields = fields(&schema);
+        let field = |path: &str| fields.iter().find(|field| field.path == path).unwrap();
+        for path in ["described", "plain"] {
+            assert_eq!(field(path).allowed_values, ["draft", "final"], "{path}");
+            assert!(field(path).field_type.contains("string"), "{path}");
+        }
+        assert_eq!(field("described").description, "outer");
+        assert_eq!(field("plain").description, "alias");
     }
 }

@@ -47,17 +47,6 @@ pub fn resolve_directories<const N: usize>(
         .expect("one resolved directory for each configured one"))
 }
 
-/// Whether Windows can name a directory `component`: no character it reserves, no trailing
-/// dot or space, which it strips, and no device name, with or without an extension.
-fn windows_names(component: &str) -> bool {
-    let stem = component.split('.').next().unwrap_or_default();
-    !component
-        .chars()
-        .any(|character| character.is_ascii_control() || "<>:\"|?*".contains(character))
-        && !component.ends_with(['.', ' '])
-        && !walthamstow_kernel::files::is_windows_device_name(stem)
-}
-
 /// The directory `configured` names beneath `root_dir` with every link inside the root on
 /// the way to it resolved, so a link changed later does not move it, and where it leads in
 /// full.
@@ -81,10 +70,9 @@ fn resolve_directory(
     {
         bail!("{name} must stay within the workspace root.");
     }
-    if relative
-        .components()
-        .any(|component| !windows_names(&component.as_os_str().to_string_lossy()))
-    {
+    if relative.components().any(|component| {
+        !walthamstow_kernel::files::windows_allows(&component.as_os_str().to_string_lossy())
+    }) {
         bail!("{name} has a directory name Windows does not allow.");
     }
     let normalised = relative

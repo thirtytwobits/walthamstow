@@ -1067,6 +1067,7 @@ pub mod walthamstow_kernel::files
 pub const fn walthamstow_kernel::files::is_windows_device_name(name: &str) -> bool
 pub fn walthamstow_kernel::files::read_files(dir: &std::path::Path) -> anyhow::Result<alloc::collections::btree::map::BTreeMap<std::path::PathBuf, alloc::vec::Vec<u8>>>
 pub fn walthamstow_kernel::files::safe_id(id: &str) -> anyhow::Result<()>
+pub fn walthamstow_kernel::files::windows_allows(component: &str) -> bool
 pub mod walthamstow_kernel::hashing
 pub fn walthamstow_kernel::hashing::sha256_hex(bytes: &[u8]) -> alloc::string::String
 pub mod walthamstow_kernel::journals

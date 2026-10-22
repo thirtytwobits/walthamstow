@@ -54,6 +54,17 @@ pub const fn is_windows_device_name(name: &str) -> bool {
     named(&stem, b"com") || named(&stem, b"lpt")
 }
 
+/// Whether Windows can name an entry `component`: no character it reserves, no trailing dot or
+/// space, which it strips, and no device name, with or without an extension.
+pub fn windows_allows(component: &str) -> bool {
+    let stem = component.split('.').next().unwrap_or_default();
+    !component
+        .chars()
+        .any(|character| character.is_ascii_control() || "<>:\"|?*".contains(character))
+        && !component.ends_with(['.', ' '])
+        && !is_windows_device_name(stem)
+}
+
 /// Every file under `dir`, by its path relative to `dir`. A symlink or any other entry
 /// that is neither a file nor a directory is refused.
 pub fn read_files(dir: &Path) -> Result<BTreeMap<PathBuf, Vec<u8>>> {

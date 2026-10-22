@@ -14,7 +14,7 @@ use crate::{KernelError, KernelResult};
 use std::collections::{BTreeMap, HashMap};
 use std::fmt;
 use std::path::{Path, PathBuf};
-use std::sync::{Arc, Mutex, PoisonError, Weak};
+use std::sync::{Arc, Mutex, PoisonError, RwLock, Weak};
 
 /// The extension of the file a write stages before it renames it into place. No record name
 /// ends with it.
@@ -38,8 +38,8 @@ impl JournalKey {
     }
 
     /// The key `names` names within `journal`. Each name is one plain path component in ASCII:
-    /// not empty, not hidden, holding no separator, not a device name Windows reserves, and not
-    /// ending in `.tmp`.
+    /// not empty, not hidden, holding no separator, one Windows allows, and not ending in
+    /// `.tmp`.
     pub fn new<I>(journal: Journal, names: I) -> KernelResult<Self>
     where
         I: IntoIterator,
@@ -57,7 +57,7 @@ impl JournalKey {
         let name = name.into();
         if !name.is_ascii()
             || crate::files::safe_id(&name).is_err()
-            || crate::files::is_windows_device_name(&name)
+            || !crate::files::windows_allows(&name)
             || name.ends_with(STAGED_SUFFIX)
         {
             return Err(KernelError::invalid_request(format!(
@@ -230,6 +230,9 @@ pub struct FileLocalStore {
     /// case-folded, so keys a file system may fold to one file share one lock. Kept while some
     /// operation holds it.
     locks: Mutex<HashMap<String, Weak<Mutex<()>>>>,
+    /// Held shared by every write and removal, and alone by a listing, so a listing sees the
+    /// records as they were at one moment.
+    listing: RwLock<()>,
 }
 
 impl fmt::Debug for FileLocalStore {
@@ -269,6 +272,7 @@ impl FileLocalStore {
             data_dir: data_dir.to_path_buf(),
             durability,
             locks: Mutex::new(HashMap::new()),
+            listing: RwLock::new(()),
         });
         open.insert(canonical, Arc::downgrade(&store));
         Ok(store)
@@ -375,6 +379,7 @@ impl LocalStore for FileLocalStore {
         bytes: &[u8],
     ) -> KernelResult<Option<Tag>> {
         let path = self.path(key)?;
+        let _writing = self.listing.read().unwrap_or_else(PoisonError::into_inner);
         let lock = self.lock(key);
         let _held = lock.lock().unwrap_or_else(PoisonError::into_inner);
         let held = self.read(&path)?.map(|held| digest_tag(&held));
@@ -423,6 +428,7 @@ impl LocalStore for FileLocalStore {
             Ok(())
         }
         let path = self.directory(prefix)?;
+        let _listing = self.listing.write().unwrap_or_else(PoisonError::into_inner);
         let mut keys = Vec::new();
         match std::fs::symlink_metadata(&path) {
             Ok(metadata) if metadata.is_dir() => visit(&path, prefix, &mut keys)?,
@@ -450,6 +456,7 @@ impl LocalStore for FileLocalStore {
 
     fn remove(&self, key: &JournalKey, expected: &Tag) -> KernelResult<bool> {
         let path = self.path(key)?;
+        let _writing = self.listing.read().unwrap_or_else(PoisonError::into_inner);
         let lock = self.lock(key);
         let _held = lock.lock().unwrap_or_else(PoisonError::into_inner);
         if self.read(&path)?.map(|held| digest_tag(&held)).as_ref() != Some(expected) {
@@ -614,6 +621,13 @@ mod tests {
             "con",
             "record.tmp",
             "record.0b2e.tmp",
+            "con.json",
+            "COM1.json",
+            "record.",
+            "record ",
+            "a:b.json",
+            "what?.json",
+            "tab\tname",
         ] {
             assert!(JournalKey::new(JOURNAL, [name]).is_err(), "{name:?}");
         }

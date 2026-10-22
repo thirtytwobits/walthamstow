@@ -100,9 +100,10 @@ creates, repairs or upgrades a record.
 
 `FileLocalStore` keeps the record at `journal/name/…` as the file `journals/journal/name/…` under
 the data directory, and tags it with the SHA-256 of its bytes. Each name is one plain component in
-ASCII. A write stages a `.tmp` file beside the record and renames it into place. Every operation
-on a record holds its lock, which keys that fold to one name share. A read settles what it finds,
-a record or none. Every open of one data directory shares one store.
+ASCII that Windows allows. A write stages a `.tmp` file beside the record and renames it into
+place. Every operation on a record holds its lock, which keys that fold to one name share, and a
+listing holds out every write, so it sees the records as they were at one moment. A read settles
+what it finds, a record or none. Every open of one data directory shares one store.
 
 ## Collaboration storage
 

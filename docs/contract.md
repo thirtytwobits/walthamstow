@@ -49,7 +49,7 @@ links.
 
 Walthamstow refuses a link wherever it names an entry itself:
 
-- `journals/`, each journal, and each directory and record within one
+- `journals/`, each journal, and every entry in a journal
 - `staging/` and each staging directory
 - the collaboration cache root that `prepare_cache_root` is given, and each entity directory
 - publication marks
@@ -93,17 +93,19 @@ authorised.
 
 ## Local records
 
-A `LocalStore` keeps the engine's local records, each under a journal and a path of names. A
-write replaces or removes a record only over the record it names by its tag. A successful write
-is durable when it returns; a write that fails may still have taken effect. Reading never
-creates, repairs or upgrades a record.
+A `LocalStore` keeps the engine's local records, each under a journal and a path of names. A name
+is any text but the empty text. A write replaces or removes a record only over the record it names
+by its tag. A successful write is durable when it returns; a write that fails may still have taken
+effect. Reading never creates, repairs or upgrades a record.
 
-`FileLocalStore` keeps the record at `journal/name/…` as the file `journals/journal/name/…` under
-the data directory, and tags it with the SHA-256 of its bytes. Each name is one plain component in
-ASCII that Windows allows. A write stages a `.tmp` file beside the record and renames it into
-place. Every operation on a record holds its lock, which keys that fold to one name share, and a
-listing holds out every write, so it sees the records as they were at one moment. A read settles
-what it finds, a record or none. Every open of one data directory shares one store.
+`FileLocalStore` owns each journal's directory, `journals/<journal>/`. It keeps each record in a
+file named by the SHA-256 of its key's names, holding those names on its first line and then the
+record's bytes, so a key never becomes a path. A record's tag is the SHA-256 of its bytes. Within
+one engine process, every operation on a record holds that record's lock, and a listing holds out
+every write, so it sees the records as they were at one moment. A write stages a file beside the
+record and renames it into place, and a read settles what it finds, a record or none. Any other
+entry in a journal's directory is refused, including what an earlier release left there: that
+release finishes it. Every open of one data directory shares one store.
 
 ## Collaboration storage
 

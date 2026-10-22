@@ -7,7 +7,6 @@
 //! `collaboration-publications` journal.
 
 use clerkenwell_store::CollaborationDocumentId;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex, MutexGuard, PoisonError, Weak};
 use walthamstow_kernel::journals::Journal;
@@ -32,26 +31,10 @@ pub struct PublicationJournal {
 #[derive(Debug)]
 struct Inner {
     store: Arc<dyn LocalStore>,
-    /// Every marked document, with how many commits to it are under way and the record its
-    /// mark is kept in.
-    marked: Mutex<HashMap<CollaborationDocumentId, Marked>>,
+    /// Every marked document, with how many commits to it are under way.
+    marked: Mutex<HashMap<CollaborationDocumentId, usize>>,
     /// Woken when a commit to a marked document finishes.
     finished: tokio::sync::Notify,
-}
-
-#[derive(PartialEq, Eq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-struct Mark {
-    entity: String,
-    resource_id: String,
-}
-
-/// A marked document's commits under way, and the record its mark is kept in: the name it
-/// was written under, which a mark from an earlier release keeps.
-#[derive(Debug)]
-struct Marked {
-    under_way: usize,
-    key: JournalKey,
 }
 
 /// A commit under way to a marked document. While one is, the mark stays.
@@ -63,8 +46,8 @@ pub struct PendingCommit {
 
 impl Drop for PendingCommit {
     fn drop(&mut self) {
-        if let Some(marked) = self.inner.locked().get_mut(&self.document) {
-            marked.under_way = marked.under_way.saturating_sub(1);
+        if let Some(under_way) = self.inner.locked().get_mut(&self.document) {
+            *under_way = under_way.saturating_sub(1);
         }
         self.inner.finished.notify_one();
     }
@@ -77,17 +60,13 @@ fn changed(key: &JournalKey) -> KernelError {
 }
 
 impl Inner {
-    fn locked(&self) -> MutexGuard<'_, HashMap<CollaborationDocumentId, Marked>> {
+    fn locked(&self) -> MutexGuard<'_, HashMap<CollaborationDocumentId, usize>> {
         self.marked.lock().unwrap_or_else(PoisonError::into_inner)
     }
 
-    /// Where a new mark for `document` is written: named by a hash of the entity and resource
-    /// as a JSON pair, which no two documents share.
-    fn key(document: &CollaborationDocumentId) -> JournalKey {
-        let pair = serde_json::to_vec(&(&document.entity, &document.resource_id))
-            .expect("a pair of strings encodes");
-        let name = walthamstow_kernel::hashing::sha256_hex(&pair);
-        JournalKey::new(JOURNAL, [format!("{name}.json")]).expect("a digest names a record")
+    /// The record `document`'s mark is kept in.
+    fn key(document: &CollaborationDocumentId) -> KernelResult<JournalKey> {
+        JournalKey::new(JOURNAL, [&document.entity, &document.resource_id])
     }
 }
 
@@ -111,20 +90,12 @@ impl PublicationJournal {
         }
         let mut marked = HashMap::new();
         for key in store.list(&JournalKey::journal(JOURNAL))? {
-            let [name] = key.names() else { continue };
-            if !name.ends_with(".json") {
-                continue;
-            }
-            let Some((bytes, _)) = store.get(&key)? else {
-                continue;
+            let [entity, resource_id] = key.names() else {
+                return Err(KernelError::internal(format!(
+                    "{key} names no document's publication mark."
+                )));
             };
-            let mark: Mark = serde_json::from_slice(&bytes).map_err(|error| {
-                KernelError::internal(format!("Collaboration publication mark {key}: {error}"))
-            })?;
-            marked.insert(
-                CollaborationDocumentId::new(mark.entity, mark.resource_id),
-                Marked { under_way: 0, key },
-            );
+            marked.insert(CollaborationDocumentId::new(entity, resource_id), 0);
         }
         let inner = Arc::new(Inner {
             store: store.clone(),
@@ -139,31 +110,14 @@ impl PublicationJournal {
     /// at least until the returned commit is dropped.
     pub fn mark(&self, document: &CollaborationDocumentId) -> KernelResult<PendingCommit> {
         let mut marked = self.inner.locked();
-        let key = marked
-            .get(document)
-            .map(|marked| marked.key.clone())
-            .unwrap_or_else(|| Inner::key(document));
-        let mark = Mark {
-            entity: document.entity.clone(),
-            resource_id: document.resource_id.clone(),
-        };
-        // A mark found in place is kept when it names `document`. Anything else there, or
-        // nothing, is written over.
-        let held = self.inner.store.get(&key)?;
-        let names_document = held.as_ref().is_some_and(|(bytes, _)| {
-            serde_json::from_slice::<Mark>(bytes).ok().as_ref() == Some(&mark)
-        });
-        if !names_document {
-            let bytes = serde_json::to_vec(&mark).expect("a mark encodes");
+        let key = Inner::key(document)?;
+        if self.inner.store.get(&key)?.is_none() {
             self.inner
                 .store
-                .compare_and_swap(&key, held.as_ref().map(|(_, tag)| tag), &bytes)?
+                .compare_and_swap(&key, None, b"{}")?
                 .ok_or_else(|| changed(&key))?;
         }
-        marked
-            .entry(document.clone())
-            .or_insert(Marked { under_way: 0, key })
-            .under_way += 1;
+        *marked.entry(document.clone()).or_insert(0) += 1;
         Ok(PendingCommit {
             inner: self.inner.clone(),
             document: document.clone(),
@@ -178,16 +132,13 @@ impl PublicationJournal {
         published: impl FnOnce() -> KernelResult<bool>,
     ) -> KernelResult<()> {
         let mut marked = self.inner.locked();
-        let Some(key) = marked
-            .get(document)
-            .filter(|marked| marked.under_way == 0)
-            .map(|marked| marked.key.clone())
-        else {
+        if marked.get(document) != Some(&0) {
             return Ok(());
-        };
+        }
         if !published()? {
             return Ok(());
         }
+        let key = Inner::key(document)?;
         // An earlier clear may have removed it already.
         if let Some((_, tag)) = self.inner.store.get(&key)? {
             if !self.inner.store.remove(&key, &tag)? {
@@ -342,24 +293,17 @@ mod tests {
     }
 
     #[test]
-    fn a_mark_under_another_name_is_found_and_cleared() {
+    fn a_mark_an_earlier_release_wrote_stops_the_journal_opening() {
         let data_dir = tempfile::tempdir().unwrap();
-        let earlier = JOURNAL.root(data_dir.path()).join("an-earlier-name.json");
         walthamstow_kernel::durability::write_synced(
             WriteDurability::System,
-            &earlier,
+            &JOURNAL.root(data_dir.path()).join("an-earlier-name.json"),
             br#"{"entity":"Note","resource_id":"kept"}"#,
         )
         .unwrap();
-        let journal =
-            PublicationJournal::open(files(data_dir.path(), WriteDurability::System)).unwrap();
-        assert!(journal.is_marked(&document("kept")));
-        journal.clear(&document("kept"), || Ok(true)).unwrap();
-        assert!(!earlier.exists());
-        drop(journal);
-        let reopened =
-            PublicationJournal::open(files(data_dir.path(), WriteDurability::System)).unwrap();
-        assert!(reopened.marked().is_empty());
+        let refused =
+            PublicationJournal::open(files(data_dir.path(), WriteDurability::System)).unwrap_err();
+        assert!(refused.message.contains("earlier release"), "{refused:?}");
     }
 
     #[test]
@@ -386,29 +330,6 @@ mod tests {
         drop(journal);
         let reopened = PublicationJournal::open(store).unwrap();
         assert!(reopened.is_marked(&document("held")));
-    }
-
-    #[test]
-    fn a_mark_found_naming_another_document_or_nothing_is_written_over() {
-        for found in [
-            &br#"{"entity":"Note","resource_id":"other"}"#[..],
-            b"not a mark",
-        ] {
-            let store = memory();
-            let journal = PublicationJournal::open(store.clone()).unwrap();
-            drop(journal.mark(&document("held")).unwrap());
-            let key = only_mark(&store);
-            let (_, tag) = store.get(&key).unwrap().unwrap();
-            store
-                .compare_and_swap(&key, Some(&tag), found)
-                .unwrap()
-                .unwrap();
-            drop(journal.mark(&document("held")).unwrap());
-            drop(journal);
-            let reopened = PublicationJournal::open(store).unwrap();
-            assert!(reopened.is_marked(&document("held")));
-            assert!(!reopened.is_marked(&document("other")));
-        }
     }
 
     #[test]

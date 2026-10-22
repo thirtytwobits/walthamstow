@@ -12,10 +12,12 @@
     earlier format, which the product rebuilds from its workspace files.
 - `LocalStore` keeps the engine's local records: `get`, `compare_and_swap`, `list` and `remove`,
   each record under a `JournalKey` and replaced only over the `Tag` its writer read.
-  `FileLocalStore` keeps them as files under the data directory's journals, laid out as before,
-  and `MemoryLocalStore` keeps them in memory.
+  `FileLocalStore` owns each journal's directory and keeps each record in a file named by a
+  digest of its key, which the file holds, so a key never becomes a path. `MemoryLocalStore`
+  keeps records in memory.
 - Breaking: `PublicationJournal::open` takes the `LocalStore` its marks are kept in, and every
-  open over one store shares one journal. A link found where a mark lies is refused.
+  open over one store shares one journal. A mark's record is named by its document. Marks an
+  earlier release left are refused: that release publishes what they mark.
 
 ## 0.1.0 — 2026-10-20
 

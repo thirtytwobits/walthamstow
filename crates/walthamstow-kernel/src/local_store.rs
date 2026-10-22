@@ -4,8 +4,9 @@
 //! bytes under a key. A write replaces or removes a record only over the record its writer
 //! read, named by its tag, so no write is lost to another.
 //!
-//! [`FileLocalStore`] keeps each record as a file under the data directory's journals.
-//! [`MemoryLocalStore`] keeps them in memory, for an engine with no disk and for tests.
+//! [`FileLocalStore`] keeps each journal's records as files in one directory it owns, each
+//! named by a digest of its key, so a key never becomes a path. [`MemoryLocalStore`] keeps
+//! them in memory, for an engine with no disk and for tests.
 
 use crate::durability::WriteDurability;
 use crate::hashing::sha256_hex;
@@ -15,10 +16,6 @@ use std::collections::{BTreeMap, HashMap};
 use std::fmt;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex, PoisonError, RwLock, Weak};
-
-/// The extension of the file a write stages before it renames it into place. No record name
-/// ends with it.
-const STAGED_SUFFIX: &str = ".tmp";
 
 /// Where a record is kept: a journal, and a path of names within it. A key with no names is
 /// the journal itself, which lists records but holds none.
@@ -37,9 +34,7 @@ impl JournalKey {
         }
     }
 
-    /// The key `names` names within `journal`. Each name is one plain path component in ASCII:
-    /// not empty, not hidden, holding no separator, one Windows allows, and not ending in
-    /// `.tmp`.
+    /// The key `names` names within `journal`. A name is any text but the empty text.
     pub fn new<I>(journal: Journal, names: I) -> KernelResult<Self>
     where
         I: IntoIterator,
@@ -55,14 +50,10 @@ impl JournalKey {
     /// This key with `name` beneath it.
     pub fn join(&self, name: impl Into<String>) -> KernelResult<Self> {
         let name = name.into();
-        if !name.is_ascii()
-            || crate::files::safe_id(&name).is_err()
-            || !crate::files::windows_allows(&name)
-            || name.ends_with(STAGED_SUFFIX)
-        {
-            return Err(KernelError::invalid_request(format!(
-                "\"{name}\" cannot name a journal record."
-            )));
+        if name.is_empty() {
+            return Err(KernelError::invalid_request(
+                "A journal record is not named by empty text.",
+            ));
         }
         let mut names = self.names.clone();
         names.push(name);
@@ -219,16 +210,23 @@ impl LocalStore for MemoryLocalStore {
 /// shares its locks.
 static OPEN: Mutex<BTreeMap<PathBuf, Weak<FileLocalStore>>> = Mutex::new(BTreeMap::new());
 
-/// Records kept as files under the data directory's journals: the record at
-/// `journal/name/…` is the file `journals/journal/name/…`. A write stages a file beside the
-/// record and renames it into place under a lock per record, so a reader never sees a part
-/// of one and two writers never interleave. Its tag is the SHA-256 of its bytes.
+/// The extension of a record's file.
+const RECORD_SUFFIX: &str = ".record";
+
+/// The extension of the file a write stages before it renames it into place.
+const STAGED_SUFFIX: &str = ".tmp";
+
+/// Records kept as files: each journal's in its own directory, `journals/<journal>/`, which the
+/// store owns. A record's file is named by the SHA-256 of its key's names and holds those names
+/// as its first line, then the record's bytes. A write stages a file beside the record and
+/// renames it into place, so a reader never sees a part of one. A record's tag is the SHA-256
+/// of its bytes.
 pub struct FileLocalStore {
+    /// The canonical data directory.
     data_dir: PathBuf,
     durability: WriteDurability,
-    /// One lock per record, held while an operation reads or replaces it, by the key
-    /// case-folded, so keys a file system may fold to one file share one lock. Kept while some
-    /// operation holds it.
+    /// One lock per record, by its file's name, held while an operation reads or replaces it.
+    /// Kept while some operation holds it.
     locks: Mutex<HashMap<String, Weak<Mutex<()>>>>,
     /// Held shared by every write and removal, and alone by a listing, so a listing sees the
     /// records as they were at one moment.
@@ -247,6 +245,35 @@ impl fmt::Debug for FileLocalStore {
 
 fn internal(path: &Path, error: impl fmt::Display) -> KernelError {
     KernelError::internal(format!("Journal record {}: {error}", path.display()))
+}
+
+/// Whether `text` is lowercase hexadecimal of `length` digits.
+fn hex(text: &str, length: usize) -> bool {
+    text.len() == length
+        && text
+            .bytes()
+            .all(|byte| matches!(byte, b'0'..=b'9' | b'a'..=b'f'))
+}
+
+/// Whether `name` is the name of a record's file: a digest and the record suffix.
+fn is_record_file(name: &str) -> bool {
+    name.strip_suffix(RECORD_SUFFIX)
+        .is_some_and(|digest| hex(digest, 64))
+}
+
+/// Whether `name` is the name of a file a write staged beside a record: the record's digest, a
+/// UUID and the staged suffix.
+fn is_staged_file(name: &str) -> bool {
+    let Some(staged) = name.strip_suffix(STAGED_SUFFIX) else {
+        return false;
+    };
+    let Some((digest, id)) = staged.split_once('.') else {
+        return false;
+    };
+    hex(digest, 64)
+        && id.len() == 36
+        && id.split('-').map(str::len).eq([8, 4, 4, 4, 12])
+        && id.split('-').all(|part| hex(part, part.len()))
 }
 
 impl FileLocalStore {
@@ -269,7 +296,7 @@ impl FileLocalStore {
             return Ok(store);
         }
         let store = Arc::new(Self {
-            data_dir: data_dir.to_path_buf(),
+            data_dir: canonical.clone(),
             durability,
             locks: Mutex::new(HashMap::new()),
             listing: RwLock::new(()),
@@ -278,63 +305,66 @@ impl FileLocalStore {
         Ok(store)
     }
 
-    /// The directory a key names, each part of it that exists refused when it is not a
-    /// directory, so nothing read or written through it leaves the journal.
-    fn directory(&self, key: &JournalKey) -> KernelResult<PathBuf> {
-        let mut path = key
-            .journal
+    /// The journal's directory, refused when it or `journals/` is a link.
+    fn directory(&self, journal: Journal) -> KernelResult<PathBuf> {
+        journal
             .unlinked_root(&self.data_dir)
-            .map_err(|error| internal(&key.journal.root(&self.data_dir), error))?;
-        for name in &key.names {
-            match std::fs::symlink_metadata(&path) {
-                Ok(metadata) if !metadata.is_dir() => {
-                    return Err(internal(
-                        &path,
-                        "a journal directory is a directory; this is not followed",
-                    ))
-                }
-                Ok(_) => {}
-                Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
-                Err(error) => return Err(internal(&path, error)),
-            }
-            path.push(name);
-        }
-        Ok(path)
+            .map_err(|error| internal(&journal.root(&self.data_dir), error))
     }
 
-    /// The file holding the record at `key`.
-    fn path(&self, key: &JournalKey) -> KernelResult<PathBuf> {
+    /// The name of the file holding the record at `key`.
+    fn file_name(key: &JournalKey) -> String {
+        let names = serde_json::to_vec(&key.names).expect("names encode");
+        format!("{}{RECORD_SUFFIX}", sha256_hex(&names))
+    }
+
+    /// The file holding the record at `key`, and its name.
+    fn path(&self, key: &JournalKey) -> KernelResult<(PathBuf, String)> {
         key.require_record()?;
-        let path = self.directory(key)?;
-        let parent = path.parent().expect("a record lies in its journal");
-        match std::fs::symlink_metadata(parent) {
-            Ok(metadata) if !metadata.is_dir() => Err(internal(
-                parent,
-                "a journal directory is a directory; this is not followed",
-            )),
-            Ok(_) => Ok(path),
-            Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(path),
-            Err(error) => Err(internal(parent, error)),
-        }
+        let name = Self::file_name(key);
+        Ok((self.directory(key.journal)?.join(&name), name))
     }
 
-    fn lock(&self, key: &JournalKey) -> Arc<Mutex<()>> {
+    fn lock(&self, name: &str) -> Arc<Mutex<()>> {
         let mut locks = self.locks.lock().unwrap_or_else(PoisonError::into_inner);
         locks.retain(|_, lock| lock.strong_count() > 0);
-        let folded = key.to_string().to_ascii_lowercase();
-        if let Some(lock) = locks.get(&folded).and_then(Weak::upgrade) {
+        if let Some(lock) = locks.get(name).and_then(Weak::upgrade) {
             return lock;
         }
         let lock = Arc::new(Mutex::new(()));
-        locks.insert(folded, Arc::downgrade(&lock));
+        locks.insert(name.to_owned(), Arc::downgrade(&lock));
         lock
     }
 
-    /// The bytes of the file at `path`; `None` when there is none. Anything there but a
-    /// regular file is refused unopened. What the read finds, a record or none, is settled
-    /// first, since a write or a removal that failed may have left it unsynced.
-    fn read(&self, path: &Path) -> KernelResult<Option<Vec<u8>>> {
-        let bytes = match std::fs::symlink_metadata(path) {
+    fn encode(key: &JournalKey, bytes: &[u8]) -> Vec<u8> {
+        let mut file = serde_json::to_vec(&key.names).expect("names encode");
+        file.push(b'\n');
+        file.extend_from_slice(bytes);
+        file
+    }
+
+    /// The names and bytes a record's file holds, refused unless its name is the digest of
+    /// those names.
+    fn decode(path: &Path, name: &str, file: &[u8]) -> KernelResult<(Vec<String>, Vec<u8>)> {
+        let line = file
+            .iter()
+            .position(|byte| *byte == b'\n')
+            .ok_or_else(|| internal(path, "a record's file names its key on its first line"))?;
+        let names: Vec<String> =
+            serde_json::from_slice(&file[..line]).map_err(|error| internal(path, error))?;
+        let named = serde_json::to_vec(&names).expect("names encode");
+        if format!("{}{RECORD_SUFFIX}", sha256_hex(&named)) != name {
+            return Err(internal(path, "this file holds a record of another key"));
+        }
+        Ok((names, file[line + 1..].to_vec()))
+    }
+
+    /// The bytes of the record at `key`, in the file at `path` named `name`; `None` when there
+    /// is none. Anything there but a regular file is refused unopened. What the read finds, a
+    /// record or none, is settled first, since a write or a removal that failed may have left
+    /// it unsynced.
+    fn read(&self, key: &JournalKey, path: &Path, name: &str) -> KernelResult<Option<Vec<u8>>> {
+        let file = match std::fs::symlink_metadata(path) {
             Ok(metadata) if metadata.file_type().is_file() => {
                 Some(std::fs::read(path).map_err(|error| internal(path, error))?)
             }
@@ -348,7 +378,14 @@ impl FileLocalStore {
             Err(error) => return Err(internal(path, error)),
         };
         self.settle(path)?;
-        Ok(bytes)
+        let Some(file) = file else {
+            return Ok(None);
+        };
+        let (names, bytes) = Self::decode(path, name, &file)?;
+        if names != key.names {
+            return Err(internal(path, "this file holds a record of another key"));
+        }
+        Ok(Some(bytes))
     }
 
     /// Makes the directory holding `path` durable, when there is one.
@@ -363,10 +400,10 @@ impl FileLocalStore {
 
 impl LocalStore for FileLocalStore {
     fn get(&self, key: &JournalKey) -> KernelResult<Option<(Vec<u8>, Tag)>> {
-        let path = self.path(key)?;
-        let lock = self.lock(key);
+        let (path, name) = self.path(key)?;
+        let lock = self.lock(&name);
         let _held = lock.lock().unwrap_or_else(PoisonError::into_inner);
-        Ok(self.read(&path)?.map(|bytes| {
+        Ok(self.read(key, &path, &name)?.map(|bytes| {
             let tag = digest_tag(&bytes);
             (bytes, tag)
         }))
@@ -378,88 +415,80 @@ impl LocalStore for FileLocalStore {
         expected: Option<&Tag>,
         bytes: &[u8],
     ) -> KernelResult<Option<Tag>> {
-        let path = self.path(key)?;
+        let (path, name) = self.path(key)?;
         let _writing = self.listing.read().unwrap_or_else(PoisonError::into_inner);
-        let lock = self.lock(key);
+        let lock = self.lock(&name);
         let _held = lock.lock().unwrap_or_else(PoisonError::into_inner);
-        let held = self.read(&path)?.map(|held| digest_tag(&held));
+        let held = self.read(key, &path, &name)?.map(|held| digest_tag(&held));
         if held.as_ref() != expected {
             return Ok(None);
         }
-        crate::durability::write_synced(self.durability, &path, bytes)
+        crate::durability::write_synced(self.durability, &path, &Self::encode(key, bytes))
             .map_err(|error| internal(&path, error))?;
         Ok(Some(digest_tag(bytes)))
     }
 
     fn list(&self, prefix: &JournalKey) -> KernelResult<Vec<JournalKey>> {
-        fn visit(path: &Path, key: &JournalKey, keys: &mut Vec<JournalKey>) -> KernelResult<()> {
-            let entries = match std::fs::read_dir(path) {
-                Ok(entries) => entries,
-                Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(()),
-                Err(error) => return Err(internal(path, error)),
-            };
-            for entry in entries {
-                let entry = entry.map_err(|error| internal(path, error))?;
-                let entry_path = entry.path();
-                let name = entry
-                    .file_name()
-                    .into_string()
-                    .map_err(|_| internal(&entry_path, "a record is named in UTF-8"))?;
-                if name.ends_with(STAGED_SUFFIX) {
-                    continue;
-                }
-                let child = key
-                    .join(&name)
-                    .map_err(|_| internal(&entry_path, "this name cannot name a journal record"))?;
-                let file_type = entry
-                    .file_type()
-                    .map_err(|error| internal(&entry_path, error))?;
-                if file_type.is_dir() {
-                    visit(&entry_path, &child, keys)?;
-                } else if file_type.is_file() {
-                    keys.push(child);
-                } else {
-                    return Err(internal(
-                        &entry_path,
-                        "a record is a regular file; this is not followed or opened",
-                    ));
-                }
-            }
-            Ok(())
-        }
-        let path = self.directory(prefix)?;
+        let directory = self.directory(prefix.journal)?;
         let _listing = self.listing.write().unwrap_or_else(PoisonError::into_inner);
-        let mut keys = Vec::new();
-        match std::fs::symlink_metadata(&path) {
-            Ok(metadata) if metadata.is_dir() => visit(&path, prefix, &mut keys)?,
-            Ok(metadata) if metadata.file_type().is_file() && !prefix.names.is_empty() => {
-                keys.push(prefix.clone())
-            }
-            Ok(metadata) if metadata.file_type().is_file() => {
-                return Err(internal(
-                    &path,
-                    "a journal is a directory; this file is not read",
-                ))
+        let entries = match std::fs::symlink_metadata(&directory) {
+            Ok(metadata) if metadata.is_dir() => {
+                std::fs::read_dir(&directory).map_err(|error| internal(&directory, error))?
             }
             Ok(_) => {
                 return Err(internal(
-                    &path,
-                    "a record is a regular file; this is not followed or opened",
+                    &directory,
+                    "a journal is a directory; this is not read",
                 ))
             }
-            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
-            Err(error) => return Err(internal(&path, error)),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
+            Err(error) => return Err(internal(&directory, error)),
+        };
+        let mut keys = Vec::new();
+        for entry in entries {
+            let entry = entry.map_err(|error| internal(&directory, error))?;
+            let path = entry.path();
+            let regular = entry
+                .file_type()
+                .map_err(|error| internal(&path, error))?
+                .is_file();
+            let name = entry.file_name().into_string().ok().filter(|_| regular);
+            let Some(name) = name.filter(|name| is_record_file(name) || is_staged_file(name))
+            else {
+                return Err(internal(
+                    &path,
+                    "this store did not write this entry; an earlier release finishes what \
+                     it left in its journals",
+                ));
+            };
+            if is_staged_file(&name) {
+                continue;
+            }
+            let file = std::fs::read(&path).map_err(|error| internal(&path, error))?;
+            let (names, _) = Self::decode(&path, &name, &file)?;
+            let key = JournalKey {
+                journal: prefix.journal,
+                names,
+            };
+            if key.starts_with(prefix) {
+                keys.push(key);
+            }
         }
         keys.sort();
         Ok(keys)
     }
 
     fn remove(&self, key: &JournalKey, expected: &Tag) -> KernelResult<bool> {
-        let path = self.path(key)?;
+        let (path, name) = self.path(key)?;
         let _writing = self.listing.read().unwrap_or_else(PoisonError::into_inner);
-        let lock = self.lock(key);
+        let lock = self.lock(&name);
         let _held = lock.lock().unwrap_or_else(PoisonError::into_inner);
-        if self.read(&path)?.map(|held| digest_tag(&held)).as_ref() != Some(expected) {
+        if self
+            .read(key, &path, &name)?
+            .map(|held| digest_tag(&held))
+            .as_ref()
+            != Some(expected)
+        {
             return Ok(false);
         }
         std::fs::remove_file(&path).map_err(|error| internal(&path, error))?;
@@ -569,19 +598,132 @@ mod tests {
     }
 
     #[test]
-    fn keys_a_file_system_may_fold_to_one_file_share_one_lock_while_it_is_held() {
+    fn any_name_but_the_empty_names_a_record_whatever_a_file_system_allows() {
+        assert!(JournalKey::new(JOURNAL, [""]).is_err());
         let data = tempfile::tempdir().unwrap();
         let store = FileLocalStore::open(data.path(), WriteDurability::System).unwrap();
-        let upper = store.lock(&key(&["Record.json"]));
-        let lower = store.lock(&key(&["record.json"]));
-        assert!(Arc::ptr_eq(&upper, &lower));
-        drop((upper, lower));
-        let _other = store.lock(&key(&["other.json"]));
+        let long = "n".repeat(300);
+        let names = [
+            "con.json",
+            "FOOBAR~1.JSO",
+            "Ünïcode",
+            "a/b",
+            "../escape",
+            ".hidden",
+            "record.tmp",
+            "trailing. ",
+            "what?:*",
+            long.as_str(),
+        ];
+        for name in names {
+            store
+                .compare_and_swap(&key(&[name]), None, name.as_bytes())
+                .unwrap()
+                .unwrap();
+        }
+        for name in names {
+            assert_eq!(
+                store.get(&key(&[name])).unwrap().unwrap().0,
+                name.as_bytes(),
+                "{name:?}"
+            );
+        }
         assert_eq!(
-            store.locks.lock().unwrap().len(),
-            1,
-            "a lock no operation holds is let go"
+            store.list(&JournalKey::journal(JOURNAL)).unwrap().len(),
+            names.len()
         );
+        assert!(
+            std::fs::read_dir(data.path().join("journals"))
+                .unwrap()
+                .count()
+                == 1,
+            "no name escapes the journal's directory"
+        );
+    }
+
+    #[test]
+    fn keys_that_differ_only_in_case_are_different_records() {
+        let data = tempfile::tempdir().unwrap();
+        let store = FileLocalStore::open(data.path(), WriteDurability::System).unwrap();
+        store
+            .compare_and_swap(&key(&["Record.json"]), None, b"upper")
+            .unwrap()
+            .unwrap();
+        store
+            .compare_and_swap(&key(&["record.json"]), None, b"lower")
+            .unwrap()
+            .unwrap();
+        assert_eq!(
+            store.get(&key(&["Record.json"])).unwrap().unwrap().0,
+            b"upper"
+        );
+        assert_eq!(
+            store.get(&key(&["record.json"])).unwrap().unwrap().0,
+            b"lower"
+        );
+    }
+
+    #[test]
+    fn a_record_is_a_file_named_by_its_keys_digest_that_holds_the_key() {
+        let data = tempfile::tempdir().unwrap();
+        let store = FileLocalStore::open(data.path(), WriteDurability::System).unwrap();
+        store
+            .compare_and_swap(&key(&["operation", "journal.json"]), None, b"held")
+            .unwrap()
+            .unwrap();
+        let files = std::fs::read_dir(JOURNAL.root(data.path()))
+            .unwrap()
+            .map(|entry| entry.unwrap())
+            .collect::<Vec<_>>();
+        assert_eq!(files.len(), 1);
+        let name = files[0].file_name().into_string().unwrap();
+        assert!(is_record_file(&name), "{name}");
+        let file = std::fs::read(files[0].path()).unwrap();
+        assert!(file.starts_with(br#"["operation","journal.json"]"#));
+        assert!(file.ends_with(b"held"));
+    }
+
+    #[test]
+    fn an_entry_this_store_did_not_write_stops_a_listing() {
+        let entries = [
+            (
+                format!("{}.json", "0a1b".repeat(16)),
+                br#"{"entity":"Note","resource_id":"x"}"#.to_vec(),
+            ),
+            ("notes.txt".to_owned(), b"anything".to_vec()),
+            (
+                format!("{}{RECORD_SUFFIX}", "f".repeat(64)),
+                b"[\"another\"]\nheld".to_vec(),
+            ),
+        ];
+        for (name, bytes) in entries {
+            let data = tempfile::tempdir().unwrap();
+            let store = FileLocalStore::open(data.path(), WriteDurability::System).unwrap();
+            std::fs::create_dir_all(JOURNAL.root(data.path())).unwrap();
+            std::fs::write(JOURNAL.root(data.path()).join(&name), bytes).unwrap();
+            assert!(store.list(&JournalKey::journal(JOURNAL)).is_err(), "{name}");
+        }
+    }
+
+    #[test]
+    fn a_staged_file_a_write_left_is_passed_over_and_anything_like_one_refused() {
+        let data = tempfile::tempdir().unwrap();
+        let store = FileLocalStore::open(data.path(), WriteDurability::System).unwrap();
+        let record = key(&["held.json"]);
+        store.compare_and_swap(&record, None, b"held").unwrap();
+        let staged = format!(
+            "{}.0b1e2f3a-4c5d-4e6f-8a9b-0c1d2e3f4a5b.tmp",
+            "0".repeat(64)
+        );
+        let root = JOURNAL.root(data.path());
+        std::fs::write(root.join(&staged), b"interrupted").unwrap();
+        assert_eq!(
+            store.list(&JournalKey::journal(JOURNAL)).unwrap(),
+            vec![record]
+        );
+        std::fs::remove_file(root.join(&staged)).unwrap();
+        std::fs::create_dir(root.join(&staged)).unwrap();
+        assert!(store.list(&JournalKey::journal(JOURNAL)).is_err());
     }
 
     #[test]
@@ -593,115 +735,52 @@ mod tests {
         assert!(store.list(&JournalKey::journal(JOURNAL)).is_err());
     }
 
-    #[cfg(unix)]
     #[test]
-    fn a_record_not_named_in_utf8_is_refused() {
-        use std::os::unix::ffi::OsStrExt;
+    fn every_open_of_a_data_directory_shares_one_store_at_its_canonical_path() {
         let data = tempfile::tempdir().unwrap();
-        let store = FileLocalStore::open(data.path(), WriteDurability::System).unwrap();
-        let root = JOURNAL.root(data.path());
-        std::fs::create_dir_all(&root).unwrap();
-        let name = std::ffi::OsStr::from_bytes(b"record-\xff.json");
-        if std::fs::write(root.join(name), b"held").is_err() {
-            // This file system names files in UTF-8 alone.
-            return;
-        }
-        assert!(store.list(&JournalKey::journal(JOURNAL)).is_err());
-    }
-
-    #[test]
-    fn a_name_that_is_not_one_plain_component_cannot_name_a_record() {
-        for name in [
-            "",
-            "ünïcode.json",
-            ".hidden",
-            "a/b",
-            "a\\b",
-            "..",
-            "con",
-            "record.tmp",
-            "record.0b2e.tmp",
-            "con.json",
-            "COM1.json",
-            "record.",
-            "record ",
-            "a:b.json",
-            "what?.json",
-            "tab\tname",
-        ] {
-            assert!(JournalKey::new(JOURNAL, [name]).is_err(), "{name:?}");
-        }
-        assert!(JournalKey::new(JOURNAL, ["0a1b.json", "operation.json"]).is_ok());
-    }
-
-    #[test]
-    fn a_file_record_is_the_file_its_key_names_under_the_journals() {
-        let data = tempfile::tempdir().unwrap();
-        let store = FileLocalStore::open(data.path(), WriteDurability::System).unwrap();
-        let record = key(&["operation", "journal.json"]);
-        store.compare_and_swap(&record, None, b"held").unwrap();
-        let file = JOURNAL.root(data.path()).join("operation/journal.json");
-        assert_eq!(std::fs::read(&file).unwrap(), b"held");
-
-        std::fs::write(
-            JOURNAL.root(data.path()).join("written.json"),
-            b"by an earlier release",
-        )
-        .unwrap();
-        let earlier = key(&["written.json"]);
-        assert_eq!(
-            store.get(&earlier).unwrap().unwrap().0,
-            b"by an earlier release"
-        );
-    }
-
-    #[test]
-    fn a_staged_file_a_write_left_is_not_a_record() {
-        let data = tempfile::tempdir().unwrap();
-        let store = FileLocalStore::open(data.path(), WriteDurability::System).unwrap();
-        let record = key(&["held.json"]);
-        store.compare_and_swap(&record, None, b"held").unwrap();
-        std::fs::write(
-            JOURNAL.root(data.path()).join("held.6f1e.tmp"),
-            b"interrupted",
-        )
-        .unwrap();
-        assert_eq!(
-            store.list(&JournalKey::journal(JOURNAL)).unwrap(),
-            vec![record]
-        );
-    }
-
-    #[test]
-    fn every_open_of_a_data_directory_shares_one_store() {
-        let data = tempfile::tempdir().unwrap();
+        std::fs::create_dir(data.path().join("nested")).unwrap();
         let first = FileLocalStore::open(data.path(), WriteDurability::System).unwrap();
-        let second = FileLocalStore::open(data.path(), WriteDurability::System).unwrap();
+        let second =
+            FileLocalStore::open(&data.path().join("nested/.."), WriteDurability::System).unwrap();
         assert!(Arc::ptr_eq(&first, &second));
+        assert_eq!(first.data_dir, data.path().canonicalize().unwrap());
         assert!(FileLocalStore::open(data.path(), WriteDurability::Device).is_err());
     }
 
+    #[test]
+    fn a_lock_no_operation_holds_is_let_go() {
+        let data = tempfile::tempdir().unwrap();
+        let store = FileLocalStore::open(data.path(), WriteDurability::System).unwrap();
+        drop(store.lock("first"));
+        let _held = store.lock("second");
+        assert_eq!(store.locks.lock().unwrap().len(), 1);
+    }
+
     #[cfg(unix)]
     #[test]
-    fn a_link_where_a_record_or_its_directory_lies_is_refused() {
+    fn a_link_where_a_journal_or_a_record_lies_is_refused() {
         let outside = tempfile::tempdir().unwrap();
-        std::fs::write(outside.path().join("journal.json"), b"outside").unwrap();
-        for linked in [
-            "journals/records",
-            "journals/records/operation",
-            "journals/records/operation/journal.json",
-        ] {
+        let record = key(&["operation", "journal.json"]);
+        let name = FileLocalStore::file_name(&record);
+        for linked in ["journals", "journals/records", "record"] {
             let data = tempfile::tempdir().unwrap();
             let store = FileLocalStore::open(data.path(), WriteDurability::System).unwrap();
-            let link = data.path().join(linked);
-            std::fs::create_dir_all(link.parent().unwrap()).unwrap();
-            let target = if linked.ends_with(".json") {
-                outside.path().join("journal.json")
-            } else {
-                outside.path().to_path_buf()
+            let link = match linked {
+                "record" => JOURNAL.root(data.path()).join(&name),
+                linked => data.path().join(linked),
             };
-            std::os::unix::fs::symlink(&target, &link).unwrap();
-            let record = key(&["operation", "journal.json"]);
+            std::fs::create_dir_all(link.parent().unwrap()).unwrap();
+            let target = outside.path().join("target");
+            std::fs::write(&target, b"outside").unwrap();
+            std::os::unix::fs::symlink(
+                if linked == "record" {
+                    target.clone()
+                } else {
+                    outside.path().to_path_buf()
+                },
+                &link,
+            )
+            .unwrap();
             assert!(store.get(&record).is_err(), "{linked}");
             assert!(
                 store.compare_and_swap(&record, None, b"written").is_err(),
@@ -711,10 +790,23 @@ mod tests {
                 store.list(&JournalKey::journal(JOURNAL)).is_err(),
                 "{linked}"
             );
-            assert_eq!(
-                std::fs::read(outside.path().join("journal.json")).unwrap(),
-                b"outside"
-            );
+            assert_eq!(std::fs::read(&target).unwrap(), b"outside");
         }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn an_entry_not_named_in_utf8_is_refused() {
+        use std::os::unix::ffi::OsStrExt;
+        let data = tempfile::tempdir().unwrap();
+        let store = FileLocalStore::open(data.path(), WriteDurability::System).unwrap();
+        let root = JOURNAL.root(data.path());
+        std::fs::create_dir_all(&root).unwrap();
+        let name = std::ffi::OsStr::from_bytes(b"record-\xff.record");
+        if std::fs::write(root.join(name), b"held").is_err() {
+            // This file system names files in UTF-8 alone.
+            return;
+        }
+        assert!(store.list(&JournalKey::journal(JOURNAL)).is_err());
     }
 }

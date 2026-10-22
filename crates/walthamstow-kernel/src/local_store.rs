@@ -37,8 +37,8 @@ impl JournalKey {
         }
     }
 
-    /// The key `names` names within `journal`. Each name is one plain path component: not
-    /// empty, not hidden, holding no separator, not a device name Windows reserves, and not
+    /// The key `names` names within `journal`. Each name is one plain path component in ASCII:
+    /// not empty, not hidden, holding no separator, not a device name Windows reserves, and not
     /// ending in `.tmp`.
     pub fn new<I>(journal: Journal, names: I) -> KernelResult<Self>
     where
@@ -55,7 +55,8 @@ impl JournalKey {
     /// This key with `name` beneath it.
     pub fn join(&self, name: impl Into<String>) -> KernelResult<Self> {
         let name = name.into();
-        if crate::files::safe_id(&name).is_err()
+        if !name.is_ascii()
+            || crate::files::safe_id(&name).is_err()
             || crate::files::is_windows_device_name(&name)
             || name.ends_with(STAGED_SUFFIX)
         {
@@ -225,8 +226,10 @@ static OPEN: Mutex<BTreeMap<PathBuf, Weak<FileLocalStore>>> = Mutex::new(BTreeMa
 pub struct FileLocalStore {
     data_dir: PathBuf,
     durability: WriteDurability,
-    /// One lock per record, held while a write compares and replaces it.
-    locks: Mutex<HashMap<JournalKey, Arc<Mutex<()>>>>,
+    /// One lock per record, held while an operation reads or replaces it, by the key
+    /// case-folded, so keys a file system may fold to one file share one lock. Kept while some
+    /// operation holds it.
+    locks: Mutex<HashMap<String, Weak<Mutex<()>>>>,
 }
 
 impl fmt::Debug for FileLocalStore {
@@ -312,12 +315,15 @@ impl FileLocalStore {
     }
 
     fn lock(&self, key: &JournalKey) -> Arc<Mutex<()>> {
-        self.locks
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .entry(key.clone())
-            .or_default()
-            .clone()
+        let mut locks = self.locks.lock().unwrap_or_else(PoisonError::into_inner);
+        locks.retain(|_, lock| lock.strong_count() > 0);
+        let folded = key.to_string().to_ascii_lowercase();
+        if let Some(lock) = locks.get(&folded).and_then(Weak::upgrade) {
+            return lock;
+        }
+        let lock = Arc::new(Mutex::new(()));
+        locks.insert(folded, Arc::downgrade(&lock));
+        lock
     }
 
     /// The bytes of the file at `path`; `None` when there is none. Anything there but a
@@ -354,6 +360,8 @@ impl FileLocalStore {
 impl LocalStore for FileLocalStore {
     fn get(&self, key: &JournalKey) -> KernelResult<Option<(Vec<u8>, Tag)>> {
         let path = self.path(key)?;
+        let lock = self.lock(key);
+        let _held = lock.lock().unwrap_or_else(PoisonError::into_inner);
         Ok(self.read(&path)?.map(|bytes| {
             let tag = digest_tag(&bytes);
             (bytes, tag)
@@ -388,7 +396,10 @@ impl LocalStore for FileLocalStore {
             for entry in entries {
                 let entry = entry.map_err(|error| internal(path, error))?;
                 let entry_path = entry.path();
-                let name = entry.file_name().to_string_lossy().into_owned();
+                let name = entry
+                    .file_name()
+                    .into_string()
+                    .map_err(|_| internal(&entry_path, "a record is named in UTF-8"))?;
                 if name.ends_with(STAGED_SUFFIX) {
                     continue;
                 }
@@ -414,8 +425,16 @@ impl LocalStore for FileLocalStore {
         let path = self.directory(prefix)?;
         let mut keys = Vec::new();
         match std::fs::symlink_metadata(&path) {
-            Ok(metadata) if metadata.file_type().is_file() => keys.push(prefix.clone()),
             Ok(metadata) if metadata.is_dir() => visit(&path, prefix, &mut keys)?,
+            Ok(metadata) if metadata.file_type().is_file() && !prefix.names.is_empty() => {
+                keys.push(prefix.clone())
+            }
+            Ok(metadata) if metadata.file_type().is_file() => {
+                return Err(internal(
+                    &path,
+                    "a journal is a directory; this file is not read",
+                ))
+            }
             Ok(_) => {
                 return Err(internal(
                     &path,
@@ -543,9 +562,51 @@ mod tests {
     }
 
     #[test]
+    fn keys_a_file_system_may_fold_to_one_file_share_one_lock_while_it_is_held() {
+        let data = tempfile::tempdir().unwrap();
+        let store = FileLocalStore::open(data.path(), WriteDurability::System).unwrap();
+        let upper = store.lock(&key(&["Record.json"]));
+        let lower = store.lock(&key(&["record.json"]));
+        assert!(Arc::ptr_eq(&upper, &lower));
+        drop((upper, lower));
+        let _other = store.lock(&key(&["other.json"]));
+        assert_eq!(
+            store.locks.lock().unwrap().len(),
+            1,
+            "a lock no operation holds is let go"
+        );
+    }
+
+    #[test]
+    fn a_file_where_a_journal_lies_is_refused() {
+        let data = tempfile::tempdir().unwrap();
+        let store = FileLocalStore::open(data.path(), WriteDurability::System).unwrap();
+        std::fs::create_dir_all(data.path().join("journals")).unwrap();
+        std::fs::write(JOURNAL.root(data.path()), b"not a journal").unwrap();
+        assert!(store.list(&JournalKey::journal(JOURNAL)).is_err());
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_record_not_named_in_utf8_is_refused() {
+        use std::os::unix::ffi::OsStrExt;
+        let data = tempfile::tempdir().unwrap();
+        let store = FileLocalStore::open(data.path(), WriteDurability::System).unwrap();
+        let root = JOURNAL.root(data.path());
+        std::fs::create_dir_all(&root).unwrap();
+        let name = std::ffi::OsStr::from_bytes(b"record-\xff.json");
+        if std::fs::write(root.join(name), b"held").is_err() {
+            // This file system names files in UTF-8 alone.
+            return;
+        }
+        assert!(store.list(&JournalKey::journal(JOURNAL)).is_err());
+    }
+
+    #[test]
     fn a_name_that_is_not_one_plain_component_cannot_name_a_record() {
         for name in [
             "",
+            "ünïcode.json",
             ".hidden",
             "a/b",
             "a\\b",

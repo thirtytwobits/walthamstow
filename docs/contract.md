@@ -99,9 +99,10 @@ is durable when it returns; a write that fails may still have taken effect. Read
 creates, repairs or upgrades a record.
 
 `FileLocalStore` keeps the record at `journal/name/…` as the file `journals/journal/name/…` under
-the data directory, and tags it with the SHA-256 of its bytes. A write stages a `.tmp` file beside
-the record and renames it into place under a lock per record. A read settles what it finds, a
-record or none. Every open of one data directory shares one store.
+the data directory, and tags it with the SHA-256 of its bytes. Each name is one plain component in
+ASCII. A write stages a `.tmp` file beside the record and renames it into place. Every operation
+on a record holds its lock, which keys that fold to one name share. A read settles what it finds,
+a record or none. Every open of one data directory shares one store.
 
 ## Collaboration storage
 

@@ -12,7 +12,8 @@
 - A public API change reviews its snapshot diff and runs `cargo xtask api --update`.
 - Tests never sleep, set a timer or read the wall clock, and are never retried. Code under test
   that needs time takes its clock as a dependency.
-- On-disk formats are compatible across releases. A change to a file a workspace or journal holds
-  comes with an explicit upgrade.
+- A change to a file a workspace holds comes with an explicit upgrade. A journal's entries belong
+  to the release that wrote them: a release that changes a journal's format refuses what an
+  earlier release left there, and that release finishes it.
 - Documentation is en-GB, precise and concise. When something is removed, remove it cleanly,
   without a note that it used to be there.

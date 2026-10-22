@@ -262,7 +262,7 @@ fn is_record_file(name: &str) -> bool {
 }
 
 /// Whether `name` is the name of a file a write staged beside a record: the record's digest, a
-/// UUID and the staged suffix.
+/// random UUID in the form a write gives it, and the staged suffix.
 fn is_staged_file(name: &str) -> bool {
     let Some(staged) = name.strip_suffix(STAGED_SUFFIX) else {
         return false;
@@ -271,9 +271,11 @@ fn is_staged_file(name: &str) -> bool {
         return false;
     };
     hex(digest, 64)
-        && id.len() == 36
-        && id.split('-').map(str::len).eq([8, 4, 4, 4, 12])
-        && id.split('-').all(|part| hex(part, part.len()))
+        && uuid::Uuid::try_parse(id).is_ok_and(|parsed| {
+            parsed.get_version() == Some(uuid::Version::Random)
+                && parsed.get_variant() == uuid::Variant::RFC4122
+                && parsed.hyphenated().to_string() == id
+        })
 }
 
 impl FileLocalStore {
@@ -352,6 +354,9 @@ impl FileLocalStore {
             .ok_or_else(|| internal(path, "a record's file names its key on its first line"))?;
         let names: Vec<String> =
             serde_json::from_slice(&file[..line]).map_err(|error| internal(path, error))?;
+        if names.is_empty() || names.iter().any(String::is_empty) {
+            return Err(internal(path, "a record's key names it by non-empty names"));
+        }
         let named = serde_json::to_vec(&names).expect("names encode");
         if format!("{}{RECORD_SUFFIX}", sha256_hex(&named)) != name {
             return Err(internal(path, "this file holds a record of another key"));
@@ -474,6 +479,10 @@ impl LocalStore for FileLocalStore {
                 keys.push(key);
             }
         }
+        // A write or removal that failed may have left what this listing found unsynced.
+        self.durability
+            .sync_directory(&directory)
+            .map_err(|error| internal(&directory, error))?;
         keys.sort();
         Ok(keys)
     }
@@ -695,6 +704,14 @@ mod tests {
                 format!("{}{RECORD_SUFFIX}", "f".repeat(64)),
                 b"[\"another\"]\nheld".to_vec(),
             ),
+            (
+                format!("{}{RECORD_SUFFIX}", sha256_hex(b"[]")),
+                b"[]\nheld".to_vec(),
+            ),
+            (
+                format!("{}{RECORD_SUFFIX}", sha256_hex(br#"["a",""]"#)),
+                b"[\"a\",\"\"]\nheld".to_vec(),
+            ),
         ];
         for (name, bytes) in entries {
             let data = tempfile::tempdir().unwrap();
@@ -712,8 +729,9 @@ mod tests {
         let record = key(&["held.json"]);
         store.compare_and_swap(&record, None, b"held").unwrap();
         let staged = format!(
-            "{}.0b1e2f3a-4c5d-4e6f-8a9b-0c1d2e3f4a5b.tmp",
-            "0".repeat(64)
+            "{}.{}{STAGED_SUFFIX}",
+            "0".repeat(64),
+            uuid::Uuid::new_v4().hyphenated()
         );
         let root = JOURNAL.root(data.path());
         std::fs::write(root.join(&staged), b"interrupted").unwrap();
@@ -724,6 +742,21 @@ mod tests {
         std::fs::remove_file(root.join(&staged)).unwrap();
         std::fs::create_dir(root.join(&staged)).unwrap();
         assert!(store.list(&JournalKey::journal(JOURNAL)).is_err());
+        std::fs::remove_dir(root.join(&staged)).unwrap();
+        for unlike in [
+            "00000000-0000-0000-0000-000000000000",
+            "0B1E2F3A-4C5D-4E6F-8A9B-0C1D2E3F4A5B",
+            "0b1e2f3a4c5d4e6f8a9b0c1d2e3f4a5b",
+            "0b1e2f3a-4c5d-1e6f-8a9b-0c1d2e3f4a5b",
+        ] {
+            let name = format!("{}.{unlike}{STAGED_SUFFIX}", "0".repeat(64));
+            std::fs::write(root.join(&name), b"unlike").unwrap();
+            assert!(
+                store.list(&JournalKey::journal(JOURNAL)).is_err(),
+                "{unlike}"
+            );
+            std::fs::remove_file(root.join(&name)).unwrap();
+        }
     }
 
     #[test]

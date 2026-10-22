@@ -794,8 +794,8 @@ impl core::marker::Freeze for walthamstow_workspace::publications::PendingCommit
 impl core::marker::Send for walthamstow_workspace::publications::PendingCommit
 impl core::marker::Sync for walthamstow_workspace::publications::PendingCommit
 impl core::marker::Unpin for walthamstow_workspace::publications::PendingCommit
-impl core::panic::unwind_safe::RefUnwindSafe for walthamstow_workspace::publications::PendingCommit
-impl core::panic::unwind_safe::UnwindSafe for walthamstow_workspace::publications::PendingCommit
+impl !core::panic::unwind_safe::RefUnwindSafe for walthamstow_workspace::publications::PendingCommit
+impl !core::panic::unwind_safe::UnwindSafe for walthamstow_workspace::publications::PendingCommit
 impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for walthamstow_workspace::publications::PendingCommit where ST: ?core::marker::Sized, DT: ?core::marker::Sized
 impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for walthamstow_workspace::publications::PendingCommit where ST: ?core::marker::Sized, DT: ?core::marker::Sized
 impl<T, U> core::convert::Into<U> for walthamstow_workspace::publications::PendingCommit where U: core::convert::From<T>
@@ -893,7 +893,7 @@ pub fn walthamstow_workspace::publications::PublicationJournal::count(&self) -> 
 pub fn walthamstow_workspace::publications::PublicationJournal::is_marked(&self, document: &clerkenwell_store::CollaborationDocumentId) -> bool
 pub fn walthamstow_workspace::publications::PublicationJournal::mark(&self, document: &clerkenwell_store::CollaborationDocumentId) -> walthamstow_kernel::error::KernelResult<walthamstow_workspace::publications::PendingCommit>
 pub fn walthamstow_workspace::publications::PublicationJournal::marked(&self) -> alloc::vec::Vec<clerkenwell_store::CollaborationDocumentId>
-pub fn walthamstow_workspace::publications::PublicationJournal::open(data_dir: &std::path::Path, durability: walthamstow_kernel::durability::WriteDurability) -> walthamstow_kernel::error::KernelResult<Self>
+pub fn walthamstow_workspace::publications::PublicationJournal::open(store: alloc::sync::Arc<dyn walthamstow_kernel::local_store::LocalStore>) -> walthamstow_kernel::error::KernelResult<Self>
 impl core::clone::Clone for walthamstow_workspace::publications::PublicationJournal
 pub fn walthamstow_workspace::publications::PublicationJournal::clone(&self) -> walthamstow_workspace::publications::PublicationJournal
 impl core::fmt::Debug for walthamstow_workspace::publications::PublicationJournal
@@ -902,8 +902,8 @@ impl core::marker::Freeze for walthamstow_workspace::publications::PublicationJo
 impl core::marker::Send for walthamstow_workspace::publications::PublicationJournal
 impl core::marker::Sync for walthamstow_workspace::publications::PublicationJournal
 impl core::marker::Unpin for walthamstow_workspace::publications::PublicationJournal
-impl core::panic::unwind_safe::RefUnwindSafe for walthamstow_workspace::publications::PublicationJournal
-impl core::panic::unwind_safe::UnwindSafe for walthamstow_workspace::publications::PublicationJournal
+impl !core::panic::unwind_safe::RefUnwindSafe for walthamstow_workspace::publications::PublicationJournal
+impl !core::panic::unwind_safe::UnwindSafe for walthamstow_workspace::publications::PublicationJournal
 impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for walthamstow_workspace::publications::PublicationJournal where ST: ?core::marker::Sized, DT: ?core::marker::Sized
 impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for walthamstow_workspace::publications::PublicationJournal where ST: ?core::marker::Sized, DT: ?core::marker::Sized
 impl<T, U> core::convert::Into<U> for walthamstow_workspace::publications::PublicationJournal where U: core::convert::From<T>

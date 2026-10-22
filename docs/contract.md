@@ -34,7 +34,7 @@ read or a write outside the directory it belongs in.
 
 One engine owns a workspace and a data directory. The workspace lock holds the root against a
 second engine. Within one engine, process-wide locks serialise publications, directory creation
-and each data directory's publication journal. Two engines sharing a workspace or a data
+and each record of a data directory's local store. Two engines sharing a workspace or a data
 directory are outside this contract.
 
 The data directory and the workspace belong to whoever runs the engine. Walthamstow checks a path
@@ -49,7 +49,7 @@ links.
 
 Walthamstow refuses a link wherever it names an entry itself:
 
-- `journals/` and each journal
+- `journals/`, each journal, and each directory and record within one
 - `staging/` and each staging directory
 - the collaboration cache root that `prepare_cache_root` is given, and each entity directory
 - publication marks
@@ -91,6 +91,18 @@ operation settles it before reporting.
 Journals record what an operation is authorised to do. Recovery finishes only what a journal
 authorised.
 
+## Local records
+
+A `LocalStore` keeps the engine's local records, each under a journal and a path of names. A
+write replaces or removes a record only over the record it names by its tag. A successful write
+is durable when it returns; a write that fails may still have taken effect. Reading never
+creates, repairs or upgrades a record.
+
+`FileLocalStore` keeps the record at `journal/name/…` as the file `journals/journal/name/…` under
+the data directory, and tags it with the SHA-256 of its bytes. A write stages a `.tmp` file beside
+the record and renames it into place under a lock per record. A read settles what it finds, a
+record or none. Every open of one data directory shares one store.
+
 ## Collaboration storage
 
 An envelope is kept at `<root>/<entity directory>/<sha-256 of the resource id>.json`:
@@ -118,7 +130,8 @@ A product marks a document before it commits to it. The mark stays until one of 
 - its removal is published
 
 A version names the document's incarnation, so files rendering a document that was removed and
-created again never clear its mark. Every open of one data directory shares one journal.
+created again never clear its mark. Each mark is a record in the `collaboration-publications`
+journal, and every open over one local store shares one journal.
 
 ## Upgrades
 

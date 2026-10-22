@@ -220,8 +220,8 @@ dependencies = [
 
 [[package]]
 name = "clerkenwell-doc"
-version = "0.9.0"
-source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.9.0#719c5ba1a0b15e5bbdf08197bdc7bab40ac4d6e7"
+version = "0.10.0"
+source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.10.0#17b17766265352b38a376f5be78e03b824035905"
 dependencies = [
  "base64 0.23.1",
  "clerkenwell-schema",
@@ -233,8 +233,8 @@ dependencies = [
 
 [[package]]
 name = "clerkenwell-events"
-version = "0.9.0"
-source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.9.0#719c5ba1a0b15e5bbdf08197bdc7bab40ac4d6e7"
+version = "0.10.0"
+source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.10.0#17b17766265352b38a376f5be78e03b824035905"
 dependencies = [
  "serde",
  "serde_json",
@@ -242,18 +242,19 @@ dependencies = [
 
 [[package]]
 name = "clerkenwell-schema"
-version = "0.9.0"
-source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.9.0#719c5ba1a0b15e5bbdf08197bdc7bab40ac4d6e7"
+version = "0.10.0"
+source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.10.0#17b17766265352b38a376f5be78e03b824035905"
 dependencies = [
  "clerkenwell-events",
  "schemars",
  "serde",
+ "serde_json",
 ]
 
 [[package]]
 name = "clerkenwell-store"
-version = "0.9.0"
-source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.9.0#719c5ba1a0b15e5bbdf08197bdc7bab40ac4d6e7"
+version = "0.10.0"
+source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.10.0#17b17766265352b38a376f5be78e03b824035905"
 dependencies = [
  "base64 0.23.1",
  "chrono",

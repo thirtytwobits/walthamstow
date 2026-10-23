@@ -103,8 +103,8 @@ impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusi
 impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_workspace::collaboration::AcceptedCollaborationDocument where V: ppv_lite86::types::MultiLane<T>
 pub fn walthamstow_workspace::collaboration::AcceptedCollaborationDocument::vzip(self) -> V
 pub struct walthamstow_workspace::collaboration::AcceptedRead
-pub walthamstow_workspace::collaboration::AcceptedRead::generation: u64
 pub walthamstow_workspace::collaboration::AcceptedRead::value: serde_json::value::Value
+pub walthamstow_workspace::collaboration::AcceptedRead::version: clerkenwell_store::version::CollaborationVersion
 impl core::marker::Freeze for walthamstow_workspace::collaboration::AcceptedRead
 impl core::marker::Send for walthamstow_workspace::collaboration::AcceptedRead
 impl core::marker::Sync for walthamstow_workspace::collaboration::AcceptedRead
@@ -320,16 +320,16 @@ pub struct walthamstow_workspace::collaboration::CollaborativeDocuments
 impl walthamstow_workspace::collaboration::CollaborativeDocuments
 pub fn walthamstow_workspace::collaboration::CollaborativeDocuments::accepted(&self) -> walthamstow_kernel::error::KernelResult<alloc::vec::Vec<walthamstow_workspace::collaboration::AcceptedCollaborationDocument>>
 pub fn walthamstow_workspace::collaboration::CollaborativeDocuments::accepted_read(&self, resource_id: &str) -> walthamstow_kernel::error::KernelResult<core::option::Option<walthamstow_workspace::collaboration::AcceptedRead>>
-pub fn walthamstow_workspace::collaboration::CollaborativeDocuments::authoring_state(&self, resource_id: &str, held_frontier_base64: core::option::Option<&str>, actor: &clerkenwell_events::Principal) -> walthamstow_kernel::error::KernelResult<clerkenwell_schema::authoring::AuthoringState>
+pub fn walthamstow_workspace::collaboration::CollaborativeDocuments::authoring_state(&self, resource_id: &str, held: core::option::Option<clerkenwell_store::version::CollaborationHeld<'_>>, actor: &clerkenwell_events::Principal) -> walthamstow_kernel::error::KernelResult<clerkenwell_schema::authoring::AuthoringState>
 pub fn walthamstow_workspace::collaboration::CollaborativeDocuments::bootstrap(&self, resource_id: &str, seed: &serde_json::value::Value, check: impl core::ops::function::Fn(&serde_json::value::Value) -> walthamstow_kernel::error::KernelResult<()>) -> walthamstow_kernel::error::KernelResult<()>
 pub fn walthamstow_workspace::collaboration::CollaborativeDocuments::bootstrap_from_file(&self, resource_id: &str, seed: &serde_json::value::Value, check: impl core::ops::function::Fn(&serde_json::value::Value) -> walthamstow_kernel::error::KernelResult<()>) -> walthamstow_kernel::error::KernelResult<()>
-pub fn walthamstow_workspace::collaboration::CollaborativeDocuments::bootstrap_update(&self, resource_id: &str, schema_version: u32, update_base64: &str, check: impl core::ops::function::Fn(&serde_json::value::Value) -> walthamstow_kernel::error::KernelResult<()>) -> walthamstow_kernel::error::KernelResult<()>
+pub fn walthamstow_workspace::collaboration::CollaborativeDocuments::bootstrap_update(&self, resource_id: &str, schema_version: u32, update_base64: &str, incarnation: core::option::Option<&str>, check: impl core::ops::function::Fn(&serde_json::value::Value) -> walthamstow_kernel::error::KernelResult<()>) -> walthamstow_kernel::error::KernelResult<()>
 pub fn walthamstow_workspace::collaboration::CollaborativeDocuments::document(&self, resource_id: &str) -> walthamstow_kernel::error::KernelResult<core::option::Option<serde_json::value::Value>>
 pub fn walthamstow_workspace::collaboration::CollaborativeDocuments::import(&self, resource_id: &str, actor: &clerkenwell_events::Principal, update: walthamstow_workspace::collaboration::CollaborationUpdate, check: impl core::ops::function::Fn(&serde_json::value::Value) -> walthamstow_kernel::error::KernelResult<()>) -> walthamstow_kernel::error::KernelResult<clerkenwell_store::CollaborationImportResult>
 pub fn walthamstow_workspace::collaboration::CollaborativeDocuments::new(service: clerkenwell_store::CollaborationService, resource: &'static walthamstow_workspace::collaboration::CollaborativeResource, publications: core::option::Option<walthamstow_workspace::publications::PublicationJournal>) -> Self
 pub fn walthamstow_workspace::collaboration::CollaborativeDocuments::publication_pending(&self, resource_id: &str) -> bool
-pub fn walthamstow_workspace::collaboration::CollaborativeDocuments::published(&self, resource_id: &str, generation: core::option::Option<u64>) -> walthamstow_kernel::error::KernelResult<()>
-pub fn walthamstow_workspace::collaboration::CollaborativeDocuments::remove(&self, resource_id: &str, actor: &clerkenwell_events::Principal) -> walthamstow_kernel::error::KernelResult<()>
+pub fn walthamstow_workspace::collaboration::CollaborativeDocuments::published(&self, resource_id: &str, version: core::option::Option<&clerkenwell_store::version::CollaborationVersion>) -> walthamstow_kernel::error::KernelResult<()>
+pub fn walthamstow_workspace::collaboration::CollaborativeDocuments::remove(&self, resource_id: &str, actor: &clerkenwell_events::Principal) -> walthamstow_kernel::error::KernelResult<core::option::Option<clerkenwell_store::version::CollaborationVersion>>
 pub fn walthamstow_workspace::collaboration::CollaborativeDocuments::require_document(&self, resource_id: &str) -> walthamstow_kernel::error::KernelResult<serde_json::value::Value>
 pub fn walthamstow_workspace::collaboration::CollaborativeDocuments::rewrite_as(&self, actor: &clerkenwell_events::Principal, resource_id: &str, operation_id: &str, intent: &str, edit: impl core::ops::function::FnOnce(&mut serde_json::value::Value) -> bool) -> walthamstow_kernel::error::KernelResult<core::option::Option<clerkenwell_store::CollaborationImportResult>>
 pub fn walthamstow_workspace::collaboration::CollaborativeDocuments::summary(&self, resource_id: &str) -> walthamstow_kernel::error::KernelResult<core::option::Option<clerkenwell_store::CollaborationDocumentSummary>>

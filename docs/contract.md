@@ -114,14 +114,11 @@ stored version equals the expected one.
 
 A product marks a document before it commits to it. The mark stays until one of these is true:
 
-- no commit to the document is under way, and its files render the generation accepted now
+- no commit to the document is under way, and its files render the version accepted now
 - its removal is published
 
-Every open of one data directory shares one journal.
-
-Marks compare generation numbers. A document removed and created again can reach the generation
-that a stale publisher reports. The mark does not tell the two apart; that needs an incarnation
-identity from Clerkenwell's document summary.
+A version names the document's incarnation, so files rendering a document that was removed and
+created again never clear its mark. Every open of one data directory shares one journal.
 
 ## Upgrades
 

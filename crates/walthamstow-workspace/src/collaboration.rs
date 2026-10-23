@@ -14,8 +14,8 @@ use clerkenwell_schema::{
 };
 use clerkenwell_store::{
     CollaborationAuthoringState, CollaborationDocumentId, CollaborationDocumentSummary,
-    CollaborationImportRequest, CollaborationImportResult, CollaborationService, ImportFence,
-    PeerBlock,
+    CollaborationHeld, CollaborationImportRequest, CollaborationImportResult, CollaborationService,
+    CollaborationVersion, ImportFence, PeerBlock,
 };
 use serde_json::Value;
 use walthamstow_kernel::{KernelError, KernelResult};
@@ -95,11 +95,11 @@ pub struct AcceptedCollaborationDocument {
     pub uninspected_reason: Option<String>,
 }
 
-/// An accepted document and the generation accepted when the read began:
-/// `value` is that generation or a later one.
+/// An accepted document and the version accepted when the read began:
+/// `value` holds that version or a later one.
 pub struct AcceptedRead {
     pub value: Value,
-    pub generation: u64,
+    pub version: CollaborationVersion,
 }
 
 /// One collaborative entity's documents in one store.
@@ -148,10 +148,14 @@ impl CollaborativeDocuments {
             .is_some_and(|journal| journal.is_marked(&self.id(resource_id)))
     }
 
-    /// Records that the document's files render `generation`, or that no
+    /// Records that the document's files render `version`, or that no
     /// accepted document remains when it is `None`. The mark stays unless
-    /// `generation` is the one accepted now.
-    pub fn published(&self, resource_id: &str, generation: Option<u64>) -> KernelResult<()> {
+    /// `version` is the one accepted now.
+    pub fn published(
+        &self,
+        resource_id: &str,
+        version: Option<&CollaborationVersion>,
+    ) -> KernelResult<()> {
         let Some(journal) = &self.publications else {
             return Ok(());
         };
@@ -160,12 +164,8 @@ impl CollaborativeDocuments {
             let accepted = self
                 .service
                 .summary(&document)?
-                .map(|summary| summary.generation);
-            Ok(match (accepted, generation) {
-                (None, None) => true,
-                (Some(accepted), Some(published)) => accepted == published,
-                (None, Some(_)) | (Some(_), None) => false,
-            })
+                .map(|summary| summary.version);
+            Ok(accepted.as_ref() == version)
         })
     }
 
@@ -201,7 +201,7 @@ impl CollaborativeDocuments {
             .read_document(self.resource.spec, &self.id(resource_id))?
             .map(|read| AcceptedRead {
                 value: read.document,
-                generation: read.summary.generation,
+                version: read.summary.version,
             }))
     }
 
@@ -268,12 +268,15 @@ impl CollaborativeDocuments {
     }
 
     /// Seeds the document from a writer's full update unless a document is
-    /// stored, in whatever format.
+    /// stored, in whatever format. `incarnation` names the history the update
+    /// comes from, as another store that holds it reads it; `None` gives the
+    /// document a new one.
     pub fn bootstrap_update(
         &self,
         resource_id: &str,
         schema_version: u32,
         update_base64: &str,
+        incarnation: Option<&str>,
         check: impl Fn(&Value) -> KernelResult<()>,
     ) -> KernelResult<()> {
         if self.summary(resource_id)?.is_some() {
@@ -285,35 +288,34 @@ impl CollaborativeDocuments {
             &self.id(resource_id),
             schema_version,
             update_base64,
+            incarnation,
             self.check_with(resource_id, check),
         )?;
         Ok(())
     }
 
-    /// The accepted state for a peer that holds every operation up to
-    /// `held_frontier_base64`, or nothing when it is `None`.
+    /// The accepted state for a peer that holds what `held` names, or nothing
+    /// when it is `None`.
     fn accepted_state(
         &self,
         resource_id: &str,
-        held_frontier_base64: Option<&str>,
+        held: Option<CollaborationHeld<'_>>,
     ) -> KernelResult<CollaborationAuthoringState> {
-        Ok(self.service.authoring_state(
-            self.resource.spec,
-            &self.id(resource_id),
-            held_frontier_base64,
-        )?)
+        Ok(self
+            .service
+            .authoring_state(self.resource.spec, &self.id(resource_id), held)?)
     }
 
-    /// The accepted state for `actor`, who holds every operation up to
-    /// `held_frontier_base64`, or nothing when it is `None`, with a new block
-    /// of peers for the actor to write under.
+    /// The accepted state for `actor`, who holds what `held` names, or
+    /// nothing when it is `None`, with a new block of peers for the actor to
+    /// write under.
     pub fn authoring_state(
         &self,
         resource_id: &str,
-        held_frontier_base64: Option<&str>,
+        held: Option<CollaborationHeld<'_>>,
         actor: &Principal,
     ) -> KernelResult<AuthoringState> {
-        let state = self.accepted_state(resource_id, held_frontier_base64)?;
+        let state = self.accepted_state(resource_id, held)?;
         let peers = self.service.allocate_peers(actor, &self.id(resource_id));
         Ok(state.into_authoring_state(peers))
     }
@@ -366,12 +368,16 @@ impl CollaborativeDocuments {
         )
     }
 
-    /// Removes the document, as `actor` asked. Its mark stays until
+    /// Removes the document, as `actor` asked, and returns the version it
+    /// removed; `None` when there was none to remove. Its mark stays until
     /// [`published`](Self::published) records that its files are gone too.
-    pub fn remove(&self, resource_id: &str, actor: &Principal) -> KernelResult<()> {
+    pub fn remove(
+        &self,
+        resource_id: &str,
+        actor: &Principal,
+    ) -> KernelResult<Option<CollaborationVersion>> {
         let _pending = self.pending(resource_id)?;
-        self.service.delete(actor, &self.id(resource_id))?;
-        Ok(())
+        Ok(self.service.delete(actor, &self.id(resource_id))?)
     }
 
     /// Commits `actor`'s edit to the accepted document, as any writer's edit is
@@ -601,8 +607,8 @@ mod tests {
         documents
             .bootstrap("one", &note("one"), |_| Ok(()))
             .unwrap();
-        let generation = documents.summary("one").unwrap().unwrap().generation;
-        documents.published("one", Some(generation)).unwrap();
+        let version = documents.summary("one").unwrap().unwrap().version;
+        documents.published("one", Some(&version)).unwrap();
         assert!(!documents.publication_pending("one"));
 
         documents.remove("one", &writer()).unwrap();
@@ -630,10 +636,14 @@ mod tests {
         documents
             .bootstrap("one", &note("one"), |_| Ok(()))
             .unwrap();
-        let stale = documents.summary("one").unwrap().unwrap().generation;
-        documents.remove("one", &writer()).unwrap();
+        let stale = documents.summary("one").unwrap().unwrap().version;
+        assert_eq!(
+            documents.remove("one", &writer()).unwrap().as_ref(),
+            Some(&stale),
+            "a removal returns the version it removed"
+        );
 
-        documents.published("one", Some(stale)).unwrap();
+        documents.published("one", Some(&stale)).unwrap();
         assert!(
             documents.publication_pending("one"),
             "files written from the removed document do not settle its removal"
@@ -656,7 +666,7 @@ mod tests {
     }
 
     #[test]
-    fn a_publication_clears_the_mark_only_at_the_generation_accepted() {
+    fn a_publication_clears_the_mark_only_at_the_version_accepted() {
         let store = tempfile::tempdir().unwrap();
         let data = tempfile::tempdir().unwrap();
         let journal = PublicationJournal::open(data.path(), DURABILITY).unwrap();
@@ -664,14 +674,23 @@ mod tests {
         documents
             .bootstrap("one", &note("one"), |_| Ok(()))
             .unwrap();
-        let accepted = documents.summary("one").unwrap().unwrap().generation;
+        let earlier = documents.summary("one").unwrap().unwrap().version;
+        documents.remove("one", &writer()).unwrap();
+        documents
+            .bootstrap("one", &note("one"), |_| Ok(()))
+            .unwrap();
+        let accepted = documents.summary("one").unwrap().unwrap().version;
+        assert_ne!(
+            accepted, earlier,
+            "a document created again has a new history"
+        );
 
-        documents.published("one", Some(accepted + 9)).unwrap();
+        documents.published("one", Some(&earlier)).unwrap();
         assert!(
             documents.publication_pending("one"),
-            "files from an earlier incarnation's later generation do not render this one"
+            "files rendering the removed document's history do not render this one"
         );
-        documents.published("one", Some(accepted)).unwrap();
+        documents.published("one", Some(&accepted)).unwrap();
         assert!(!documents.publication_pending("one"));
     }
 }

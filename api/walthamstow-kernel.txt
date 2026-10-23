@@ -934,6 +934,7 @@ impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusi
 impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_kernel::durability::WriteDurability where V: ppv_lite86::types::MultiLane<T>
 pub fn walthamstow_kernel::durability::WriteDurability::vzip(self) -> V
 pub fn walthamstow_kernel::durability::create_dir_all_synced(durability: walthamstow_kernel::durability::WriteDurability, directory: &std::path::Path) -> std::io::error::Result<()>
+pub fn walthamstow_kernel::durability::staged_by_write(name: &str) -> bool
 pub fn walthamstow_kernel::durability::write_synced(durability: walthamstow_kernel::durability::WriteDurability, path: &std::path::Path, bytes: &[u8]) -> anyhow::Result<()>
 pub mod walthamstow_kernel::error
 pub struct walthamstow_kernel::error::KernelError
@@ -1064,24 +1065,154 @@ impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_kernel::error::KernelError
 pub fn walthamstow_kernel::error::KernelError::vzip(self) -> V
 pub type walthamstow_kernel::error::KernelResult<T> = core::result::Result<T, walthamstow_kernel::error::KernelError>
 pub mod walthamstow_kernel::files
+pub struct walthamstow_kernel::files::Identity
+impl core::clone::Clone for walthamstow_kernel::files::Identity
+pub fn walthamstow_kernel::files::Identity::clone(&self) -> walthamstow_kernel::files::Identity
+impl core::cmp::Eq for walthamstow_kernel::files::Identity
+impl core::cmp::Ord for walthamstow_kernel::files::Identity
+pub fn walthamstow_kernel::files::Identity::cmp(&self, other: &walthamstow_kernel::files::Identity) -> core::cmp::Ordering
+impl core::cmp::PartialEq for walthamstow_kernel::files::Identity
+pub fn walthamstow_kernel::files::Identity::eq(&self, other: &walthamstow_kernel::files::Identity) -> bool
+impl core::cmp::PartialOrd for walthamstow_kernel::files::Identity
+pub fn walthamstow_kernel::files::Identity::partial_cmp(&self, other: &walthamstow_kernel::files::Identity) -> core::option::Option<core::cmp::Ordering>
+impl core::fmt::Debug for walthamstow_kernel::files::Identity
+pub fn walthamstow_kernel::files::Identity::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for walthamstow_kernel::files::Identity
+pub fn walthamstow_kernel::files::Identity::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::StructuralPartialEq for walthamstow_kernel::files::Identity
+impl core::marker::Freeze for walthamstow_kernel::files::Identity
+impl core::marker::Send for walthamstow_kernel::files::Identity
+impl core::marker::Sync for walthamstow_kernel::files::Identity
+impl core::marker::Unpin for walthamstow_kernel::files::Identity
+impl core::panic::unwind_safe::RefUnwindSafe for walthamstow_kernel::files::Identity
+impl core::panic::unwind_safe::UnwindSafe for walthamstow_kernel::files::Identity
+impl<Q, K> equivalent::Comparable<K> for walthamstow_kernel::files::Identity where Q: core::cmp::Ord + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn walthamstow_kernel::files::Identity::compare(&self, key: &K) -> core::cmp::Ordering
+impl<Q, K> equivalent::Equivalent<K> for walthamstow_kernel::files::Identity where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn walthamstow_kernel::files::Identity::equivalent(&self, key: &K) -> bool
+impl<Q, K> hashbrown::Equivalent<K> for walthamstow_kernel::files::Identity where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn walthamstow_kernel::files::Identity::equivalent(&self, key: &K) -> bool
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for walthamstow_kernel::files::Identity where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for walthamstow_kernel::files::Identity where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<T, U> core::convert::Into<U> for walthamstow_kernel::files::Identity where U: core::convert::From<T>
+pub fn walthamstow_kernel::files::Identity::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for walthamstow_kernel::files::Identity where U: core::convert::Into<T>
+pub type walthamstow_kernel::files::Identity::Error = core::convert::Infallible
+pub fn walthamstow_kernel::files::Identity::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for walthamstow_kernel::files::Identity where U: core::convert::TryFrom<T>
+pub type walthamstow_kernel::files::Identity::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn walthamstow_kernel::files::Identity::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for walthamstow_kernel::files::Identity where T: core::clone::Clone
+pub type walthamstow_kernel::files::Identity::Owned = T
+pub fn walthamstow_kernel::files::Identity::clone_into(&self, target: &mut T)
+pub fn walthamstow_kernel::files::Identity::to_owned(&self) -> T
+impl<T> core::any::Any for walthamstow_kernel::files::Identity where T: 'static + ?core::marker::Sized
+pub fn walthamstow_kernel::files::Identity::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for walthamstow_kernel::files::Identity where T: ?core::marker::Sized
+pub fn walthamstow_kernel::files::Identity::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for walthamstow_kernel::files::Identity where T: ?core::marker::Sized
+pub fn walthamstow_kernel::files::Identity::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for walthamstow_kernel::files::Identity where T: core::clone::Clone
+pub unsafe fn walthamstow_kernel::files::Identity::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for walthamstow_kernel::files::Identity
+pub fn walthamstow_kernel::files::Identity::from(t: T) -> T
+impl<T> dyn_clone::DynClone for walthamstow_kernel::files::Identity where T: core::clone::Clone
+pub fn walthamstow_kernel::files::Identity::__clone_box(&self, _: dyn_clone::sealed::Private) -> *mut ()
+impl<T> either::into_either::IntoEither for walthamstow_kernel::files::Identity
+impl<T> tracing::instrument::Instrument for walthamstow_kernel::files::Identity
+impl<T> tracing::instrument::WithSubscriber for walthamstow_kernel::files::Identity
+impl<T> typenum::type_operators::Same for walthamstow_kernel::files::Identity
+pub type walthamstow_kernel::files::Identity::Output = T
+impl<T> yansi::paint::Paint for walthamstow_kernel::files::Identity where T: ?core::marker::Sized
+pub fn walthamstow_kernel::files::Identity::attr(&self, value: yansi::attr_quirk::Attribute) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::bg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::bold(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::clear(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::conceal(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::dim(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::fg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::invert(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::italic(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::linger(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::mask(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::on_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::on_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::on_bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::on_bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::on_bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::on_bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::on_bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::on_bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::on_bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::on_bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::on_bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::on_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::on_fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::on_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::on_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::on_primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::on_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::on_rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::on_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::on_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::quirk(&self, value: yansi::attr_quirk::Quirk) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::rapid_blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::resetting(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::strike(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::underline(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::whenever(&self, value: yansi::condition::Condition) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::wrap(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::yellow(&self) -> yansi::paint::Painted<&T>
+impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_kernel::files::Identity where T: ?core::marker::Sized
+impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_kernel::files::Identity where V: ppv_lite86::types::MultiLane<T>
+pub fn walthamstow_kernel::files::Identity::vzip(self) -> V
+pub fn walthamstow_kernel::files::identity(path: &std::path::Path) -> std::io::error::Result<walthamstow_kernel::files::Identity>
 pub const fn walthamstow_kernel::files::is_windows_device_name(name: &str) -> bool
 pub fn walthamstow_kernel::files::read_files(dir: &std::path::Path) -> anyhow::Result<alloc::collections::btree::map::BTreeMap<std::path::PathBuf, alloc::vec::Vec<u8>>>
 pub fn walthamstow_kernel::files::safe_id(id: &str) -> anyhow::Result<()>
+pub fn walthamstow_kernel::files::windows_allows(component: &str) -> bool
 pub mod walthamstow_kernel::hashing
 pub fn walthamstow_kernel::hashing::sha256_hex(bytes: &[u8]) -> alloc::string::String
 pub mod walthamstow_kernel::journals
 pub struct walthamstow_kernel::journals::Journal(_)
 impl walthamstow_kernel::journals::Journal
+pub const fn walthamstow_kernel::journals::Journal::name(self) -> &'static str
 pub const fn walthamstow_kernel::journals::Journal::new(name: &'static str) -> Self
 pub fn walthamstow_kernel::journals::Journal::root(self, data_dir: &std::path::Path) -> std::path::PathBuf
 pub fn walthamstow_kernel::journals::Journal::unlinked_root(self, data_dir: &std::path::Path) -> std::io::error::Result<std::path::PathBuf>
 impl core::clone::Clone for walthamstow_kernel::journals::Journal
 pub fn walthamstow_kernel::journals::Journal::clone(&self) -> walthamstow_kernel::journals::Journal
 impl core::cmp::Eq for walthamstow_kernel::journals::Journal
+impl core::cmp::Ord for walthamstow_kernel::journals::Journal
+pub fn walthamstow_kernel::journals::Journal::cmp(&self, other: &walthamstow_kernel::journals::Journal) -> core::cmp::Ordering
 impl core::cmp::PartialEq for walthamstow_kernel::journals::Journal
 pub fn walthamstow_kernel::journals::Journal::eq(&self, other: &walthamstow_kernel::journals::Journal) -> bool
+impl core::cmp::PartialOrd for walthamstow_kernel::journals::Journal
+pub fn walthamstow_kernel::journals::Journal::partial_cmp(&self, other: &walthamstow_kernel::journals::Journal) -> core::option::Option<core::cmp::Ordering>
 impl core::fmt::Debug for walthamstow_kernel::journals::Journal
 pub fn walthamstow_kernel::journals::Journal::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for walthamstow_kernel::journals::Journal
+pub fn walthamstow_kernel::journals::Journal::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
 impl core::marker::Copy for walthamstow_kernel::journals::Journal
 impl core::marker::StructuralPartialEq for walthamstow_kernel::journals::Journal
 impl core::marker::Freeze for walthamstow_kernel::journals::Journal
@@ -1090,6 +1221,8 @@ impl core::marker::Sync for walthamstow_kernel::journals::Journal
 impl core::marker::Unpin for walthamstow_kernel::journals::Journal
 impl core::panic::unwind_safe::RefUnwindSafe for walthamstow_kernel::journals::Journal
 impl core::panic::unwind_safe::UnwindSafe for walthamstow_kernel::journals::Journal
+impl<Q, K> equivalent::Comparable<K> for walthamstow_kernel::journals::Journal where Q: core::cmp::Ord + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn walthamstow_kernel::journals::Journal::compare(&self, key: &K) -> core::cmp::Ordering
 impl<Q, K> equivalent::Equivalent<K> for walthamstow_kernel::journals::Journal where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
 pub fn walthamstow_kernel::journals::Journal::equivalent(&self, key: &K) -> bool
 impl<Q, K> hashbrown::Equivalent<K> for walthamstow_kernel::journals::Journal where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
@@ -1306,6 +1439,480 @@ pub fn walthamstow_kernel::journals::Staging::yellow(&self) -> yansi::paint::Pai
 impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_kernel::journals::Staging where T: ?core::marker::Sized
 impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_kernel::journals::Staging where V: ppv_lite86::types::MultiLane<T>
 pub fn walthamstow_kernel::journals::Staging::vzip(self) -> V
+pub mod walthamstow_kernel::local_store
+pub struct walthamstow_kernel::local_store::FileLocalStore
+impl walthamstow_kernel::local_store::FileLocalStore
+pub fn walthamstow_kernel::local_store::FileLocalStore::open(data_dir: &std::path::Path, durability: walthamstow_kernel::durability::WriteDurability) -> walthamstow_kernel::error::KernelResult<alloc::sync::Arc<Self>>
+impl core::fmt::Debug for walthamstow_kernel::local_store::FileLocalStore
+pub fn walthamstow_kernel::local_store::FileLocalStore::fmt(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl walthamstow_kernel::local_store::LocalStore for walthamstow_kernel::local_store::FileLocalStore
+pub fn walthamstow_kernel::local_store::FileLocalStore::compare_and_swap(&self, key: &walthamstow_kernel::local_store::JournalKey, expected: core::option::Option<&walthamstow_kernel::local_store::Tag>, bytes: &[u8]) -> walthamstow_kernel::error::KernelResult<core::option::Option<walthamstow_kernel::local_store::Tag>>
+pub fn walthamstow_kernel::local_store::FileLocalStore::get(&self, key: &walthamstow_kernel::local_store::JournalKey) -> walthamstow_kernel::error::KernelResult<core::option::Option<(alloc::vec::Vec<u8>, walthamstow_kernel::local_store::Tag)>>
+pub fn walthamstow_kernel::local_store::FileLocalStore::list(&self, prefix: &walthamstow_kernel::local_store::JournalKey) -> walthamstow_kernel::error::KernelResult<alloc::vec::Vec<walthamstow_kernel::local_store::JournalKey>>
+pub fn walthamstow_kernel::local_store::FileLocalStore::remove(&self, key: &walthamstow_kernel::local_store::JournalKey, expected: &walthamstow_kernel::local_store::Tag) -> walthamstow_kernel::error::KernelResult<bool>
+impl !core::marker::Freeze for walthamstow_kernel::local_store::FileLocalStore
+impl core::marker::Send for walthamstow_kernel::local_store::FileLocalStore
+impl core::marker::Sync for walthamstow_kernel::local_store::FileLocalStore
+impl core::marker::Unpin for walthamstow_kernel::local_store::FileLocalStore
+impl core::panic::unwind_safe::RefUnwindSafe for walthamstow_kernel::local_store::FileLocalStore
+impl core::panic::unwind_safe::UnwindSafe for walthamstow_kernel::local_store::FileLocalStore
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for walthamstow_kernel::local_store::FileLocalStore where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for walthamstow_kernel::local_store::FileLocalStore where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<T, U> core::convert::Into<U> for walthamstow_kernel::local_store::FileLocalStore where U: core::convert::From<T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for walthamstow_kernel::local_store::FileLocalStore where U: core::convert::Into<T>
+pub type walthamstow_kernel::local_store::FileLocalStore::Error = core::convert::Infallible
+pub fn walthamstow_kernel::local_store::FileLocalStore::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for walthamstow_kernel::local_store::FileLocalStore where U: core::convert::TryFrom<T>
+pub type walthamstow_kernel::local_store::FileLocalStore::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn walthamstow_kernel::local_store::FileLocalStore::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for walthamstow_kernel::local_store::FileLocalStore where T: 'static + ?core::marker::Sized
+pub fn walthamstow_kernel::local_store::FileLocalStore::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for walthamstow_kernel::local_store::FileLocalStore where T: ?core::marker::Sized
+pub fn walthamstow_kernel::local_store::FileLocalStore::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for walthamstow_kernel::local_store::FileLocalStore where T: ?core::marker::Sized
+pub fn walthamstow_kernel::local_store::FileLocalStore::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for walthamstow_kernel::local_store::FileLocalStore
+pub fn walthamstow_kernel::local_store::FileLocalStore::from(t: T) -> T
+impl<T> either::into_either::IntoEither for walthamstow_kernel::local_store::FileLocalStore
+impl<T> tracing::instrument::Instrument for walthamstow_kernel::local_store::FileLocalStore
+impl<T> tracing::instrument::WithSubscriber for walthamstow_kernel::local_store::FileLocalStore
+impl<T> typenum::type_operators::Same for walthamstow_kernel::local_store::FileLocalStore
+pub type walthamstow_kernel::local_store::FileLocalStore::Output = T
+impl<T> yansi::paint::Paint for walthamstow_kernel::local_store::FileLocalStore where T: ?core::marker::Sized
+pub fn walthamstow_kernel::local_store::FileLocalStore::attr(&self, value: yansi::attr_quirk::Attribute) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::bg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::bold(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::clear(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::conceal(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::dim(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::fg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::invert(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::italic(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::linger(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::mask(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::on_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::on_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::on_bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::on_bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::on_bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::on_bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::on_bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::on_bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::on_bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::on_bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::on_bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::on_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::on_fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::on_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::on_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::on_primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::on_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::on_rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::on_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::on_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::quirk(&self, value: yansi::attr_quirk::Quirk) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::rapid_blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::resetting(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::strike(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::underline(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::whenever(&self, value: yansi::condition::Condition) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::wrap(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::yellow(&self) -> yansi::paint::Painted<&T>
+impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_kernel::local_store::FileLocalStore where T: ?core::marker::Sized
+impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_kernel::local_store::FileLocalStore where V: ppv_lite86::types::MultiLane<T>
+pub fn walthamstow_kernel::local_store::FileLocalStore::vzip(self) -> V
+pub struct walthamstow_kernel::local_store::JournalKey
+impl walthamstow_kernel::local_store::JournalKey
+pub fn walthamstow_kernel::local_store::JournalKey::join(&self, name: impl core::convert::Into<alloc::string::String>) -> walthamstow_kernel::error::KernelResult<Self>
+pub fn walthamstow_kernel::local_store::JournalKey::journal(journal: walthamstow_kernel::journals::Journal) -> Self
+pub fn walthamstow_kernel::local_store::JournalKey::journal_of(&self) -> walthamstow_kernel::journals::Journal
+pub fn walthamstow_kernel::local_store::JournalKey::names(&self) -> &[alloc::string::String]
+pub fn walthamstow_kernel::local_store::JournalKey::new<I>(journal: walthamstow_kernel::journals::Journal, names: I) -> walthamstow_kernel::error::KernelResult<Self> where I: core::iter::traits::collect::IntoIterator, <I as core::iter::traits::collect::IntoIterator>::Item: core::convert::Into<alloc::string::String>
+pub fn walthamstow_kernel::local_store::JournalKey::starts_with(&self, prefix: &walthamstow_kernel::local_store::JournalKey) -> bool
+impl core::clone::Clone for walthamstow_kernel::local_store::JournalKey
+pub fn walthamstow_kernel::local_store::JournalKey::clone(&self) -> walthamstow_kernel::local_store::JournalKey
+impl core::cmp::Eq for walthamstow_kernel::local_store::JournalKey
+impl core::cmp::Ord for walthamstow_kernel::local_store::JournalKey
+pub fn walthamstow_kernel::local_store::JournalKey::cmp(&self, other: &walthamstow_kernel::local_store::JournalKey) -> core::cmp::Ordering
+impl core::cmp::PartialEq for walthamstow_kernel::local_store::JournalKey
+pub fn walthamstow_kernel::local_store::JournalKey::eq(&self, other: &walthamstow_kernel::local_store::JournalKey) -> bool
+impl core::cmp::PartialOrd for walthamstow_kernel::local_store::JournalKey
+pub fn walthamstow_kernel::local_store::JournalKey::partial_cmp(&self, other: &walthamstow_kernel::local_store::JournalKey) -> core::option::Option<core::cmp::Ordering>
+impl core::fmt::Debug for walthamstow_kernel::local_store::JournalKey
+pub fn walthamstow_kernel::local_store::JournalKey::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for walthamstow_kernel::local_store::JournalKey
+pub fn walthamstow_kernel::local_store::JournalKey::fmt(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for walthamstow_kernel::local_store::JournalKey
+pub fn walthamstow_kernel::local_store::JournalKey::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::StructuralPartialEq for walthamstow_kernel::local_store::JournalKey
+impl core::marker::Freeze for walthamstow_kernel::local_store::JournalKey
+impl core::marker::Send for walthamstow_kernel::local_store::JournalKey
+impl core::marker::Sync for walthamstow_kernel::local_store::JournalKey
+impl core::marker::Unpin for walthamstow_kernel::local_store::JournalKey
+impl core::panic::unwind_safe::RefUnwindSafe for walthamstow_kernel::local_store::JournalKey
+impl core::panic::unwind_safe::UnwindSafe for walthamstow_kernel::local_store::JournalKey
+impl<Q, K> equivalent::Comparable<K> for walthamstow_kernel::local_store::JournalKey where Q: core::cmp::Ord + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn walthamstow_kernel::local_store::JournalKey::compare(&self, key: &K) -> core::cmp::Ordering
+impl<Q, K> equivalent::Equivalent<K> for walthamstow_kernel::local_store::JournalKey where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn walthamstow_kernel::local_store::JournalKey::equivalent(&self, key: &K) -> bool
+impl<Q, K> hashbrown::Equivalent<K> for walthamstow_kernel::local_store::JournalKey where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn walthamstow_kernel::local_store::JournalKey::equivalent(&self, key: &K) -> bool
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for walthamstow_kernel::local_store::JournalKey where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for walthamstow_kernel::local_store::JournalKey where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<T, U> core::convert::Into<U> for walthamstow_kernel::local_store::JournalKey where U: core::convert::From<T>
+pub fn walthamstow_kernel::local_store::JournalKey::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for walthamstow_kernel::local_store::JournalKey where U: core::convert::Into<T>
+pub type walthamstow_kernel::local_store::JournalKey::Error = core::convert::Infallible
+pub fn walthamstow_kernel::local_store::JournalKey::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for walthamstow_kernel::local_store::JournalKey where U: core::convert::TryFrom<T>
+pub type walthamstow_kernel::local_store::JournalKey::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn walthamstow_kernel::local_store::JournalKey::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for walthamstow_kernel::local_store::JournalKey where T: core::clone::Clone
+pub type walthamstow_kernel::local_store::JournalKey::Owned = T
+pub fn walthamstow_kernel::local_store::JournalKey::clone_into(&self, target: &mut T)
+pub fn walthamstow_kernel::local_store::JournalKey::to_owned(&self) -> T
+impl<T> alloc::string::ToString for walthamstow_kernel::local_store::JournalKey where T: core::fmt::Display + ?core::marker::Sized
+pub fn walthamstow_kernel::local_store::JournalKey::to_string(&self) -> alloc::string::String
+impl<T> core::any::Any for walthamstow_kernel::local_store::JournalKey where T: 'static + ?core::marker::Sized
+pub fn walthamstow_kernel::local_store::JournalKey::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for walthamstow_kernel::local_store::JournalKey where T: ?core::marker::Sized
+pub fn walthamstow_kernel::local_store::JournalKey::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for walthamstow_kernel::local_store::JournalKey where T: ?core::marker::Sized
+pub fn walthamstow_kernel::local_store::JournalKey::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for walthamstow_kernel::local_store::JournalKey where T: core::clone::Clone
+pub unsafe fn walthamstow_kernel::local_store::JournalKey::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for walthamstow_kernel::local_store::JournalKey
+pub fn walthamstow_kernel::local_store::JournalKey::from(t: T) -> T
+impl<T> dyn_clone::DynClone for walthamstow_kernel::local_store::JournalKey where T: core::clone::Clone
+pub fn walthamstow_kernel::local_store::JournalKey::__clone_box(&self, _: dyn_clone::sealed::Private) -> *mut ()
+impl<T> either::into_either::IntoEither for walthamstow_kernel::local_store::JournalKey
+impl<T> tracing::instrument::Instrument for walthamstow_kernel::local_store::JournalKey
+impl<T> tracing::instrument::WithSubscriber for walthamstow_kernel::local_store::JournalKey
+impl<T> typenum::type_operators::Same for walthamstow_kernel::local_store::JournalKey
+pub type walthamstow_kernel::local_store::JournalKey::Output = T
+impl<T> yansi::paint::Paint for walthamstow_kernel::local_store::JournalKey where T: ?core::marker::Sized
+pub fn walthamstow_kernel::local_store::JournalKey::attr(&self, value: yansi::attr_quirk::Attribute) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::bg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::bold(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::clear(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::conceal(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::dim(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::fg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::invert(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::italic(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::linger(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::mask(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::on_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::on_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::on_bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::on_bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::on_bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::on_bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::on_bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::on_bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::on_bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::on_bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::on_bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::on_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::on_fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::on_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::on_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::on_primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::on_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::on_rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::on_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::on_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::quirk(&self, value: yansi::attr_quirk::Quirk) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::rapid_blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::resetting(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::strike(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::underline(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::whenever(&self, value: yansi::condition::Condition) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::wrap(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::JournalKey::yellow(&self) -> yansi::paint::Painted<&T>
+impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_kernel::local_store::JournalKey where T: ?core::marker::Sized
+impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_kernel::local_store::JournalKey where V: ppv_lite86::types::MultiLane<T>
+pub fn walthamstow_kernel::local_store::JournalKey::vzip(self) -> V
+pub struct walthamstow_kernel::local_store::MemoryLocalStore
+impl walthamstow_kernel::local_store::MemoryLocalStore
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::new() -> Self
+impl core::default::Default for walthamstow_kernel::local_store::MemoryLocalStore
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::default() -> walthamstow_kernel::local_store::MemoryLocalStore
+impl core::fmt::Debug for walthamstow_kernel::local_store::MemoryLocalStore
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl walthamstow_kernel::local_store::LocalStore for walthamstow_kernel::local_store::MemoryLocalStore
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::compare_and_swap(&self, key: &walthamstow_kernel::local_store::JournalKey, expected: core::option::Option<&walthamstow_kernel::local_store::Tag>, bytes: &[u8]) -> walthamstow_kernel::error::KernelResult<core::option::Option<walthamstow_kernel::local_store::Tag>>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::get(&self, key: &walthamstow_kernel::local_store::JournalKey) -> walthamstow_kernel::error::KernelResult<core::option::Option<(alloc::vec::Vec<u8>, walthamstow_kernel::local_store::Tag)>>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::list(&self, prefix: &walthamstow_kernel::local_store::JournalKey) -> walthamstow_kernel::error::KernelResult<alloc::vec::Vec<walthamstow_kernel::local_store::JournalKey>>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::remove(&self, key: &walthamstow_kernel::local_store::JournalKey, expected: &walthamstow_kernel::local_store::Tag) -> walthamstow_kernel::error::KernelResult<bool>
+impl !core::marker::Freeze for walthamstow_kernel::local_store::MemoryLocalStore
+impl core::marker::Send for walthamstow_kernel::local_store::MemoryLocalStore
+impl core::marker::Sync for walthamstow_kernel::local_store::MemoryLocalStore
+impl core::marker::Unpin for walthamstow_kernel::local_store::MemoryLocalStore
+impl core::panic::unwind_safe::RefUnwindSafe for walthamstow_kernel::local_store::MemoryLocalStore
+impl core::panic::unwind_safe::UnwindSafe for walthamstow_kernel::local_store::MemoryLocalStore
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for walthamstow_kernel::local_store::MemoryLocalStore where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for walthamstow_kernel::local_store::MemoryLocalStore where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<T, U> core::convert::Into<U> for walthamstow_kernel::local_store::MemoryLocalStore where U: core::convert::From<T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for walthamstow_kernel::local_store::MemoryLocalStore where U: core::convert::Into<T>
+pub type walthamstow_kernel::local_store::MemoryLocalStore::Error = core::convert::Infallible
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for walthamstow_kernel::local_store::MemoryLocalStore where U: core::convert::TryFrom<T>
+pub type walthamstow_kernel::local_store::MemoryLocalStore::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for walthamstow_kernel::local_store::MemoryLocalStore where T: 'static + ?core::marker::Sized
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for walthamstow_kernel::local_store::MemoryLocalStore where T: ?core::marker::Sized
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for walthamstow_kernel::local_store::MemoryLocalStore where T: ?core::marker::Sized
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for walthamstow_kernel::local_store::MemoryLocalStore
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::from(t: T) -> T
+impl<T> either::into_either::IntoEither for walthamstow_kernel::local_store::MemoryLocalStore
+impl<T> loro_rle::rle_trait::ZeroElement for walthamstow_kernel::local_store::MemoryLocalStore where T: core::default::Default
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::zero_element() -> T
+impl<T> tracing::instrument::Instrument for walthamstow_kernel::local_store::MemoryLocalStore
+impl<T> tracing::instrument::WithSubscriber for walthamstow_kernel::local_store::MemoryLocalStore
+impl<T> typenum::type_operators::Same for walthamstow_kernel::local_store::MemoryLocalStore
+pub type walthamstow_kernel::local_store::MemoryLocalStore::Output = T
+impl<T> yansi::paint::Paint for walthamstow_kernel::local_store::MemoryLocalStore where T: ?core::marker::Sized
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::attr(&self, value: yansi::attr_quirk::Attribute) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::bg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::bold(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::clear(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::conceal(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::dim(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::fg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::invert(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::italic(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::linger(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::mask(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::on_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::on_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::on_bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::on_bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::on_bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::on_bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::on_bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::on_bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::on_bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::on_bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::on_bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::on_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::on_fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::on_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::on_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::on_primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::on_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::on_rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::on_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::on_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::quirk(&self, value: yansi::attr_quirk::Quirk) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::rapid_blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::resetting(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::strike(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::underline(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::whenever(&self, value: yansi::condition::Condition) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::wrap(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::yellow(&self) -> yansi::paint::Painted<&T>
+impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_kernel::local_store::MemoryLocalStore where T: ?core::marker::Sized
+impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_kernel::local_store::MemoryLocalStore where V: ppv_lite86::types::MultiLane<T>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::vzip(self) -> V
+pub struct walthamstow_kernel::local_store::Tag(_)
+impl walthamstow_kernel::local_store::Tag
+pub fn walthamstow_kernel::local_store::Tag::as_str(&self) -> &str
+pub fn walthamstow_kernel::local_store::Tag::new(tag: impl core::convert::Into<alloc::string::String>) -> Self
+impl core::clone::Clone for walthamstow_kernel::local_store::Tag
+pub fn walthamstow_kernel::local_store::Tag::clone(&self) -> walthamstow_kernel::local_store::Tag
+impl core::cmp::Eq for walthamstow_kernel::local_store::Tag
+impl core::cmp::PartialEq for walthamstow_kernel::local_store::Tag
+pub fn walthamstow_kernel::local_store::Tag::eq(&self, other: &walthamstow_kernel::local_store::Tag) -> bool
+impl core::fmt::Debug for walthamstow_kernel::local_store::Tag
+pub fn walthamstow_kernel::local_store::Tag::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for walthamstow_kernel::local_store::Tag
+pub fn walthamstow_kernel::local_store::Tag::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::StructuralPartialEq for walthamstow_kernel::local_store::Tag
+impl core::marker::Freeze for walthamstow_kernel::local_store::Tag
+impl core::marker::Send for walthamstow_kernel::local_store::Tag
+impl core::marker::Sync for walthamstow_kernel::local_store::Tag
+impl core::marker::Unpin for walthamstow_kernel::local_store::Tag
+impl core::panic::unwind_safe::RefUnwindSafe for walthamstow_kernel::local_store::Tag
+impl core::panic::unwind_safe::UnwindSafe for walthamstow_kernel::local_store::Tag
+impl<Q, K> equivalent::Equivalent<K> for walthamstow_kernel::local_store::Tag where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn walthamstow_kernel::local_store::Tag::equivalent(&self, key: &K) -> bool
+impl<Q, K> hashbrown::Equivalent<K> for walthamstow_kernel::local_store::Tag where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn walthamstow_kernel::local_store::Tag::equivalent(&self, key: &K) -> bool
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for walthamstow_kernel::local_store::Tag where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for walthamstow_kernel::local_store::Tag where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<T, U> core::convert::Into<U> for walthamstow_kernel::local_store::Tag where U: core::convert::From<T>
+pub fn walthamstow_kernel::local_store::Tag::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for walthamstow_kernel::local_store::Tag where U: core::convert::Into<T>
+pub type walthamstow_kernel::local_store::Tag::Error = core::convert::Infallible
+pub fn walthamstow_kernel::local_store::Tag::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for walthamstow_kernel::local_store::Tag where U: core::convert::TryFrom<T>
+pub type walthamstow_kernel::local_store::Tag::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn walthamstow_kernel::local_store::Tag::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for walthamstow_kernel::local_store::Tag where T: core::clone::Clone
+pub type walthamstow_kernel::local_store::Tag::Owned = T
+pub fn walthamstow_kernel::local_store::Tag::clone_into(&self, target: &mut T)
+pub fn walthamstow_kernel::local_store::Tag::to_owned(&self) -> T
+impl<T> core::any::Any for walthamstow_kernel::local_store::Tag where T: 'static + ?core::marker::Sized
+pub fn walthamstow_kernel::local_store::Tag::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for walthamstow_kernel::local_store::Tag where T: ?core::marker::Sized
+pub fn walthamstow_kernel::local_store::Tag::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for walthamstow_kernel::local_store::Tag where T: ?core::marker::Sized
+pub fn walthamstow_kernel::local_store::Tag::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for walthamstow_kernel::local_store::Tag where T: core::clone::Clone
+pub unsafe fn walthamstow_kernel::local_store::Tag::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for walthamstow_kernel::local_store::Tag
+pub fn walthamstow_kernel::local_store::Tag::from(t: T) -> T
+impl<T> dyn_clone::DynClone for walthamstow_kernel::local_store::Tag where T: core::clone::Clone
+pub fn walthamstow_kernel::local_store::Tag::__clone_box(&self, _: dyn_clone::sealed::Private) -> *mut ()
+impl<T> either::into_either::IntoEither for walthamstow_kernel::local_store::Tag
+impl<T> tracing::instrument::Instrument for walthamstow_kernel::local_store::Tag
+impl<T> tracing::instrument::WithSubscriber for walthamstow_kernel::local_store::Tag
+impl<T> typenum::type_operators::Same for walthamstow_kernel::local_store::Tag
+pub type walthamstow_kernel::local_store::Tag::Output = T
+impl<T> yansi::paint::Paint for walthamstow_kernel::local_store::Tag where T: ?core::marker::Sized
+pub fn walthamstow_kernel::local_store::Tag::attr(&self, value: yansi::attr_quirk::Attribute) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::bg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::bold(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::clear(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::conceal(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::dim(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::fg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::invert(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::italic(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::linger(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::mask(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::on_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::on_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::on_bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::on_bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::on_bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::on_bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::on_bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::on_bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::on_bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::on_bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::on_bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::on_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::on_fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::on_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::on_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::on_primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::on_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::on_rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::on_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::on_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::quirk(&self, value: yansi::attr_quirk::Quirk) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::rapid_blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::resetting(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::strike(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::underline(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::whenever(&self, value: yansi::condition::Condition) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::wrap(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::local_store::Tag::yellow(&self) -> yansi::paint::Painted<&T>
+impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_kernel::local_store::Tag where T: ?core::marker::Sized
+impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_kernel::local_store::Tag where V: ppv_lite86::types::MultiLane<T>
+pub fn walthamstow_kernel::local_store::Tag::vzip(self) -> V
+pub trait walthamstow_kernel::local_store::LocalStore: core::marker::Send + core::marker::Sync + core::fmt::Debug
+pub fn walthamstow_kernel::local_store::LocalStore::compare_and_swap(&self, key: &walthamstow_kernel::local_store::JournalKey, expected: core::option::Option<&walthamstow_kernel::local_store::Tag>, bytes: &[u8]) -> walthamstow_kernel::error::KernelResult<core::option::Option<walthamstow_kernel::local_store::Tag>>
+pub fn walthamstow_kernel::local_store::LocalStore::get(&self, key: &walthamstow_kernel::local_store::JournalKey) -> walthamstow_kernel::error::KernelResult<core::option::Option<(alloc::vec::Vec<u8>, walthamstow_kernel::local_store::Tag)>>
+pub fn walthamstow_kernel::local_store::LocalStore::list(&self, prefix: &walthamstow_kernel::local_store::JournalKey) -> walthamstow_kernel::error::KernelResult<alloc::vec::Vec<walthamstow_kernel::local_store::JournalKey>>
+pub fn walthamstow_kernel::local_store::LocalStore::remove(&self, key: &walthamstow_kernel::local_store::JournalKey, expected: &walthamstow_kernel::local_store::Tag) -> walthamstow_kernel::error::KernelResult<bool>
+impl walthamstow_kernel::local_store::LocalStore for walthamstow_kernel::local_store::FileLocalStore
+pub fn walthamstow_kernel::local_store::FileLocalStore::compare_and_swap(&self, key: &walthamstow_kernel::local_store::JournalKey, expected: core::option::Option<&walthamstow_kernel::local_store::Tag>, bytes: &[u8]) -> walthamstow_kernel::error::KernelResult<core::option::Option<walthamstow_kernel::local_store::Tag>>
+pub fn walthamstow_kernel::local_store::FileLocalStore::get(&self, key: &walthamstow_kernel::local_store::JournalKey) -> walthamstow_kernel::error::KernelResult<core::option::Option<(alloc::vec::Vec<u8>, walthamstow_kernel::local_store::Tag)>>
+pub fn walthamstow_kernel::local_store::FileLocalStore::list(&self, prefix: &walthamstow_kernel::local_store::JournalKey) -> walthamstow_kernel::error::KernelResult<alloc::vec::Vec<walthamstow_kernel::local_store::JournalKey>>
+pub fn walthamstow_kernel::local_store::FileLocalStore::remove(&self, key: &walthamstow_kernel::local_store::JournalKey, expected: &walthamstow_kernel::local_store::Tag) -> walthamstow_kernel::error::KernelResult<bool>
+impl walthamstow_kernel::local_store::LocalStore for walthamstow_kernel::local_store::MemoryLocalStore
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::compare_and_swap(&self, key: &walthamstow_kernel::local_store::JournalKey, expected: core::option::Option<&walthamstow_kernel::local_store::Tag>, bytes: &[u8]) -> walthamstow_kernel::error::KernelResult<core::option::Option<walthamstow_kernel::local_store::Tag>>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::get(&self, key: &walthamstow_kernel::local_store::JournalKey) -> walthamstow_kernel::error::KernelResult<core::option::Option<(alloc::vec::Vec<u8>, walthamstow_kernel::local_store::Tag)>>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::list(&self, prefix: &walthamstow_kernel::local_store::JournalKey) -> walthamstow_kernel::error::KernelResult<alloc::vec::Vec<walthamstow_kernel::local_store::JournalKey>>
+pub fn walthamstow_kernel::local_store::MemoryLocalStore::remove(&self, key: &walthamstow_kernel::local_store::JournalKey, expected: &walthamstow_kernel::local_store::Tag) -> walthamstow_kernel::error::KernelResult<bool>
 pub mod walthamstow_kernel::reason_codes
 pub const walthamstow_kernel::reason_codes::WORKSPACE_HELD: &str
 pub mod walthamstow_kernel::workspace_lock

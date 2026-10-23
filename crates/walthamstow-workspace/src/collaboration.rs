@@ -496,6 +496,7 @@ mod tests {
     use std::time::Duration;
     use walthamstow_kernel::collaboration_storage::FileCollaborationStorage;
     use walthamstow_kernel::durability::WriteDurability;
+    use walthamstow_kernel::local_store::FileLocalStore;
     use walthamstow_kernel::WallClock;
 
     const fn field(
@@ -602,7 +603,10 @@ mod tests {
     fn a_removed_document_waits_for_its_files_until_they_are_published_gone() {
         let store = tempfile::tempdir().unwrap();
         let data = tempfile::tempdir().unwrap();
-        let journal = || PublicationJournal::open(data.path(), DURABILITY).unwrap();
+        let journal = || {
+            PublicationJournal::open(FileLocalStore::open(data.path(), DURABILITY).unwrap())
+                .unwrap()
+        };
         let documents = CollaborativeDocuments::new(service(store.path()), &NOTES, Some(journal()));
         documents
             .bootstrap("one", &note("one"), |_| Ok(()))
@@ -631,7 +635,9 @@ mod tests {
     fn a_stale_publication_finishing_after_a_removal_keeps_the_removal_pending() {
         let store = tempfile::tempdir().unwrap();
         let data = tempfile::tempdir().unwrap();
-        let journal = PublicationJournal::open(data.path(), DURABILITY).unwrap();
+        let journal =
+            PublicationJournal::open(FileLocalStore::open(data.path(), DURABILITY).unwrap())
+                .unwrap();
         let documents = CollaborativeDocuments::new(service(store.path()), &NOTES, Some(journal));
         documents
             .bootstrap("one", &note("one"), |_| Ok(()))
@@ -669,7 +675,9 @@ mod tests {
     fn a_publication_clears_the_mark_only_at_the_version_accepted() {
         let store = tempfile::tempdir().unwrap();
         let data = tempfile::tempdir().unwrap();
-        let journal = PublicationJournal::open(data.path(), DURABILITY).unwrap();
+        let journal =
+            PublicationJournal::open(FileLocalStore::open(data.path(), DURABILITY).unwrap())
+                .unwrap();
         let documents = CollaborativeDocuments::new(service(store.path()), &NOTES, Some(journal));
         documents
             .bootstrap("one", &note("one"), |_| Ok(()))

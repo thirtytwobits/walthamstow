@@ -28,7 +28,7 @@ const fn is_directory_name(name: &str) -> bool {
 }
 
 /// A journal, named by the part of the engine that keeps it.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Journal(&'static str);
 
 impl Journal {
@@ -40,6 +40,11 @@ impl Journal {
             "a journal is named by lowercase letters, digits, '-' and '_'"
         );
         Self(name)
+    }
+
+    /// The name the journal was given.
+    pub const fn name(self) -> &'static str {
+        self.0
     }
 
     /// The journal's directory under the engine data directory `data_dir`.

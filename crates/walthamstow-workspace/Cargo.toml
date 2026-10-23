@@ -1,6 +1,6 @@
 [package]
 name = "walthamstow-workspace"
-description = "A file-backed workspace of typed collaborative documents: directories, document loading, schemas, mounts and publications"
+description = "A workspace of typed collaborative documents: the canonical store, the outbox, directories, document loading, schemas and mounts"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -9,6 +9,7 @@ publish = false
 
 [dependencies]
 anyhow.workspace = true
+async-trait.workspace = true
 clerkenwell-doc.workspace = true
 clerkenwell-events.workspace = true
 clerkenwell-schema.workspace = true

@@ -1,4 +1,857 @@
 pub mod walthamstow_workspace
+pub mod walthamstow_workspace::canonical
+pub struct walthamstow_workspace::canonical::FileCanonicalStore
+impl walthamstow_workspace::canonical::FileCanonicalStore
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::new(leases: alloc::sync::Arc<walthamstow_kernel::leases::FileLeases>, local: alloc::sync::Arc<dyn walthamstow_kernel::local_store::LocalStore>, durability: walthamstow_kernel::durability::WriteDurability) -> Self
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::with_entity(self, entity: &str, directory: std::path::PathBuf, codec: alloc::sync::Arc<dyn walthamstow_workspace::canonical::DocumentCodec>) -> Self
+impl core::fmt::Debug for walthamstow_workspace::canonical::FileCanonicalStore
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl walthamstow_workspace::canonical::CanonicalStore for walthamstow_workspace::canonical::FileCanonicalStore
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::admit(&self, document: &clerkenwell_store::CollaborationDocumentId, parts: &[walthamstow_workspace::canonical::Part]) -> walthamstow_kernel::error::KernelResult<()>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::list<'life0, 'life1, 'async_trait>(&'life0 self, entity: &'life1 str) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = walthamstow_kernel::error::KernelResult<alloc::vec::Vec<clerkenwell_store::CollaborationDocumentId>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::publish<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, document: &'life1 clerkenwell_store::CollaborationDocumentId, lease: &'life2 walthamstow_kernel::leases::Lease, publication: &'life3 walthamstow_workspace::canonical::Publication) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = walthamstow_kernel::error::KernelResult<clerkenwell_store::version::CollaborationVersion>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::pull<'life0, 'life1, 'async_trait>(&'life0 self, document: &'life1 clerkenwell_store::CollaborationDocumentId) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = walthamstow_kernel::error::KernelResult<core::option::Option<walthamstow_workspace::canonical::Pulled>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::remove<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, document: &'life1 clerkenwell_store::CollaborationDocumentId, lease: &'life2 walthamstow_kernel::leases::Lease) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = walthamstow_kernel::error::KernelResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+impl core::marker::Freeze for walthamstow_workspace::canonical::FileCanonicalStore
+impl core::marker::Send for walthamstow_workspace::canonical::FileCanonicalStore
+impl core::marker::Sync for walthamstow_workspace::canonical::FileCanonicalStore
+impl core::marker::Unpin for walthamstow_workspace::canonical::FileCanonicalStore
+impl !core::panic::unwind_safe::RefUnwindSafe for walthamstow_workspace::canonical::FileCanonicalStore
+impl !core::panic::unwind_safe::UnwindSafe for walthamstow_workspace::canonical::FileCanonicalStore
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for walthamstow_workspace::canonical::FileCanonicalStore where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for walthamstow_workspace::canonical::FileCanonicalStore where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<T, U> core::convert::Into<U> for walthamstow_workspace::canonical::FileCanonicalStore where U: core::convert::From<T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for walthamstow_workspace::canonical::FileCanonicalStore where U: core::convert::Into<T>
+pub type walthamstow_workspace::canonical::FileCanonicalStore::Error = core::convert::Infallible
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for walthamstow_workspace::canonical::FileCanonicalStore where U: core::convert::TryFrom<T>
+pub type walthamstow_workspace::canonical::FileCanonicalStore::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for walthamstow_workspace::canonical::FileCanonicalStore where T: 'static + ?core::marker::Sized
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for walthamstow_workspace::canonical::FileCanonicalStore where T: ?core::marker::Sized
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for walthamstow_workspace::canonical::FileCanonicalStore where T: ?core::marker::Sized
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for walthamstow_workspace::canonical::FileCanonicalStore
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::from(t: T) -> T
+impl<T> either::into_either::IntoEither for walthamstow_workspace::canonical::FileCanonicalStore
+impl<T> tower_http::follow_redirect::policy::PolicyExt for walthamstow_workspace::canonical::FileCanonicalStore where T: ?core::marker::Sized
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::and<P, B, E>(self, other: P) -> tower_http::follow_redirect::policy::and::And<T, P> where T: tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::or<P, B, E>(self, other: P) -> tower_http::follow_redirect::policy::or::Or<T, P> where T: tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+impl<T> tracing::instrument::Instrument for walthamstow_workspace::canonical::FileCanonicalStore
+impl<T> tracing::instrument::WithSubscriber for walthamstow_workspace::canonical::FileCanonicalStore
+impl<T> typenum::type_operators::Same for walthamstow_workspace::canonical::FileCanonicalStore
+pub type walthamstow_workspace::canonical::FileCanonicalStore::Output = T
+impl<T> yansi::paint::Paint for walthamstow_workspace::canonical::FileCanonicalStore where T: ?core::marker::Sized
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::attr(&self, value: yansi::attr_quirk::Attribute) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::bg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::bold(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::clear(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::conceal(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::dim(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::fg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::invert(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::italic(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::linger(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::mask(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::on_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::on_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::on_bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::on_bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::on_bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::on_bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::on_bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::on_bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::on_bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::on_bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::on_bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::on_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::on_fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::on_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::on_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::on_primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::on_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::on_rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::on_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::on_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::quirk(&self, value: yansi::attr_quirk::Quirk) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::rapid_blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::resetting(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::strike(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::underline(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::whenever(&self, value: yansi::condition::Condition) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::wrap(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::yellow(&self) -> yansi::paint::Painted<&T>
+impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_workspace::canonical::FileCanonicalStore where T: ?core::marker::Sized
+impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_workspace::canonical::FileCanonicalStore where V: ppv_lite86::types::MultiLane<T>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::vzip(self) -> V
+pub struct walthamstow_workspace::canonical::MemoryCanonicalStore
+impl walthamstow_workspace::canonical::MemoryCanonicalStore
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::new(leases: alloc::sync::Arc<walthamstow_kernel::leases::MemoryLeases>) -> Self
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::write_outside(&self, document: &clerkenwell_store::CollaborationDocumentId, parts: alloc::vec::Vec<walthamstow_workspace::canonical::Part>)
+impl core::fmt::Debug for walthamstow_workspace::canonical::MemoryCanonicalStore
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl walthamstow_workspace::canonical::CanonicalStore for walthamstow_workspace::canonical::MemoryCanonicalStore
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::admit(&self, _document: &clerkenwell_store::CollaborationDocumentId, parts: &[walthamstow_workspace::canonical::Part]) -> walthamstow_kernel::error::KernelResult<()>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::list<'life0, 'life1, 'async_trait>(&'life0 self, entity: &'life1 str) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = walthamstow_kernel::error::KernelResult<alloc::vec::Vec<clerkenwell_store::CollaborationDocumentId>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::publish<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, document: &'life1 clerkenwell_store::CollaborationDocumentId, lease: &'life2 walthamstow_kernel::leases::Lease, publication: &'life3 walthamstow_workspace::canonical::Publication) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = walthamstow_kernel::error::KernelResult<clerkenwell_store::version::CollaborationVersion>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::pull<'life0, 'life1, 'async_trait>(&'life0 self, document: &'life1 clerkenwell_store::CollaborationDocumentId) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = walthamstow_kernel::error::KernelResult<core::option::Option<walthamstow_workspace::canonical::Pulled>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::remove<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, document: &'life1 clerkenwell_store::CollaborationDocumentId, lease: &'life2 walthamstow_kernel::leases::Lease) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = walthamstow_kernel::error::KernelResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+impl !core::marker::Freeze for walthamstow_workspace::canonical::MemoryCanonicalStore
+impl core::marker::Send for walthamstow_workspace::canonical::MemoryCanonicalStore
+impl core::marker::Sync for walthamstow_workspace::canonical::MemoryCanonicalStore
+impl core::marker::Unpin for walthamstow_workspace::canonical::MemoryCanonicalStore
+impl !core::panic::unwind_safe::RefUnwindSafe for walthamstow_workspace::canonical::MemoryCanonicalStore
+impl !core::panic::unwind_safe::UnwindSafe for walthamstow_workspace::canonical::MemoryCanonicalStore
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for walthamstow_workspace::canonical::MemoryCanonicalStore where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for walthamstow_workspace::canonical::MemoryCanonicalStore where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<T, U> core::convert::Into<U> for walthamstow_workspace::canonical::MemoryCanonicalStore where U: core::convert::From<T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for walthamstow_workspace::canonical::MemoryCanonicalStore where U: core::convert::Into<T>
+pub type walthamstow_workspace::canonical::MemoryCanonicalStore::Error = core::convert::Infallible
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for walthamstow_workspace::canonical::MemoryCanonicalStore where U: core::convert::TryFrom<T>
+pub type walthamstow_workspace::canonical::MemoryCanonicalStore::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for walthamstow_workspace::canonical::MemoryCanonicalStore where T: 'static + ?core::marker::Sized
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for walthamstow_workspace::canonical::MemoryCanonicalStore where T: ?core::marker::Sized
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for walthamstow_workspace::canonical::MemoryCanonicalStore where T: ?core::marker::Sized
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for walthamstow_workspace::canonical::MemoryCanonicalStore
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::from(t: T) -> T
+impl<T> either::into_either::IntoEither for walthamstow_workspace::canonical::MemoryCanonicalStore
+impl<T> tower_http::follow_redirect::policy::PolicyExt for walthamstow_workspace::canonical::MemoryCanonicalStore where T: ?core::marker::Sized
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::and<P, B, E>(self, other: P) -> tower_http::follow_redirect::policy::and::And<T, P> where T: tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::or<P, B, E>(self, other: P) -> tower_http::follow_redirect::policy::or::Or<T, P> where T: tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+impl<T> tracing::instrument::Instrument for walthamstow_workspace::canonical::MemoryCanonicalStore
+impl<T> tracing::instrument::WithSubscriber for walthamstow_workspace::canonical::MemoryCanonicalStore
+impl<T> typenum::type_operators::Same for walthamstow_workspace::canonical::MemoryCanonicalStore
+pub type walthamstow_workspace::canonical::MemoryCanonicalStore::Output = T
+impl<T> yansi::paint::Paint for walthamstow_workspace::canonical::MemoryCanonicalStore where T: ?core::marker::Sized
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::attr(&self, value: yansi::attr_quirk::Attribute) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::bg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::bold(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::clear(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::conceal(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::dim(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::fg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::invert(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::italic(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::linger(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::mask(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::on_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::on_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::on_bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::on_bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::on_bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::on_bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::on_bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::on_bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::on_bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::on_bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::on_bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::on_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::on_fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::on_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::on_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::on_primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::on_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::on_rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::on_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::on_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::quirk(&self, value: yansi::attr_quirk::Quirk) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::rapid_blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::resetting(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::strike(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::underline(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::whenever(&self, value: yansi::condition::Condition) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::wrap(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::yellow(&self) -> yansi::paint::Painted<&T>
+impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_workspace::canonical::MemoryCanonicalStore where T: ?core::marker::Sized
+impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_workspace::canonical::MemoryCanonicalStore where V: ppv_lite86::types::MultiLane<T>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::vzip(self) -> V
+pub struct walthamstow_workspace::canonical::Operations
+pub walthamstow_workspace::canonical::Operations::schema_version: u32
+pub walthamstow_workspace::canonical::Operations::update_base64: alloc::string::String
+impl core::clone::Clone for walthamstow_workspace::canonical::Operations
+pub fn walthamstow_workspace::canonical::Operations::clone(&self) -> walthamstow_workspace::canonical::Operations
+impl core::cmp::Eq for walthamstow_workspace::canonical::Operations
+impl core::cmp::PartialEq for walthamstow_workspace::canonical::Operations
+pub fn walthamstow_workspace::canonical::Operations::eq(&self, other: &walthamstow_workspace::canonical::Operations) -> bool
+impl core::fmt::Debug for walthamstow_workspace::canonical::Operations
+pub fn walthamstow_workspace::canonical::Operations::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for walthamstow_workspace::canonical::Operations
+impl core::marker::Freeze for walthamstow_workspace::canonical::Operations
+impl core::marker::Send for walthamstow_workspace::canonical::Operations
+impl core::marker::Sync for walthamstow_workspace::canonical::Operations
+impl core::marker::Unpin for walthamstow_workspace::canonical::Operations
+impl core::panic::unwind_safe::RefUnwindSafe for walthamstow_workspace::canonical::Operations
+impl core::panic::unwind_safe::UnwindSafe for walthamstow_workspace::canonical::Operations
+impl<Q, K> equivalent::Equivalent<K> for walthamstow_workspace::canonical::Operations where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn walthamstow_workspace::canonical::Operations::equivalent(&self, key: &K) -> bool
+impl<Q, K> hashbrown::Equivalent<K> for walthamstow_workspace::canonical::Operations where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+impl<Q, K> hashbrown::Equivalent<K> for walthamstow_workspace::canonical::Operations where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn walthamstow_workspace::canonical::Operations::equivalent(&self, key: &K) -> bool
+pub fn walthamstow_workspace::canonical::Operations::equivalent(&self, key: &K) -> bool
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for walthamstow_workspace::canonical::Operations where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for walthamstow_workspace::canonical::Operations where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<T, U> core::convert::Into<U> for walthamstow_workspace::canonical::Operations where U: core::convert::From<T>
+pub fn walthamstow_workspace::canonical::Operations::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for walthamstow_workspace::canonical::Operations where U: core::convert::Into<T>
+pub type walthamstow_workspace::canonical::Operations::Error = core::convert::Infallible
+pub fn walthamstow_workspace::canonical::Operations::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for walthamstow_workspace::canonical::Operations where U: core::convert::TryFrom<T>
+pub type walthamstow_workspace::canonical::Operations::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn walthamstow_workspace::canonical::Operations::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for walthamstow_workspace::canonical::Operations where T: core::clone::Clone
+pub type walthamstow_workspace::canonical::Operations::Owned = T
+pub fn walthamstow_workspace::canonical::Operations::clone_into(&self, target: &mut T)
+pub fn walthamstow_workspace::canonical::Operations::to_owned(&self) -> T
+impl<T> core::any::Any for walthamstow_workspace::canonical::Operations where T: 'static + ?core::marker::Sized
+pub fn walthamstow_workspace::canonical::Operations::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for walthamstow_workspace::canonical::Operations where T: ?core::marker::Sized
+pub fn walthamstow_workspace::canonical::Operations::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for walthamstow_workspace::canonical::Operations where T: ?core::marker::Sized
+pub fn walthamstow_workspace::canonical::Operations::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for walthamstow_workspace::canonical::Operations where T: core::clone::Clone
+pub unsafe fn walthamstow_workspace::canonical::Operations::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for walthamstow_workspace::canonical::Operations
+pub fn walthamstow_workspace::canonical::Operations::from(t: T) -> T
+impl<T> dyn_clone::DynClone for walthamstow_workspace::canonical::Operations where T: core::clone::Clone
+pub fn walthamstow_workspace::canonical::Operations::__clone_box(&self, _: dyn_clone::sealed::Private) -> *mut ()
+impl<T> either::into_either::IntoEither for walthamstow_workspace::canonical::Operations
+impl<T> tower_http::follow_redirect::policy::PolicyExt for walthamstow_workspace::canonical::Operations where T: ?core::marker::Sized
+pub fn walthamstow_workspace::canonical::Operations::and<P, B, E>(self, other: P) -> tower_http::follow_redirect::policy::and::And<T, P> where T: tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+pub fn walthamstow_workspace::canonical::Operations::or<P, B, E>(self, other: P) -> tower_http::follow_redirect::policy::or::Or<T, P> where T: tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+impl<T> tracing::instrument::Instrument for walthamstow_workspace::canonical::Operations
+impl<T> tracing::instrument::WithSubscriber for walthamstow_workspace::canonical::Operations
+impl<T> typenum::type_operators::Same for walthamstow_workspace::canonical::Operations
+pub type walthamstow_workspace::canonical::Operations::Output = T
+impl<T> yansi::paint::Paint for walthamstow_workspace::canonical::Operations where T: ?core::marker::Sized
+pub fn walthamstow_workspace::canonical::Operations::attr(&self, value: yansi::attr_quirk::Attribute) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::bg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::bold(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::clear(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::conceal(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::dim(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::fg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::invert(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::italic(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::linger(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::mask(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::on_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::on_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::on_bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::on_bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::on_bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::on_bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::on_bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::on_bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::on_bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::on_bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::on_bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::on_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::on_fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::on_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::on_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::on_primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::on_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::on_rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::on_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::on_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::quirk(&self, value: yansi::attr_quirk::Quirk) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::rapid_blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::resetting(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::strike(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::underline(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::whenever(&self, value: yansi::condition::Condition) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::wrap(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Operations::yellow(&self) -> yansi::paint::Painted<&T>
+impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_workspace::canonical::Operations where T: ?core::marker::Sized
+impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_workspace::canonical::Operations where V: ppv_lite86::types::MultiLane<T>
+pub fn walthamstow_workspace::canonical::Operations::vzip(self) -> V
+pub struct walthamstow_workspace::canonical::Part
+pub walthamstow_workspace::canonical::Part::bytes: alloc::vec::Vec<u8>
+pub walthamstow_workspace::canonical::Part::name: walthamstow_workspace::canonical::PartName
+impl core::clone::Clone for walthamstow_workspace::canonical::Part
+pub fn walthamstow_workspace::canonical::Part::clone(&self) -> walthamstow_workspace::canonical::Part
+impl core::cmp::Eq for walthamstow_workspace::canonical::Part
+impl core::cmp::PartialEq for walthamstow_workspace::canonical::Part
+pub fn walthamstow_workspace::canonical::Part::eq(&self, other: &walthamstow_workspace::canonical::Part) -> bool
+impl core::fmt::Debug for walthamstow_workspace::canonical::Part
+pub fn walthamstow_workspace::canonical::Part::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for walthamstow_workspace::canonical::Part
+impl core::marker::Freeze for walthamstow_workspace::canonical::Part
+impl core::marker::Send for walthamstow_workspace::canonical::Part
+impl core::marker::Sync for walthamstow_workspace::canonical::Part
+impl core::marker::Unpin for walthamstow_workspace::canonical::Part
+impl core::panic::unwind_safe::RefUnwindSafe for walthamstow_workspace::canonical::Part
+impl core::panic::unwind_safe::UnwindSafe for walthamstow_workspace::canonical::Part
+impl<Q, K> equivalent::Equivalent<K> for walthamstow_workspace::canonical::Part where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn walthamstow_workspace::canonical::Part::equivalent(&self, key: &K) -> bool
+impl<Q, K> hashbrown::Equivalent<K> for walthamstow_workspace::canonical::Part where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+impl<Q, K> hashbrown::Equivalent<K> for walthamstow_workspace::canonical::Part where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn walthamstow_workspace::canonical::Part::equivalent(&self, key: &K) -> bool
+pub fn walthamstow_workspace::canonical::Part::equivalent(&self, key: &K) -> bool
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for walthamstow_workspace::canonical::Part where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for walthamstow_workspace::canonical::Part where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<T, U> core::convert::Into<U> for walthamstow_workspace::canonical::Part where U: core::convert::From<T>
+pub fn walthamstow_workspace::canonical::Part::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for walthamstow_workspace::canonical::Part where U: core::convert::Into<T>
+pub type walthamstow_workspace::canonical::Part::Error = core::convert::Infallible
+pub fn walthamstow_workspace::canonical::Part::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for walthamstow_workspace::canonical::Part where U: core::convert::TryFrom<T>
+pub type walthamstow_workspace::canonical::Part::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn walthamstow_workspace::canonical::Part::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for walthamstow_workspace::canonical::Part where T: core::clone::Clone
+pub type walthamstow_workspace::canonical::Part::Owned = T
+pub fn walthamstow_workspace::canonical::Part::clone_into(&self, target: &mut T)
+pub fn walthamstow_workspace::canonical::Part::to_owned(&self) -> T
+impl<T> core::any::Any for walthamstow_workspace::canonical::Part where T: 'static + ?core::marker::Sized
+pub fn walthamstow_workspace::canonical::Part::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for walthamstow_workspace::canonical::Part where T: ?core::marker::Sized
+pub fn walthamstow_workspace::canonical::Part::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for walthamstow_workspace::canonical::Part where T: ?core::marker::Sized
+pub fn walthamstow_workspace::canonical::Part::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for walthamstow_workspace::canonical::Part where T: core::clone::Clone
+pub unsafe fn walthamstow_workspace::canonical::Part::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for walthamstow_workspace::canonical::Part
+pub fn walthamstow_workspace::canonical::Part::from(t: T) -> T
+impl<T> dyn_clone::DynClone for walthamstow_workspace::canonical::Part where T: core::clone::Clone
+pub fn walthamstow_workspace::canonical::Part::__clone_box(&self, _: dyn_clone::sealed::Private) -> *mut ()
+impl<T> either::into_either::IntoEither for walthamstow_workspace::canonical::Part
+impl<T> tower_http::follow_redirect::policy::PolicyExt for walthamstow_workspace::canonical::Part where T: ?core::marker::Sized
+pub fn walthamstow_workspace::canonical::Part::and<P, B, E>(self, other: P) -> tower_http::follow_redirect::policy::and::And<T, P> where T: tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+pub fn walthamstow_workspace::canonical::Part::or<P, B, E>(self, other: P) -> tower_http::follow_redirect::policy::or::Or<T, P> where T: tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+impl<T> tracing::instrument::Instrument for walthamstow_workspace::canonical::Part
+impl<T> tracing::instrument::WithSubscriber for walthamstow_workspace::canonical::Part
+impl<T> typenum::type_operators::Same for walthamstow_workspace::canonical::Part
+pub type walthamstow_workspace::canonical::Part::Output = T
+impl<T> yansi::paint::Paint for walthamstow_workspace::canonical::Part where T: ?core::marker::Sized
+pub fn walthamstow_workspace::canonical::Part::attr(&self, value: yansi::attr_quirk::Attribute) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::bg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::bold(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::clear(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::conceal(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::dim(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::fg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::invert(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::italic(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::linger(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::mask(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::on_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::on_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::on_bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::on_bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::on_bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::on_bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::on_bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::on_bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::on_bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::on_bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::on_bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::on_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::on_fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::on_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::on_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::on_primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::on_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::on_rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::on_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::on_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::quirk(&self, value: yansi::attr_quirk::Quirk) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::rapid_blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::resetting(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::strike(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::underline(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::whenever(&self, value: yansi::condition::Condition) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::wrap(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Part::yellow(&self) -> yansi::paint::Painted<&T>
+impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_workspace::canonical::Part where T: ?core::marker::Sized
+impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_workspace::canonical::Part where V: ppv_lite86::types::MultiLane<T>
+pub fn walthamstow_workspace::canonical::Part::vzip(self) -> V
+pub struct walthamstow_workspace::canonical::PartName(_)
+impl walthamstow_workspace::canonical::PartName
+pub fn walthamstow_workspace::canonical::PartName::as_str(&self) -> &str
+pub fn walthamstow_workspace::canonical::PartName::new(name: impl core::convert::Into<alloc::string::String>) -> walthamstow_kernel::error::KernelResult<Self>
+impl core::clone::Clone for walthamstow_workspace::canonical::PartName
+pub fn walthamstow_workspace::canonical::PartName::clone(&self) -> walthamstow_workspace::canonical::PartName
+impl core::cmp::Eq for walthamstow_workspace::canonical::PartName
+impl core::cmp::Ord for walthamstow_workspace::canonical::PartName
+pub fn walthamstow_workspace::canonical::PartName::cmp(&self, other: &walthamstow_workspace::canonical::PartName) -> core::cmp::Ordering
+impl core::cmp::PartialEq for walthamstow_workspace::canonical::PartName
+pub fn walthamstow_workspace::canonical::PartName::eq(&self, other: &walthamstow_workspace::canonical::PartName) -> bool
+impl core::cmp::PartialOrd for walthamstow_workspace::canonical::PartName
+pub fn walthamstow_workspace::canonical::PartName::partial_cmp(&self, other: &walthamstow_workspace::canonical::PartName) -> core::option::Option<core::cmp::Ordering>
+impl core::fmt::Debug for walthamstow_workspace::canonical::PartName
+pub fn walthamstow_workspace::canonical::PartName::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for walthamstow_workspace::canonical::PartName
+pub fn walthamstow_workspace::canonical::PartName::fmt(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for walthamstow_workspace::canonical::PartName
+pub fn walthamstow_workspace::canonical::PartName::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::StructuralPartialEq for walthamstow_workspace::canonical::PartName
+impl core::marker::Freeze for walthamstow_workspace::canonical::PartName
+impl core::marker::Send for walthamstow_workspace::canonical::PartName
+impl core::marker::Sync for walthamstow_workspace::canonical::PartName
+impl core::marker::Unpin for walthamstow_workspace::canonical::PartName
+impl core::panic::unwind_safe::RefUnwindSafe for walthamstow_workspace::canonical::PartName
+impl core::panic::unwind_safe::UnwindSafe for walthamstow_workspace::canonical::PartName
+impl<Q, K> equivalent::Comparable<K> for walthamstow_workspace::canonical::PartName where Q: core::cmp::Ord + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn walthamstow_workspace::canonical::PartName::compare(&self, key: &K) -> core::cmp::Ordering
+impl<Q, K> equivalent::Equivalent<K> for walthamstow_workspace::canonical::PartName where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn walthamstow_workspace::canonical::PartName::equivalent(&self, key: &K) -> bool
+impl<Q, K> hashbrown::Equivalent<K> for walthamstow_workspace::canonical::PartName where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+impl<Q, K> hashbrown::Equivalent<K> for walthamstow_workspace::canonical::PartName where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn walthamstow_workspace::canonical::PartName::equivalent(&self, key: &K) -> bool
+pub fn walthamstow_workspace::canonical::PartName::equivalent(&self, key: &K) -> bool
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for walthamstow_workspace::canonical::PartName where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for walthamstow_workspace::canonical::PartName where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<T, U> core::convert::Into<U> for walthamstow_workspace::canonical::PartName where U: core::convert::From<T>
+pub fn walthamstow_workspace::canonical::PartName::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for walthamstow_workspace::canonical::PartName where U: core::convert::Into<T>
+pub type walthamstow_workspace::canonical::PartName::Error = core::convert::Infallible
+pub fn walthamstow_workspace::canonical::PartName::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for walthamstow_workspace::canonical::PartName where U: core::convert::TryFrom<T>
+pub type walthamstow_workspace::canonical::PartName::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn walthamstow_workspace::canonical::PartName::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for walthamstow_workspace::canonical::PartName where T: core::clone::Clone
+pub type walthamstow_workspace::canonical::PartName::Owned = T
+pub fn walthamstow_workspace::canonical::PartName::clone_into(&self, target: &mut T)
+pub fn walthamstow_workspace::canonical::PartName::to_owned(&self) -> T
+impl<T> alloc::string::ToString for walthamstow_workspace::canonical::PartName where T: core::fmt::Display + ?core::marker::Sized
+pub fn walthamstow_workspace::canonical::PartName::to_string(&self) -> alloc::string::String
+impl<T> core::any::Any for walthamstow_workspace::canonical::PartName where T: 'static + ?core::marker::Sized
+pub fn walthamstow_workspace::canonical::PartName::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for walthamstow_workspace::canonical::PartName where T: ?core::marker::Sized
+pub fn walthamstow_workspace::canonical::PartName::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for walthamstow_workspace::canonical::PartName where T: ?core::marker::Sized
+pub fn walthamstow_workspace::canonical::PartName::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for walthamstow_workspace::canonical::PartName where T: core::clone::Clone
+pub unsafe fn walthamstow_workspace::canonical::PartName::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for walthamstow_workspace::canonical::PartName
+pub fn walthamstow_workspace::canonical::PartName::from(t: T) -> T
+impl<T> dyn_clone::DynClone for walthamstow_workspace::canonical::PartName where T: core::clone::Clone
+pub fn walthamstow_workspace::canonical::PartName::__clone_box(&self, _: dyn_clone::sealed::Private) -> *mut ()
+impl<T> either::into_either::IntoEither for walthamstow_workspace::canonical::PartName
+impl<T> tower_http::follow_redirect::policy::PolicyExt for walthamstow_workspace::canonical::PartName where T: ?core::marker::Sized
+pub fn walthamstow_workspace::canonical::PartName::and<P, B, E>(self, other: P) -> tower_http::follow_redirect::policy::and::And<T, P> where T: tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+pub fn walthamstow_workspace::canonical::PartName::or<P, B, E>(self, other: P) -> tower_http::follow_redirect::policy::or::Or<T, P> where T: tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+impl<T> tracing::instrument::Instrument for walthamstow_workspace::canonical::PartName
+impl<T> tracing::instrument::WithSubscriber for walthamstow_workspace::canonical::PartName
+impl<T> typenum::type_operators::Same for walthamstow_workspace::canonical::PartName
+pub type walthamstow_workspace::canonical::PartName::Output = T
+impl<T> yansi::paint::Paint for walthamstow_workspace::canonical::PartName where T: ?core::marker::Sized
+pub fn walthamstow_workspace::canonical::PartName::attr(&self, value: yansi::attr_quirk::Attribute) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::bg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::bold(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::clear(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::conceal(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::dim(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::fg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::invert(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::italic(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::linger(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::mask(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::on_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::on_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::on_bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::on_bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::on_bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::on_bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::on_bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::on_bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::on_bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::on_bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::on_bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::on_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::on_fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::on_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::on_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::on_primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::on_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::on_rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::on_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::on_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::quirk(&self, value: yansi::attr_quirk::Quirk) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::rapid_blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::resetting(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::strike(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::underline(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::whenever(&self, value: yansi::condition::Condition) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::wrap(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::PartName::yellow(&self) -> yansi::paint::Painted<&T>
+impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_workspace::canonical::PartName where T: ?core::marker::Sized
+impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_workspace::canonical::PartName where V: ppv_lite86::types::MultiLane<T>
+pub fn walthamstow_workspace::canonical::PartName::vzip(self) -> V
+pub struct walthamstow_workspace::canonical::Publication
+pub walthamstow_workspace::canonical::Publication::operations: walthamstow_workspace::canonical::Operations
+pub walthamstow_workspace::canonical::Publication::parts: alloc::vec::Vec<walthamstow_workspace::canonical::Part>
+pub walthamstow_workspace::canonical::Publication::version: clerkenwell_store::version::CollaborationVersion
+impl core::clone::Clone for walthamstow_workspace::canonical::Publication
+pub fn walthamstow_workspace::canonical::Publication::clone(&self) -> walthamstow_workspace::canonical::Publication
+impl core::cmp::Eq for walthamstow_workspace::canonical::Publication
+impl core::cmp::PartialEq for walthamstow_workspace::canonical::Publication
+pub fn walthamstow_workspace::canonical::Publication::eq(&self, other: &walthamstow_workspace::canonical::Publication) -> bool
+impl core::fmt::Debug for walthamstow_workspace::canonical::Publication
+pub fn walthamstow_workspace::canonical::Publication::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for walthamstow_workspace::canonical::Publication
+impl core::marker::Freeze for walthamstow_workspace::canonical::Publication
+impl core::marker::Send for walthamstow_workspace::canonical::Publication
+impl core::marker::Sync for walthamstow_workspace::canonical::Publication
+impl core::marker::Unpin for walthamstow_workspace::canonical::Publication
+impl core::panic::unwind_safe::RefUnwindSafe for walthamstow_workspace::canonical::Publication
+impl core::panic::unwind_safe::UnwindSafe for walthamstow_workspace::canonical::Publication
+impl<Q, K> equivalent::Equivalent<K> for walthamstow_workspace::canonical::Publication where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn walthamstow_workspace::canonical::Publication::equivalent(&self, key: &K) -> bool
+impl<Q, K> hashbrown::Equivalent<K> for walthamstow_workspace::canonical::Publication where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+impl<Q, K> hashbrown::Equivalent<K> for walthamstow_workspace::canonical::Publication where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn walthamstow_workspace::canonical::Publication::equivalent(&self, key: &K) -> bool
+pub fn walthamstow_workspace::canonical::Publication::equivalent(&self, key: &K) -> bool
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for walthamstow_workspace::canonical::Publication where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for walthamstow_workspace::canonical::Publication where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<T, U> core::convert::Into<U> for walthamstow_workspace::canonical::Publication where U: core::convert::From<T>
+pub fn walthamstow_workspace::canonical::Publication::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for walthamstow_workspace::canonical::Publication where U: core::convert::Into<T>
+pub type walthamstow_workspace::canonical::Publication::Error = core::convert::Infallible
+pub fn walthamstow_workspace::canonical::Publication::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for walthamstow_workspace::canonical::Publication where U: core::convert::TryFrom<T>
+pub type walthamstow_workspace::canonical::Publication::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn walthamstow_workspace::canonical::Publication::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for walthamstow_workspace::canonical::Publication where T: core::clone::Clone
+pub type walthamstow_workspace::canonical::Publication::Owned = T
+pub fn walthamstow_workspace::canonical::Publication::clone_into(&self, target: &mut T)
+pub fn walthamstow_workspace::canonical::Publication::to_owned(&self) -> T
+impl<T> core::any::Any for walthamstow_workspace::canonical::Publication where T: 'static + ?core::marker::Sized
+pub fn walthamstow_workspace::canonical::Publication::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for walthamstow_workspace::canonical::Publication where T: ?core::marker::Sized
+pub fn walthamstow_workspace::canonical::Publication::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for walthamstow_workspace::canonical::Publication where T: ?core::marker::Sized
+pub fn walthamstow_workspace::canonical::Publication::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for walthamstow_workspace::canonical::Publication where T: core::clone::Clone
+pub unsafe fn walthamstow_workspace::canonical::Publication::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for walthamstow_workspace::canonical::Publication
+pub fn walthamstow_workspace::canonical::Publication::from(t: T) -> T
+impl<T> dyn_clone::DynClone for walthamstow_workspace::canonical::Publication where T: core::clone::Clone
+pub fn walthamstow_workspace::canonical::Publication::__clone_box(&self, _: dyn_clone::sealed::Private) -> *mut ()
+impl<T> either::into_either::IntoEither for walthamstow_workspace::canonical::Publication
+impl<T> tower_http::follow_redirect::policy::PolicyExt for walthamstow_workspace::canonical::Publication where T: ?core::marker::Sized
+pub fn walthamstow_workspace::canonical::Publication::and<P, B, E>(self, other: P) -> tower_http::follow_redirect::policy::and::And<T, P> where T: tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+pub fn walthamstow_workspace::canonical::Publication::or<P, B, E>(self, other: P) -> tower_http::follow_redirect::policy::or::Or<T, P> where T: tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+impl<T> tracing::instrument::Instrument for walthamstow_workspace::canonical::Publication
+impl<T> tracing::instrument::WithSubscriber for walthamstow_workspace::canonical::Publication
+impl<T> typenum::type_operators::Same for walthamstow_workspace::canonical::Publication
+pub type walthamstow_workspace::canonical::Publication::Output = T
+impl<T> yansi::paint::Paint for walthamstow_workspace::canonical::Publication where T: ?core::marker::Sized
+pub fn walthamstow_workspace::canonical::Publication::attr(&self, value: yansi::attr_quirk::Attribute) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::bg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::bold(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::clear(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::conceal(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::dim(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::fg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::invert(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::italic(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::linger(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::mask(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::on_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::on_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::on_bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::on_bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::on_bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::on_bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::on_bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::on_bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::on_bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::on_bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::on_bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::on_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::on_fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::on_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::on_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::on_primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::on_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::on_rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::on_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::on_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::quirk(&self, value: yansi::attr_quirk::Quirk) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::rapid_blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::resetting(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::strike(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::underline(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::whenever(&self, value: yansi::condition::Condition) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::wrap(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Publication::yellow(&self) -> yansi::paint::Painted<&T>
+impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_workspace::canonical::Publication where T: ?core::marker::Sized
+impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_workspace::canonical::Publication where V: ppv_lite86::types::MultiLane<T>
+pub fn walthamstow_workspace::canonical::Publication::vzip(self) -> V
+pub struct walthamstow_workspace::canonical::Pulled
+pub walthamstow_workspace::canonical::Pulled::operations: core::option::Option<walthamstow_workspace::canonical::Operations>
+pub walthamstow_workspace::canonical::Pulled::parts: alloc::vec::Vec<walthamstow_workspace::canonical::Part>
+pub walthamstow_workspace::canonical::Pulled::version: core::option::Option<clerkenwell_store::version::CollaborationVersion>
+impl core::clone::Clone for walthamstow_workspace::canonical::Pulled
+pub fn walthamstow_workspace::canonical::Pulled::clone(&self) -> walthamstow_workspace::canonical::Pulled
+impl core::cmp::Eq for walthamstow_workspace::canonical::Pulled
+impl core::cmp::PartialEq for walthamstow_workspace::canonical::Pulled
+pub fn walthamstow_workspace::canonical::Pulled::eq(&self, other: &walthamstow_workspace::canonical::Pulled) -> bool
+impl core::fmt::Debug for walthamstow_workspace::canonical::Pulled
+pub fn walthamstow_workspace::canonical::Pulled::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for walthamstow_workspace::canonical::Pulled
+impl core::marker::Freeze for walthamstow_workspace::canonical::Pulled
+impl core::marker::Send for walthamstow_workspace::canonical::Pulled
+impl core::marker::Sync for walthamstow_workspace::canonical::Pulled
+impl core::marker::Unpin for walthamstow_workspace::canonical::Pulled
+impl core::panic::unwind_safe::RefUnwindSafe for walthamstow_workspace::canonical::Pulled
+impl core::panic::unwind_safe::UnwindSafe for walthamstow_workspace::canonical::Pulled
+impl<Q, K> equivalent::Equivalent<K> for walthamstow_workspace::canonical::Pulled where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn walthamstow_workspace::canonical::Pulled::equivalent(&self, key: &K) -> bool
+impl<Q, K> hashbrown::Equivalent<K> for walthamstow_workspace::canonical::Pulled where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+impl<Q, K> hashbrown::Equivalent<K> for walthamstow_workspace::canonical::Pulled where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn walthamstow_workspace::canonical::Pulled::equivalent(&self, key: &K) -> bool
+pub fn walthamstow_workspace::canonical::Pulled::equivalent(&self, key: &K) -> bool
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for walthamstow_workspace::canonical::Pulled where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for walthamstow_workspace::canonical::Pulled where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<T, U> core::convert::Into<U> for walthamstow_workspace::canonical::Pulled where U: core::convert::From<T>
+pub fn walthamstow_workspace::canonical::Pulled::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for walthamstow_workspace::canonical::Pulled where U: core::convert::Into<T>
+pub type walthamstow_workspace::canonical::Pulled::Error = core::convert::Infallible
+pub fn walthamstow_workspace::canonical::Pulled::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for walthamstow_workspace::canonical::Pulled where U: core::convert::TryFrom<T>
+pub type walthamstow_workspace::canonical::Pulled::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn walthamstow_workspace::canonical::Pulled::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for walthamstow_workspace::canonical::Pulled where T: core::clone::Clone
+pub type walthamstow_workspace::canonical::Pulled::Owned = T
+pub fn walthamstow_workspace::canonical::Pulled::clone_into(&self, target: &mut T)
+pub fn walthamstow_workspace::canonical::Pulled::to_owned(&self) -> T
+impl<T> core::any::Any for walthamstow_workspace::canonical::Pulled where T: 'static + ?core::marker::Sized
+pub fn walthamstow_workspace::canonical::Pulled::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for walthamstow_workspace::canonical::Pulled where T: ?core::marker::Sized
+pub fn walthamstow_workspace::canonical::Pulled::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for walthamstow_workspace::canonical::Pulled where T: ?core::marker::Sized
+pub fn walthamstow_workspace::canonical::Pulled::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for walthamstow_workspace::canonical::Pulled where T: core::clone::Clone
+pub unsafe fn walthamstow_workspace::canonical::Pulled::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for walthamstow_workspace::canonical::Pulled
+pub fn walthamstow_workspace::canonical::Pulled::from(t: T) -> T
+impl<T> dyn_clone::DynClone for walthamstow_workspace::canonical::Pulled where T: core::clone::Clone
+pub fn walthamstow_workspace::canonical::Pulled::__clone_box(&self, _: dyn_clone::sealed::Private) -> *mut ()
+impl<T> either::into_either::IntoEither for walthamstow_workspace::canonical::Pulled
+impl<T> tower_http::follow_redirect::policy::PolicyExt for walthamstow_workspace::canonical::Pulled where T: ?core::marker::Sized
+pub fn walthamstow_workspace::canonical::Pulled::and<P, B, E>(self, other: P) -> tower_http::follow_redirect::policy::and::And<T, P> where T: tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+pub fn walthamstow_workspace::canonical::Pulled::or<P, B, E>(self, other: P) -> tower_http::follow_redirect::policy::or::Or<T, P> where T: tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+impl<T> tracing::instrument::Instrument for walthamstow_workspace::canonical::Pulled
+impl<T> tracing::instrument::WithSubscriber for walthamstow_workspace::canonical::Pulled
+impl<T> typenum::type_operators::Same for walthamstow_workspace::canonical::Pulled
+pub type walthamstow_workspace::canonical::Pulled::Output = T
+impl<T> yansi::paint::Paint for walthamstow_workspace::canonical::Pulled where T: ?core::marker::Sized
+pub fn walthamstow_workspace::canonical::Pulled::attr(&self, value: yansi::attr_quirk::Attribute) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::bg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::bold(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::clear(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::conceal(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::dim(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::fg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::invert(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::italic(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::linger(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::mask(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::on_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::on_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::on_bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::on_bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::on_bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::on_bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::on_bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::on_bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::on_bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::on_bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::on_bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::on_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::on_fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::on_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::on_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::on_primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::on_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::on_rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::on_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::on_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::quirk(&self, value: yansi::attr_quirk::Quirk) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::rapid_blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::resetting(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::strike(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::underline(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::whenever(&self, value: yansi::condition::Condition) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::wrap(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::canonical::Pulled::yellow(&self) -> yansi::paint::Painted<&T>
+impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_workspace::canonical::Pulled where T: ?core::marker::Sized
+impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_workspace::canonical::Pulled where V: ppv_lite86::types::MultiLane<T>
+pub fn walthamstow_workspace::canonical::Pulled::vzip(self) -> V
+pub const walthamstow_workspace::canonical::RENDERINGS: walthamstow_kernel::journals::Journal
+pub trait walthamstow_workspace::canonical::CanonicalStore: core::marker::Send + core::marker::Sync + core::fmt::Debug
+pub fn walthamstow_workspace::canonical::CanonicalStore::admit(&self, document: &clerkenwell_store::CollaborationDocumentId, parts: &[walthamstow_workspace::canonical::Part]) -> walthamstow_kernel::error::KernelResult<()>
+pub fn walthamstow_workspace::canonical::CanonicalStore::list<'life0, 'life1, 'async_trait>(&'life0 self, entity: &'life1 str) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = walthamstow_kernel::error::KernelResult<alloc::vec::Vec<clerkenwell_store::CollaborationDocumentId>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn walthamstow_workspace::canonical::CanonicalStore::publish<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, document: &'life1 clerkenwell_store::CollaborationDocumentId, lease: &'life2 walthamstow_kernel::leases::Lease, publication: &'life3 walthamstow_workspace::canonical::Publication) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = walthamstow_kernel::error::KernelResult<clerkenwell_store::version::CollaborationVersion>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn walthamstow_workspace::canonical::CanonicalStore::pull<'life0, 'life1, 'async_trait>(&'life0 self, document: &'life1 clerkenwell_store::CollaborationDocumentId) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = walthamstow_kernel::error::KernelResult<core::option::Option<walthamstow_workspace::canonical::Pulled>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn walthamstow_workspace::canonical::CanonicalStore::remove<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, document: &'life1 clerkenwell_store::CollaborationDocumentId, lease: &'life2 walthamstow_kernel::leases::Lease) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = walthamstow_kernel::error::KernelResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+impl walthamstow_workspace::canonical::CanonicalStore for walthamstow_workspace::canonical::FileCanonicalStore
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::admit(&self, document: &clerkenwell_store::CollaborationDocumentId, parts: &[walthamstow_workspace::canonical::Part]) -> walthamstow_kernel::error::KernelResult<()>
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::list<'life0, 'life1, 'async_trait>(&'life0 self, entity: &'life1 str) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = walthamstow_kernel::error::KernelResult<alloc::vec::Vec<clerkenwell_store::CollaborationDocumentId>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::publish<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, document: &'life1 clerkenwell_store::CollaborationDocumentId, lease: &'life2 walthamstow_kernel::leases::Lease, publication: &'life3 walthamstow_workspace::canonical::Publication) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = walthamstow_kernel::error::KernelResult<clerkenwell_store::version::CollaborationVersion>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::pull<'life0, 'life1, 'async_trait>(&'life0 self, document: &'life1 clerkenwell_store::CollaborationDocumentId) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = walthamstow_kernel::error::KernelResult<core::option::Option<walthamstow_workspace::canonical::Pulled>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn walthamstow_workspace::canonical::FileCanonicalStore::remove<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, document: &'life1 clerkenwell_store::CollaborationDocumentId, lease: &'life2 walthamstow_kernel::leases::Lease) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = walthamstow_kernel::error::KernelResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+impl walthamstow_workspace::canonical::CanonicalStore for walthamstow_workspace::canonical::MemoryCanonicalStore
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::admit(&self, _document: &clerkenwell_store::CollaborationDocumentId, parts: &[walthamstow_workspace::canonical::Part]) -> walthamstow_kernel::error::KernelResult<()>
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::list<'life0, 'life1, 'async_trait>(&'life0 self, entity: &'life1 str) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = walthamstow_kernel::error::KernelResult<alloc::vec::Vec<clerkenwell_store::CollaborationDocumentId>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::publish<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, document: &'life1 clerkenwell_store::CollaborationDocumentId, lease: &'life2 walthamstow_kernel::leases::Lease, publication: &'life3 walthamstow_workspace::canonical::Publication) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = walthamstow_kernel::error::KernelResult<clerkenwell_store::version::CollaborationVersion>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::pull<'life0, 'life1, 'async_trait>(&'life0 self, document: &'life1 clerkenwell_store::CollaborationDocumentId) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = walthamstow_kernel::error::KernelResult<core::option::Option<walthamstow_workspace::canonical::Pulled>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn walthamstow_workspace::canonical::MemoryCanonicalStore::remove<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, document: &'life1 clerkenwell_store::CollaborationDocumentId, lease: &'life2 walthamstow_kernel::leases::Lease) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = walthamstow_kernel::error::KernelResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub trait walthamstow_workspace::canonical::DocumentCodec: core::marker::Send + core::marker::Sync + core::fmt::Debug
+pub fn walthamstow_workspace::canonical::DocumentCodec::parse(&self, document: &clerkenwell_store::CollaborationDocumentId, parts: &[walthamstow_workspace::canonical::Part]) -> walthamstow_kernel::error::KernelResult<serde_json::value::Value>
+pub fn walthamstow_workspace::canonical::DocumentCodec::render<'life0, 'life1, 'life2, 'life3, 'async_trait>(&'life0 self, document: &'life1 clerkenwell_store::CollaborationDocumentId, state: &'life2 serde_json::value::Value, held: &'life3 [walthamstow_workspace::canonical::Part]) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = walthamstow_kernel::error::KernelResult<alloc::vec::Vec<walthamstow_workspace::canonical::Part>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait, 'life3: 'async_trait
+pub fn walthamstow_workspace::canonical::DocumentCodec::resource_of(&self, part: &walthamstow_workspace::canonical::Part) -> walthamstow_kernel::error::KernelResult<core::option::Option<alloc::string::String>>
 pub mod walthamstow_workspace::collaboration
 pub struct walthamstow_workspace::collaboration::AcceptedCollaborationDocument
 pub walthamstow_workspace::collaboration::AcceptedCollaborationDocument::entity: alloc::string::String
@@ -322,13 +1175,15 @@ pub fn walthamstow_workspace::collaboration::CollaborativeDocuments::accepted(&s
 pub fn walthamstow_workspace::collaboration::CollaborativeDocuments::accepted_read(&self, resource_id: &str) -> walthamstow_kernel::error::KernelResult<core::option::Option<walthamstow_workspace::collaboration::AcceptedRead>>
 pub fn walthamstow_workspace::collaboration::CollaborativeDocuments::authoring_state(&self, resource_id: &str, held: core::option::Option<clerkenwell_store::version::CollaborationHeld<'_>>, actor: &clerkenwell_events::Principal) -> walthamstow_kernel::error::KernelResult<clerkenwell_schema::authoring::AuthoringState>
 pub fn walthamstow_workspace::collaboration::CollaborativeDocuments::bootstrap(&self, resource_id: &str, seed: &serde_json::value::Value, check: impl core::ops::function::Fn(&serde_json::value::Value) -> walthamstow_kernel::error::KernelResult<()>) -> walthamstow_kernel::error::KernelResult<()>
-pub fn walthamstow_workspace::collaboration::CollaborativeDocuments::bootstrap_from_file(&self, resource_id: &str, seed: &serde_json::value::Value, check: impl core::ops::function::Fn(&serde_json::value::Value) -> walthamstow_kernel::error::KernelResult<()>) -> walthamstow_kernel::error::KernelResult<()>
+pub fn walthamstow_workspace::collaboration::CollaborativeDocuments::bootstrap_pulled(&self, resource_id: &str, pulled: &walthamstow_workspace::canonical::Pulled, check: impl core::ops::function::Fn(&serde_json::value::Value) -> walthamstow_kernel::error::KernelResult<()>) -> walthamstow_kernel::error::KernelResult<()>
 pub fn walthamstow_workspace::collaboration::CollaborativeDocuments::bootstrap_update(&self, resource_id: &str, schema_version: u32, update_base64: &str, incarnation: core::option::Option<&str>, check: impl core::ops::function::Fn(&serde_json::value::Value) -> walthamstow_kernel::error::KernelResult<()>) -> walthamstow_kernel::error::KernelResult<()>
 pub fn walthamstow_workspace::collaboration::CollaborativeDocuments::document(&self, resource_id: &str) -> walthamstow_kernel::error::KernelResult<core::option::Option<serde_json::value::Value>>
 pub fn walthamstow_workspace::collaboration::CollaborativeDocuments::import(&self, resource_id: &str, actor: &clerkenwell_events::Principal, update: walthamstow_workspace::collaboration::CollaborationUpdate, check: impl core::ops::function::Fn(&serde_json::value::Value) -> walthamstow_kernel::error::KernelResult<()>) -> walthamstow_kernel::error::KernelResult<clerkenwell_store::CollaborationImportResult>
-pub fn walthamstow_workspace::collaboration::CollaborativeDocuments::new(service: clerkenwell_store::CollaborationService, resource: &'static walthamstow_workspace::collaboration::CollaborativeResource, publications: core::option::Option<walthamstow_workspace::publications::PublicationJournal>) -> Self
+pub fn walthamstow_workspace::collaboration::CollaborativeDocuments::new(service: clerkenwell_store::CollaborationService, resource: &'static walthamstow_workspace::collaboration::CollaborativeResource, publishing: core::option::Option<walthamstow_workspace::collaboration::Publishing>) -> Self
+pub fn walthamstow_workspace::collaboration::CollaborativeDocuments::parse(&self, resource_id: &str, parts: &[walthamstow_workspace::canonical::Part]) -> walthamstow_kernel::error::KernelResult<serde_json::value::Value>
 pub fn walthamstow_workspace::collaboration::CollaborativeDocuments::publication_pending(&self, resource_id: &str) -> bool
-pub fn walthamstow_workspace::collaboration::CollaborativeDocuments::published(&self, resource_id: &str, version: core::option::Option<&clerkenwell_store::version::CollaborationVersion>) -> walthamstow_kernel::error::KernelResult<()>
+pub async fn walthamstow_workspace::collaboration::CollaborativeDocuments::publish(&self, resource_id: &str) -> walthamstow_kernel::error::KernelResult<core::option::Option<walthamstow_workspace::collaboration::Published>>
+pub async fn walthamstow_workspace::collaboration::CollaborativeDocuments::pull(&self, resource_id: &str) -> walthamstow_kernel::error::KernelResult<core::option::Option<walthamstow_workspace::canonical::Pulled>>
 pub fn walthamstow_workspace::collaboration::CollaborativeDocuments::remove(&self, resource_id: &str, actor: &clerkenwell_events::Principal) -> walthamstow_kernel::error::KernelResult<core::option::Option<clerkenwell_store::version::CollaborationVersion>>
 pub fn walthamstow_workspace::collaboration::CollaborativeDocuments::require_document(&self, resource_id: &str) -> walthamstow_kernel::error::KernelResult<serde_json::value::Value>
 pub fn walthamstow_workspace::collaboration::CollaborativeDocuments::rewrite_as(&self, actor: &clerkenwell_events::Principal, resource_id: &str, operation_id: &str, intent: &str, edit: impl core::ops::function::FnOnce(&mut serde_json::value::Value) -> bool) -> walthamstow_kernel::error::KernelResult<core::option::Option<clerkenwell_store::CollaborationImportResult>>
@@ -543,6 +1398,227 @@ pub fn walthamstow_workspace::collaboration::CollaborativeResource::yellow(&self
 impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_workspace::collaboration::CollaborativeResource where T: ?core::marker::Sized
 impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_workspace::collaboration::CollaborativeResource where V: ppv_lite86::types::MultiLane<T>
 pub fn walthamstow_workspace::collaboration::CollaborativeResource::vzip(self) -> V
+pub struct walthamstow_workspace::collaboration::Published
+pub walthamstow_workspace::collaboration::Published::parts: alloc::vec::Vec<walthamstow_workspace::canonical::Part>
+pub walthamstow_workspace::collaboration::Published::state: core::option::Option<serde_json::value::Value>
+pub walthamstow_workspace::collaboration::Published::version: core::option::Option<clerkenwell_store::version::CollaborationVersion>
+impl core::clone::Clone for walthamstow_workspace::collaboration::Published
+pub fn walthamstow_workspace::collaboration::Published::clone(&self) -> walthamstow_workspace::collaboration::Published
+impl core::fmt::Debug for walthamstow_workspace::collaboration::Published
+pub fn walthamstow_workspace::collaboration::Published::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for walthamstow_workspace::collaboration::Published
+impl core::marker::Send for walthamstow_workspace::collaboration::Published
+impl core::marker::Sync for walthamstow_workspace::collaboration::Published
+impl core::marker::Unpin for walthamstow_workspace::collaboration::Published
+impl core::panic::unwind_safe::RefUnwindSafe for walthamstow_workspace::collaboration::Published
+impl core::panic::unwind_safe::UnwindSafe for walthamstow_workspace::collaboration::Published
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for walthamstow_workspace::collaboration::Published where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for walthamstow_workspace::collaboration::Published where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<T, U> core::convert::Into<U> for walthamstow_workspace::collaboration::Published where U: core::convert::From<T>
+pub fn walthamstow_workspace::collaboration::Published::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for walthamstow_workspace::collaboration::Published where U: core::convert::Into<T>
+pub type walthamstow_workspace::collaboration::Published::Error = core::convert::Infallible
+pub fn walthamstow_workspace::collaboration::Published::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for walthamstow_workspace::collaboration::Published where U: core::convert::TryFrom<T>
+pub type walthamstow_workspace::collaboration::Published::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn walthamstow_workspace::collaboration::Published::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for walthamstow_workspace::collaboration::Published where T: core::clone::Clone
+pub type walthamstow_workspace::collaboration::Published::Owned = T
+pub fn walthamstow_workspace::collaboration::Published::clone_into(&self, target: &mut T)
+pub fn walthamstow_workspace::collaboration::Published::to_owned(&self) -> T
+impl<T> core::any::Any for walthamstow_workspace::collaboration::Published where T: 'static + ?core::marker::Sized
+pub fn walthamstow_workspace::collaboration::Published::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for walthamstow_workspace::collaboration::Published where T: ?core::marker::Sized
+pub fn walthamstow_workspace::collaboration::Published::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for walthamstow_workspace::collaboration::Published where T: ?core::marker::Sized
+pub fn walthamstow_workspace::collaboration::Published::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for walthamstow_workspace::collaboration::Published where T: core::clone::Clone
+pub unsafe fn walthamstow_workspace::collaboration::Published::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for walthamstow_workspace::collaboration::Published
+pub fn walthamstow_workspace::collaboration::Published::from(t: T) -> T
+impl<T> dyn_clone::DynClone for walthamstow_workspace::collaboration::Published where T: core::clone::Clone
+pub fn walthamstow_workspace::collaboration::Published::__clone_box(&self, _: dyn_clone::sealed::Private) -> *mut ()
+impl<T> either::into_either::IntoEither for walthamstow_workspace::collaboration::Published
+impl<T> tower_http::follow_redirect::policy::PolicyExt for walthamstow_workspace::collaboration::Published where T: ?core::marker::Sized
+pub fn walthamstow_workspace::collaboration::Published::and<P, B, E>(self, other: P) -> tower_http::follow_redirect::policy::and::And<T, P> where T: tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+pub fn walthamstow_workspace::collaboration::Published::or<P, B, E>(self, other: P) -> tower_http::follow_redirect::policy::or::Or<T, P> where T: tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+impl<T> tracing::instrument::Instrument for walthamstow_workspace::collaboration::Published
+impl<T> tracing::instrument::WithSubscriber for walthamstow_workspace::collaboration::Published
+impl<T> typenum::type_operators::Same for walthamstow_workspace::collaboration::Published
+pub type walthamstow_workspace::collaboration::Published::Output = T
+impl<T> yansi::paint::Paint for walthamstow_workspace::collaboration::Published where T: ?core::marker::Sized
+pub fn walthamstow_workspace::collaboration::Published::attr(&self, value: yansi::attr_quirk::Attribute) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::bg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::bold(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::clear(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::conceal(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::dim(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::fg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::invert(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::italic(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::linger(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::mask(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::on_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::on_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::on_bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::on_bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::on_bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::on_bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::on_bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::on_bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::on_bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::on_bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::on_bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::on_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::on_fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::on_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::on_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::on_primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::on_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::on_rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::on_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::on_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::quirk(&self, value: yansi::attr_quirk::Quirk) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::rapid_blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::resetting(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::strike(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::underline(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::whenever(&self, value: yansi::condition::Condition) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::wrap(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Published::yellow(&self) -> yansi::paint::Painted<&T>
+impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_workspace::collaboration::Published where T: ?core::marker::Sized
+impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_workspace::collaboration::Published where V: ppv_lite86::types::MultiLane<T>
+pub fn walthamstow_workspace::collaboration::Published::vzip(self) -> V
+pub struct walthamstow_workspace::collaboration::Publishing
+pub walthamstow_workspace::collaboration::Publishing::codec: alloc::sync::Arc<dyn walthamstow_workspace::canonical::DocumentCodec>
+pub walthamstow_workspace::collaboration::Publishing::outbox: walthamstow_workspace::outbox::Outbox
+impl core::clone::Clone for walthamstow_workspace::collaboration::Publishing
+pub fn walthamstow_workspace::collaboration::Publishing::clone(&self) -> walthamstow_workspace::collaboration::Publishing
+impl core::fmt::Debug for walthamstow_workspace::collaboration::Publishing
+pub fn walthamstow_workspace::collaboration::Publishing::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for walthamstow_workspace::collaboration::Publishing
+impl core::marker::Send for walthamstow_workspace::collaboration::Publishing
+impl core::marker::Sync for walthamstow_workspace::collaboration::Publishing
+impl core::marker::Unpin for walthamstow_workspace::collaboration::Publishing
+impl !core::panic::unwind_safe::RefUnwindSafe for walthamstow_workspace::collaboration::Publishing
+impl !core::panic::unwind_safe::UnwindSafe for walthamstow_workspace::collaboration::Publishing
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for walthamstow_workspace::collaboration::Publishing where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for walthamstow_workspace::collaboration::Publishing where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<T, U> core::convert::Into<U> for walthamstow_workspace::collaboration::Publishing where U: core::convert::From<T>
+pub fn walthamstow_workspace::collaboration::Publishing::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for walthamstow_workspace::collaboration::Publishing where U: core::convert::Into<T>
+pub type walthamstow_workspace::collaboration::Publishing::Error = core::convert::Infallible
+pub fn walthamstow_workspace::collaboration::Publishing::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for walthamstow_workspace::collaboration::Publishing where U: core::convert::TryFrom<T>
+pub type walthamstow_workspace::collaboration::Publishing::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn walthamstow_workspace::collaboration::Publishing::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for walthamstow_workspace::collaboration::Publishing where T: core::clone::Clone
+pub type walthamstow_workspace::collaboration::Publishing::Owned = T
+pub fn walthamstow_workspace::collaboration::Publishing::clone_into(&self, target: &mut T)
+pub fn walthamstow_workspace::collaboration::Publishing::to_owned(&self) -> T
+impl<T> core::any::Any for walthamstow_workspace::collaboration::Publishing where T: 'static + ?core::marker::Sized
+pub fn walthamstow_workspace::collaboration::Publishing::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for walthamstow_workspace::collaboration::Publishing where T: ?core::marker::Sized
+pub fn walthamstow_workspace::collaboration::Publishing::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for walthamstow_workspace::collaboration::Publishing where T: ?core::marker::Sized
+pub fn walthamstow_workspace::collaboration::Publishing::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for walthamstow_workspace::collaboration::Publishing where T: core::clone::Clone
+pub unsafe fn walthamstow_workspace::collaboration::Publishing::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for walthamstow_workspace::collaboration::Publishing
+pub fn walthamstow_workspace::collaboration::Publishing::from(t: T) -> T
+impl<T> dyn_clone::DynClone for walthamstow_workspace::collaboration::Publishing where T: core::clone::Clone
+pub fn walthamstow_workspace::collaboration::Publishing::__clone_box(&self, _: dyn_clone::sealed::Private) -> *mut ()
+impl<T> either::into_either::IntoEither for walthamstow_workspace::collaboration::Publishing
+impl<T> tower_http::follow_redirect::policy::PolicyExt for walthamstow_workspace::collaboration::Publishing where T: ?core::marker::Sized
+pub fn walthamstow_workspace::collaboration::Publishing::and<P, B, E>(self, other: P) -> tower_http::follow_redirect::policy::and::And<T, P> where T: tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+pub fn walthamstow_workspace::collaboration::Publishing::or<P, B, E>(self, other: P) -> tower_http::follow_redirect::policy::or::Or<T, P> where T: tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+impl<T> tracing::instrument::Instrument for walthamstow_workspace::collaboration::Publishing
+impl<T> tracing::instrument::WithSubscriber for walthamstow_workspace::collaboration::Publishing
+impl<T> typenum::type_operators::Same for walthamstow_workspace::collaboration::Publishing
+pub type walthamstow_workspace::collaboration::Publishing::Output = T
+impl<T> yansi::paint::Paint for walthamstow_workspace::collaboration::Publishing where T: ?core::marker::Sized
+pub fn walthamstow_workspace::collaboration::Publishing::attr(&self, value: yansi::attr_quirk::Attribute) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::bg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::bold(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::clear(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::conceal(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::dim(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::fg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::invert(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::italic(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::linger(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::mask(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::on_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::on_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::on_bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::on_bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::on_bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::on_bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::on_bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::on_bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::on_bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::on_bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::on_bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::on_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::on_fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::on_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::on_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::on_primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::on_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::on_rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::on_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::on_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::quirk(&self, value: yansi::attr_quirk::Quirk) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::rapid_blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::resetting(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::strike(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::underline(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::whenever(&self, value: yansi::condition::Condition) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::wrap(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::collaboration::Publishing::yellow(&self) -> yansi::paint::Painted<&T>
+impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_workspace::collaboration::Publishing where T: ?core::marker::Sized
+impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_workspace::collaboration::Publishing where V: ppv_lite86::types::MultiLane<T>
+pub fn walthamstow_workspace::collaboration::Publishing::vzip(self) -> V
 pub struct walthamstow_workspace::collaboration::Writer
 pub walthamstow_workspace::collaboration::Writer::accepted: clerkenwell_store::CollaborationAuthoringState
 pub walthamstow_workspace::collaboration::Writer::peers: clerkenwell_store::peers::PeerBlock
@@ -782,226 +1858,229 @@ pub fn walthamstow_workspace::mounts::infer_mime_type(path: &str) -> core::optio
 pub fn walthamstow_workspace::mounts::join_mount_path(parent: &str, child: &str) -> alloc::string::String
 pub fn walthamstow_workspace::mounts::normalize_mount_relative_path(path: &str) -> alloc::string::String
 pub fn walthamstow_workspace::mounts::resolve_mount_path(root: &std::path::Path, requested_path: &str) -> walthamstow_kernel::error::KernelResult<std::path::PathBuf>
+pub mod walthamstow_workspace::outbox
+pub struct walthamstow_workspace::outbox::Outbox
+impl walthamstow_workspace::outbox::Outbox
+pub fn walthamstow_workspace::outbox::Outbox::canonical(&self) -> &alloc::sync::Arc<dyn walthamstow_workspace::canonical::CanonicalStore>
+pub async fn walthamstow_workspace::outbox::Outbox::commit_finished(&self)
+pub fn walthamstow_workspace::outbox::Outbox::count(&self) -> usize
+pub fn walthamstow_workspace::outbox::Outbox::is_marked(&self, document: &clerkenwell_store::CollaborationDocumentId) -> bool
+pub fn walthamstow_workspace::outbox::Outbox::mark(&self, document: &clerkenwell_store::CollaborationDocumentId) -> walthamstow_kernel::error::KernelResult<walthamstow_workspace::outbox::PendingCommit>
+pub fn walthamstow_workspace::outbox::Outbox::marked(&self) -> alloc::vec::Vec<clerkenwell_store::CollaborationDocumentId>
+pub fn walthamstow_workspace::outbox::Outbox::open(local: alloc::sync::Arc<dyn walthamstow_kernel::local_store::LocalStore>, canonical: alloc::sync::Arc<dyn walthamstow_workspace::canonical::CanonicalStore>, leases: alloc::sync::Arc<dyn walthamstow_kernel::leases::Leases>, holder: walthamstow_kernel::leases::Holder) -> walthamstow_kernel::error::KernelResult<Self>
+pub fn walthamstow_workspace::outbox::Outbox::removed(&self, document: &clerkenwell_store::CollaborationDocumentId) -> walthamstow_kernel::error::KernelResult<core::option::Option<clerkenwell_store::version::CollaborationVersion>>
+impl core::clone::Clone for walthamstow_workspace::outbox::Outbox
+pub fn walthamstow_workspace::outbox::Outbox::clone(&self) -> walthamstow_workspace::outbox::Outbox
+impl core::fmt::Debug for walthamstow_workspace::outbox::Outbox
+pub fn walthamstow_workspace::outbox::Outbox::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for walthamstow_workspace::outbox::Outbox
+impl core::marker::Send for walthamstow_workspace::outbox::Outbox
+impl core::marker::Sync for walthamstow_workspace::outbox::Outbox
+impl core::marker::Unpin for walthamstow_workspace::outbox::Outbox
+impl !core::panic::unwind_safe::RefUnwindSafe for walthamstow_workspace::outbox::Outbox
+impl !core::panic::unwind_safe::UnwindSafe for walthamstow_workspace::outbox::Outbox
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for walthamstow_workspace::outbox::Outbox where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for walthamstow_workspace::outbox::Outbox where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<T, U> core::convert::Into<U> for walthamstow_workspace::outbox::Outbox where U: core::convert::From<T>
+pub fn walthamstow_workspace::outbox::Outbox::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for walthamstow_workspace::outbox::Outbox where U: core::convert::Into<T>
+pub type walthamstow_workspace::outbox::Outbox::Error = core::convert::Infallible
+pub fn walthamstow_workspace::outbox::Outbox::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for walthamstow_workspace::outbox::Outbox where U: core::convert::TryFrom<T>
+pub type walthamstow_workspace::outbox::Outbox::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn walthamstow_workspace::outbox::Outbox::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for walthamstow_workspace::outbox::Outbox where T: core::clone::Clone
+pub type walthamstow_workspace::outbox::Outbox::Owned = T
+pub fn walthamstow_workspace::outbox::Outbox::clone_into(&self, target: &mut T)
+pub fn walthamstow_workspace::outbox::Outbox::to_owned(&self) -> T
+impl<T> core::any::Any for walthamstow_workspace::outbox::Outbox where T: 'static + ?core::marker::Sized
+pub fn walthamstow_workspace::outbox::Outbox::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for walthamstow_workspace::outbox::Outbox where T: ?core::marker::Sized
+pub fn walthamstow_workspace::outbox::Outbox::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for walthamstow_workspace::outbox::Outbox where T: ?core::marker::Sized
+pub fn walthamstow_workspace::outbox::Outbox::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for walthamstow_workspace::outbox::Outbox where T: core::clone::Clone
+pub unsafe fn walthamstow_workspace::outbox::Outbox::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for walthamstow_workspace::outbox::Outbox
+pub fn walthamstow_workspace::outbox::Outbox::from(t: T) -> T
+impl<T> dyn_clone::DynClone for walthamstow_workspace::outbox::Outbox where T: core::clone::Clone
+pub fn walthamstow_workspace::outbox::Outbox::__clone_box(&self, _: dyn_clone::sealed::Private) -> *mut ()
+impl<T> either::into_either::IntoEither for walthamstow_workspace::outbox::Outbox
+impl<T> tower_http::follow_redirect::policy::PolicyExt for walthamstow_workspace::outbox::Outbox where T: ?core::marker::Sized
+pub fn walthamstow_workspace::outbox::Outbox::and<P, B, E>(self, other: P) -> tower_http::follow_redirect::policy::and::And<T, P> where T: tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+pub fn walthamstow_workspace::outbox::Outbox::or<P, B, E>(self, other: P) -> tower_http::follow_redirect::policy::or::Or<T, P> where T: tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+impl<T> tracing::instrument::Instrument for walthamstow_workspace::outbox::Outbox
+impl<T> tracing::instrument::WithSubscriber for walthamstow_workspace::outbox::Outbox
+impl<T> typenum::type_operators::Same for walthamstow_workspace::outbox::Outbox
+pub type walthamstow_workspace::outbox::Outbox::Output = T
+impl<T> yansi::paint::Paint for walthamstow_workspace::outbox::Outbox where T: ?core::marker::Sized
+pub fn walthamstow_workspace::outbox::Outbox::attr(&self, value: yansi::attr_quirk::Attribute) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::bg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::bold(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::clear(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::conceal(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::dim(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::fg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::invert(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::italic(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::linger(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::mask(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::on_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::on_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::on_bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::on_bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::on_bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::on_bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::on_bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::on_bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::on_bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::on_bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::on_bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::on_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::on_fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::on_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::on_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::on_primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::on_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::on_rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::on_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::on_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::quirk(&self, value: yansi::attr_quirk::Quirk) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::rapid_blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::resetting(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::strike(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::underline(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::whenever(&self, value: yansi::condition::Condition) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::wrap(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::Outbox::yellow(&self) -> yansi::paint::Painted<&T>
+impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_workspace::outbox::Outbox where T: ?core::marker::Sized
+impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_workspace::outbox::Outbox where V: ppv_lite86::types::MultiLane<T>
+pub fn walthamstow_workspace::outbox::Outbox::vzip(self) -> V
+pub struct walthamstow_workspace::outbox::PendingCommit
+impl walthamstow_workspace::outbox::PendingCommit
+pub fn walthamstow_workspace::outbox::PendingCommit::removes(&self, version: &clerkenwell_store::version::CollaborationVersion) -> walthamstow_kernel::error::KernelResult<()>
+impl core::fmt::Debug for walthamstow_workspace::outbox::PendingCommit
+pub fn walthamstow_workspace::outbox::PendingCommit::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::ops::drop::Drop for walthamstow_workspace::outbox::PendingCommit
+pub fn walthamstow_workspace::outbox::PendingCommit::drop(&mut self)
+impl core::marker::Freeze for walthamstow_workspace::outbox::PendingCommit
+impl core::marker::Send for walthamstow_workspace::outbox::PendingCommit
+impl core::marker::Sync for walthamstow_workspace::outbox::PendingCommit
+impl core::marker::Unpin for walthamstow_workspace::outbox::PendingCommit
+impl !core::panic::unwind_safe::RefUnwindSafe for walthamstow_workspace::outbox::PendingCommit
+impl !core::panic::unwind_safe::UnwindSafe for walthamstow_workspace::outbox::PendingCommit
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for walthamstow_workspace::outbox::PendingCommit where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for walthamstow_workspace::outbox::PendingCommit where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<T, U> core::convert::Into<U> for walthamstow_workspace::outbox::PendingCommit where U: core::convert::From<T>
+pub fn walthamstow_workspace::outbox::PendingCommit::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for walthamstow_workspace::outbox::PendingCommit where U: core::convert::Into<T>
+pub type walthamstow_workspace::outbox::PendingCommit::Error = core::convert::Infallible
+pub fn walthamstow_workspace::outbox::PendingCommit::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for walthamstow_workspace::outbox::PendingCommit where U: core::convert::TryFrom<T>
+pub type walthamstow_workspace::outbox::PendingCommit::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn walthamstow_workspace::outbox::PendingCommit::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for walthamstow_workspace::outbox::PendingCommit where T: 'static + ?core::marker::Sized
+pub fn walthamstow_workspace::outbox::PendingCommit::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for walthamstow_workspace::outbox::PendingCommit where T: ?core::marker::Sized
+pub fn walthamstow_workspace::outbox::PendingCommit::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for walthamstow_workspace::outbox::PendingCommit where T: ?core::marker::Sized
+pub fn walthamstow_workspace::outbox::PendingCommit::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for walthamstow_workspace::outbox::PendingCommit
+pub fn walthamstow_workspace::outbox::PendingCommit::from(t: T) -> T
+impl<T> either::into_either::IntoEither for walthamstow_workspace::outbox::PendingCommit
+impl<T> tower_http::follow_redirect::policy::PolicyExt for walthamstow_workspace::outbox::PendingCommit where T: ?core::marker::Sized
+pub fn walthamstow_workspace::outbox::PendingCommit::and<P, B, E>(self, other: P) -> tower_http::follow_redirect::policy::and::And<T, P> where T: tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+pub fn walthamstow_workspace::outbox::PendingCommit::or<P, B, E>(self, other: P) -> tower_http::follow_redirect::policy::or::Or<T, P> where T: tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+impl<T> tracing::instrument::Instrument for walthamstow_workspace::outbox::PendingCommit
+impl<T> tracing::instrument::WithSubscriber for walthamstow_workspace::outbox::PendingCommit
+impl<T> typenum::type_operators::Same for walthamstow_workspace::outbox::PendingCommit
+pub type walthamstow_workspace::outbox::PendingCommit::Output = T
+impl<T> yansi::paint::Paint for walthamstow_workspace::outbox::PendingCommit where T: ?core::marker::Sized
+pub fn walthamstow_workspace::outbox::PendingCommit::attr(&self, value: yansi::attr_quirk::Attribute) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::bg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::bold(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::clear(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::conceal(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::dim(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::fg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::invert(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::italic(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::linger(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::mask(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::on_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::on_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::on_bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::on_bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::on_bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::on_bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::on_bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::on_bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::on_bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::on_bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::on_bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::on_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::on_fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::on_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::on_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::on_primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::on_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::on_rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::on_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::on_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::quirk(&self, value: yansi::attr_quirk::Quirk) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::rapid_blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::resetting(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::strike(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::underline(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::whenever(&self, value: yansi::condition::Condition) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::wrap(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::outbox::PendingCommit::yellow(&self) -> yansi::paint::Painted<&T>
+impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_workspace::outbox::PendingCommit where T: ?core::marker::Sized
+impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_workspace::outbox::PendingCommit where V: ppv_lite86::types::MultiLane<T>
+pub fn walthamstow_workspace::outbox::PendingCommit::vzip(self) -> V
+pub const walthamstow_workspace::outbox::JOURNAL: walthamstow_kernel::journals::Journal
 pub mod walthamstow_workspace::paths
 pub fn walthamstow_workspace::paths::resolve_directories<const N: usize>(root_dir: &std::path::Path, configured: [(&str, &str); N]) -> anyhow::Result<[std::path::PathBuf; N]>
-pub mod walthamstow_workspace::publications
-pub struct walthamstow_workspace::publications::PendingCommit
-impl core::fmt::Debug for walthamstow_workspace::publications::PendingCommit
-pub fn walthamstow_workspace::publications::PendingCommit::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::ops::drop::Drop for walthamstow_workspace::publications::PendingCommit
-pub fn walthamstow_workspace::publications::PendingCommit::drop(&mut self)
-impl core::marker::Freeze for walthamstow_workspace::publications::PendingCommit
-impl core::marker::Send for walthamstow_workspace::publications::PendingCommit
-impl core::marker::Sync for walthamstow_workspace::publications::PendingCommit
-impl core::marker::Unpin for walthamstow_workspace::publications::PendingCommit
-impl !core::panic::unwind_safe::RefUnwindSafe for walthamstow_workspace::publications::PendingCommit
-impl !core::panic::unwind_safe::UnwindSafe for walthamstow_workspace::publications::PendingCommit
-impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for walthamstow_workspace::publications::PendingCommit where ST: ?core::marker::Sized, DT: ?core::marker::Sized
-impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for walthamstow_workspace::publications::PendingCommit where ST: ?core::marker::Sized, DT: ?core::marker::Sized
-impl<T, U> core::convert::Into<U> for walthamstow_workspace::publications::PendingCommit where U: core::convert::From<T>
-pub fn walthamstow_workspace::publications::PendingCommit::into(self) -> U
-impl<T, U> core::convert::TryFrom<U> for walthamstow_workspace::publications::PendingCommit where U: core::convert::Into<T>
-pub type walthamstow_workspace::publications::PendingCommit::Error = core::convert::Infallible
-pub fn walthamstow_workspace::publications::PendingCommit::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
-impl<T, U> core::convert::TryInto<U> for walthamstow_workspace::publications::PendingCommit where U: core::convert::TryFrom<T>
-pub type walthamstow_workspace::publications::PendingCommit::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn walthamstow_workspace::publications::PendingCommit::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> core::any::Any for walthamstow_workspace::publications::PendingCommit where T: 'static + ?core::marker::Sized
-pub fn walthamstow_workspace::publications::PendingCommit::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for walthamstow_workspace::publications::PendingCommit where T: ?core::marker::Sized
-pub fn walthamstow_workspace::publications::PendingCommit::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for walthamstow_workspace::publications::PendingCommit where T: ?core::marker::Sized
-pub fn walthamstow_workspace::publications::PendingCommit::borrow_mut(&mut self) -> &mut T
-impl<T> core::convert::From<T> for walthamstow_workspace::publications::PendingCommit
-pub fn walthamstow_workspace::publications::PendingCommit::from(t: T) -> T
-impl<T> either::into_either::IntoEither for walthamstow_workspace::publications::PendingCommit
-impl<T> tower_http::follow_redirect::policy::PolicyExt for walthamstow_workspace::publications::PendingCommit where T: ?core::marker::Sized
-pub fn walthamstow_workspace::publications::PendingCommit::and<P, B, E>(self, other: P) -> tower_http::follow_redirect::policy::and::And<T, P> where T: tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
-pub fn walthamstow_workspace::publications::PendingCommit::or<P, B, E>(self, other: P) -> tower_http::follow_redirect::policy::or::Or<T, P> where T: tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
-impl<T> tracing::instrument::Instrument for walthamstow_workspace::publications::PendingCommit
-impl<T> tracing::instrument::WithSubscriber for walthamstow_workspace::publications::PendingCommit
-impl<T> typenum::type_operators::Same for walthamstow_workspace::publications::PendingCommit
-pub type walthamstow_workspace::publications::PendingCommit::Output = T
-impl<T> yansi::paint::Paint for walthamstow_workspace::publications::PendingCommit where T: ?core::marker::Sized
-pub fn walthamstow_workspace::publications::PendingCommit::attr(&self, value: yansi::attr_quirk::Attribute) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::bg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::black(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::blink(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::blue(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::bold(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::bright(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::bright_black(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::bright_blue(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::bright_cyan(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::bright_green(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::bright_magenta(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::bright_red(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::bright_white(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::bright_yellow(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::clear(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::conceal(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::cyan(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::dim(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::fg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::fixed(&self, color: u8) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::green(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::invert(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::italic(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::linger(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::magenta(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::mask(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::on_black(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::on_blue(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::on_bright(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::on_bright_black(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::on_bright_blue(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::on_bright_cyan(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::on_bright_green(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::on_bright_magenta(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::on_bright_red(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::on_bright_white(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::on_bright_yellow(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::on_cyan(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::on_fixed(&self, color: u8) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::on_green(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::on_magenta(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::on_primary(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::on_red(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::on_rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::on_white(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::on_yellow(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::primary(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::quirk(&self, value: yansi::attr_quirk::Quirk) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::rapid_blink(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::red(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::resetting(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::strike(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::underline(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::whenever(&self, value: yansi::condition::Condition) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::white(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::wrap(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PendingCommit::yellow(&self) -> yansi::paint::Painted<&T>
-impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_workspace::publications::PendingCommit where T: ?core::marker::Sized
-impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_workspace::publications::PendingCommit where V: ppv_lite86::types::MultiLane<T>
-pub fn walthamstow_workspace::publications::PendingCommit::vzip(self) -> V
-pub struct walthamstow_workspace::publications::PublicationJournal
-impl walthamstow_workspace::publications::PublicationJournal
-pub fn walthamstow_workspace::publications::PublicationJournal::clear(&self, document: &clerkenwell_store::CollaborationDocumentId, published: impl core::ops::function::FnOnce() -> walthamstow_kernel::error::KernelResult<bool>) -> walthamstow_kernel::error::KernelResult<()>
-pub async fn walthamstow_workspace::publications::PublicationJournal::commit_finished(&self)
-pub fn walthamstow_workspace::publications::PublicationJournal::count(&self) -> usize
-pub fn walthamstow_workspace::publications::PublicationJournal::is_marked(&self, document: &clerkenwell_store::CollaborationDocumentId) -> bool
-pub fn walthamstow_workspace::publications::PublicationJournal::mark(&self, document: &clerkenwell_store::CollaborationDocumentId) -> walthamstow_kernel::error::KernelResult<walthamstow_workspace::publications::PendingCommit>
-pub fn walthamstow_workspace::publications::PublicationJournal::marked(&self) -> alloc::vec::Vec<clerkenwell_store::CollaborationDocumentId>
-pub fn walthamstow_workspace::publications::PublicationJournal::open(store: alloc::sync::Arc<dyn walthamstow_kernel::local_store::LocalStore>) -> walthamstow_kernel::error::KernelResult<Self>
-impl core::clone::Clone for walthamstow_workspace::publications::PublicationJournal
-pub fn walthamstow_workspace::publications::PublicationJournal::clone(&self) -> walthamstow_workspace::publications::PublicationJournal
-impl core::fmt::Debug for walthamstow_workspace::publications::PublicationJournal
-pub fn walthamstow_workspace::publications::PublicationJournal::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl core::marker::Freeze for walthamstow_workspace::publications::PublicationJournal
-impl core::marker::Send for walthamstow_workspace::publications::PublicationJournal
-impl core::marker::Sync for walthamstow_workspace::publications::PublicationJournal
-impl core::marker::Unpin for walthamstow_workspace::publications::PublicationJournal
-impl !core::panic::unwind_safe::RefUnwindSafe for walthamstow_workspace::publications::PublicationJournal
-impl !core::panic::unwind_safe::UnwindSafe for walthamstow_workspace::publications::PublicationJournal
-impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for walthamstow_workspace::publications::PublicationJournal where ST: ?core::marker::Sized, DT: ?core::marker::Sized
-impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for walthamstow_workspace::publications::PublicationJournal where ST: ?core::marker::Sized, DT: ?core::marker::Sized
-impl<T, U> core::convert::Into<U> for walthamstow_workspace::publications::PublicationJournal where U: core::convert::From<T>
-pub fn walthamstow_workspace::publications::PublicationJournal::into(self) -> U
-impl<T, U> core::convert::TryFrom<U> for walthamstow_workspace::publications::PublicationJournal where U: core::convert::Into<T>
-pub type walthamstow_workspace::publications::PublicationJournal::Error = core::convert::Infallible
-pub fn walthamstow_workspace::publications::PublicationJournal::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
-impl<T, U> core::convert::TryInto<U> for walthamstow_workspace::publications::PublicationJournal where U: core::convert::TryFrom<T>
-pub type walthamstow_workspace::publications::PublicationJournal::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn walthamstow_workspace::publications::PublicationJournal::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> alloc::borrow::ToOwned for walthamstow_workspace::publications::PublicationJournal where T: core::clone::Clone
-pub type walthamstow_workspace::publications::PublicationJournal::Owned = T
-pub fn walthamstow_workspace::publications::PublicationJournal::clone_into(&self, target: &mut T)
-pub fn walthamstow_workspace::publications::PublicationJournal::to_owned(&self) -> T
-impl<T> core::any::Any for walthamstow_workspace::publications::PublicationJournal where T: 'static + ?core::marker::Sized
-pub fn walthamstow_workspace::publications::PublicationJournal::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for walthamstow_workspace::publications::PublicationJournal where T: ?core::marker::Sized
-pub fn walthamstow_workspace::publications::PublicationJournal::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for walthamstow_workspace::publications::PublicationJournal where T: ?core::marker::Sized
-pub fn walthamstow_workspace::publications::PublicationJournal::borrow_mut(&mut self) -> &mut T
-impl<T> core::clone::CloneToUninit for walthamstow_workspace::publications::PublicationJournal where T: core::clone::Clone
-pub unsafe fn walthamstow_workspace::publications::PublicationJournal::clone_to_uninit(&self, dest: *mut u8)
-impl<T> core::convert::From<T> for walthamstow_workspace::publications::PublicationJournal
-pub fn walthamstow_workspace::publications::PublicationJournal::from(t: T) -> T
-impl<T> dyn_clone::DynClone for walthamstow_workspace::publications::PublicationJournal where T: core::clone::Clone
-pub fn walthamstow_workspace::publications::PublicationJournal::__clone_box(&self, _: dyn_clone::sealed::Private) -> *mut ()
-impl<T> either::into_either::IntoEither for walthamstow_workspace::publications::PublicationJournal
-impl<T> tower_http::follow_redirect::policy::PolicyExt for walthamstow_workspace::publications::PublicationJournal where T: ?core::marker::Sized
-pub fn walthamstow_workspace::publications::PublicationJournal::and<P, B, E>(self, other: P) -> tower_http::follow_redirect::policy::and::And<T, P> where T: tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
-pub fn walthamstow_workspace::publications::PublicationJournal::or<P, B, E>(self, other: P) -> tower_http::follow_redirect::policy::or::Or<T, P> where T: tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
-impl<T> tracing::instrument::Instrument for walthamstow_workspace::publications::PublicationJournal
-impl<T> tracing::instrument::WithSubscriber for walthamstow_workspace::publications::PublicationJournal
-impl<T> typenum::type_operators::Same for walthamstow_workspace::publications::PublicationJournal
-pub type walthamstow_workspace::publications::PublicationJournal::Output = T
-impl<T> yansi::paint::Paint for walthamstow_workspace::publications::PublicationJournal where T: ?core::marker::Sized
-pub fn walthamstow_workspace::publications::PublicationJournal::attr(&self, value: yansi::attr_quirk::Attribute) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::bg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::black(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::blink(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::blue(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::bold(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::bright(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::bright_black(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::bright_blue(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::bright_cyan(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::bright_green(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::bright_magenta(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::bright_red(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::bright_white(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::bright_yellow(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::clear(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::conceal(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::cyan(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::dim(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::fg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::fixed(&self, color: u8) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::green(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::invert(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::italic(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::linger(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::magenta(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::mask(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::on_black(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::on_blue(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::on_bright(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::on_bright_black(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::on_bright_blue(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::on_bright_cyan(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::on_bright_green(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::on_bright_magenta(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::on_bright_red(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::on_bright_white(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::on_bright_yellow(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::on_cyan(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::on_fixed(&self, color: u8) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::on_green(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::on_magenta(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::on_primary(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::on_red(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::on_rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::on_white(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::on_yellow(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::primary(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::quirk(&self, value: yansi::attr_quirk::Quirk) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::rapid_blink(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::red(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::resetting(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::strike(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::underline(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::whenever(&self, value: yansi::condition::Condition) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::white(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::wrap(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_workspace::publications::PublicationJournal::yellow(&self) -> yansi::paint::Painted<&T>
-impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_workspace::publications::PublicationJournal where T: ?core::marker::Sized
-impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_workspace::publications::PublicationJournal where V: ppv_lite86::types::MultiLane<T>
-pub fn walthamstow_workspace::publications::PublicationJournal::vzip(self) -> V
-pub const walthamstow_workspace::publications::JOURNAL: walthamstow_kernel::journals::Journal
 pub mod walthamstow_workspace::reason_codes
 pub const walthamstow_workspace::reason_codes::COLLABORATION_DOCUMENT_NOT_FOUND: &str
 pub mod walthamstow_workspace::schema_describe

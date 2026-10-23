@@ -1439,6 +1439,459 @@ pub fn walthamstow_kernel::journals::Staging::yellow(&self) -> yansi::paint::Pai
 impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_kernel::journals::Staging where T: ?core::marker::Sized
 impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_kernel::journals::Staging where V: ppv_lite86::types::MultiLane<T>
 pub fn walthamstow_kernel::journals::Staging::vzip(self) -> V
+pub mod walthamstow_kernel::leases
+pub struct walthamstow_kernel::leases::FileLeases
+impl walthamstow_kernel::leases::FileLeases
+pub fn walthamstow_kernel::leases::FileLeases::holds(&self, lease: &walthamstow_kernel::leases::Lease) -> bool
+pub fn walthamstow_kernel::leases::FileLeases::new(lock: walthamstow_kernel::workspace_lock::WorkspaceLock, holder: walthamstow_kernel::leases::Holder, local: &dyn walthamstow_kernel::local_store::LocalStore) -> walthamstow_kernel::error::KernelResult<Self>
+impl core::fmt::Debug for walthamstow_kernel::leases::FileLeases
+pub fn walthamstow_kernel::leases::FileLeases::fmt(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl walthamstow_kernel::leases::Leases for walthamstow_kernel::leases::FileLeases
+pub fn walthamstow_kernel::leases::FileLeases::acquire<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, document: &'life1 clerkenwell_store::CollaborationDocumentId, holder: &'life2 walthamstow_kernel::leases::Holder) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = walthamstow_kernel::error::KernelResult<core::option::Option<walthamstow_kernel::leases::Lease>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn walthamstow_kernel::leases::FileLeases::release<'life0, 'life1, 'async_trait>(&'life0 self, _lease: &'life1 walthamstow_kernel::leases::Lease) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = walthamstow_kernel::error::KernelResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn walthamstow_kernel::leases::FileLeases::renew<'life0, 'life1, 'async_trait>(&'life0 self, lease: &'life1 walthamstow_kernel::leases::Lease) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = walthamstow_kernel::error::KernelResult<core::option::Option<walthamstow_kernel::leases::Lease>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl core::marker::Freeze for walthamstow_kernel::leases::FileLeases
+impl core::marker::Send for walthamstow_kernel::leases::FileLeases
+impl core::marker::Sync for walthamstow_kernel::leases::FileLeases
+impl core::marker::Unpin for walthamstow_kernel::leases::FileLeases
+impl core::panic::unwind_safe::RefUnwindSafe for walthamstow_kernel::leases::FileLeases
+impl core::panic::unwind_safe::UnwindSafe for walthamstow_kernel::leases::FileLeases
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for walthamstow_kernel::leases::FileLeases where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for walthamstow_kernel::leases::FileLeases where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<T, U> core::convert::Into<U> for walthamstow_kernel::leases::FileLeases where U: core::convert::From<T>
+pub fn walthamstow_kernel::leases::FileLeases::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for walthamstow_kernel::leases::FileLeases where U: core::convert::Into<T>
+pub type walthamstow_kernel::leases::FileLeases::Error = core::convert::Infallible
+pub fn walthamstow_kernel::leases::FileLeases::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for walthamstow_kernel::leases::FileLeases where U: core::convert::TryFrom<T>
+pub type walthamstow_kernel::leases::FileLeases::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn walthamstow_kernel::leases::FileLeases::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for walthamstow_kernel::leases::FileLeases where T: 'static + ?core::marker::Sized
+pub fn walthamstow_kernel::leases::FileLeases::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for walthamstow_kernel::leases::FileLeases where T: ?core::marker::Sized
+pub fn walthamstow_kernel::leases::FileLeases::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for walthamstow_kernel::leases::FileLeases where T: ?core::marker::Sized
+pub fn walthamstow_kernel::leases::FileLeases::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for walthamstow_kernel::leases::FileLeases
+pub fn walthamstow_kernel::leases::FileLeases::from(t: T) -> T
+impl<T> either::into_either::IntoEither for walthamstow_kernel::leases::FileLeases
+impl<T> tracing::instrument::Instrument for walthamstow_kernel::leases::FileLeases
+impl<T> tracing::instrument::WithSubscriber for walthamstow_kernel::leases::FileLeases
+impl<T> typenum::type_operators::Same for walthamstow_kernel::leases::FileLeases
+pub type walthamstow_kernel::leases::FileLeases::Output = T
+impl<T> yansi::paint::Paint for walthamstow_kernel::leases::FileLeases where T: ?core::marker::Sized
+pub fn walthamstow_kernel::leases::FileLeases::attr(&self, value: yansi::attr_quirk::Attribute) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::bg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::bold(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::clear(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::conceal(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::dim(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::fg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::invert(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::italic(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::linger(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::mask(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::on_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::on_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::on_bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::on_bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::on_bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::on_bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::on_bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::on_bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::on_bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::on_bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::on_bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::on_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::on_fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::on_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::on_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::on_primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::on_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::on_rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::on_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::on_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::quirk(&self, value: yansi::attr_quirk::Quirk) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::rapid_blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::resetting(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::strike(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::underline(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::whenever(&self, value: yansi::condition::Condition) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::wrap(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::FileLeases::yellow(&self) -> yansi::paint::Painted<&T>
+impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_kernel::leases::FileLeases where T: ?core::marker::Sized
+impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_kernel::leases::FileLeases where V: ppv_lite86::types::MultiLane<T>
+pub fn walthamstow_kernel::leases::FileLeases::vzip(self) -> V
+pub struct walthamstow_kernel::leases::Holder(_)
+impl walthamstow_kernel::leases::Holder
+pub fn walthamstow_kernel::leases::Holder::as_str(&self) -> &str
+pub fn walthamstow_kernel::leases::Holder::new(name: impl core::convert::Into<alloc::string::String>) -> walthamstow_kernel::error::KernelResult<Self>
+impl core::clone::Clone for walthamstow_kernel::leases::Holder
+pub fn walthamstow_kernel::leases::Holder::clone(&self) -> walthamstow_kernel::leases::Holder
+impl core::cmp::Eq for walthamstow_kernel::leases::Holder
+impl core::cmp::PartialEq for walthamstow_kernel::leases::Holder
+pub fn walthamstow_kernel::leases::Holder::eq(&self, other: &walthamstow_kernel::leases::Holder) -> bool
+impl core::fmt::Debug for walthamstow_kernel::leases::Holder
+pub fn walthamstow_kernel::leases::Holder::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for walthamstow_kernel::leases::Holder
+pub fn walthamstow_kernel::leases::Holder::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::StructuralPartialEq for walthamstow_kernel::leases::Holder
+impl core::marker::Freeze for walthamstow_kernel::leases::Holder
+impl core::marker::Send for walthamstow_kernel::leases::Holder
+impl core::marker::Sync for walthamstow_kernel::leases::Holder
+impl core::marker::Unpin for walthamstow_kernel::leases::Holder
+impl core::panic::unwind_safe::RefUnwindSafe for walthamstow_kernel::leases::Holder
+impl core::panic::unwind_safe::UnwindSafe for walthamstow_kernel::leases::Holder
+impl<Q, K> equivalent::Equivalent<K> for walthamstow_kernel::leases::Holder where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn walthamstow_kernel::leases::Holder::equivalent(&self, key: &K) -> bool
+impl<Q, K> hashbrown::Equivalent<K> for walthamstow_kernel::leases::Holder where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn walthamstow_kernel::leases::Holder::equivalent(&self, key: &K) -> bool
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for walthamstow_kernel::leases::Holder where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for walthamstow_kernel::leases::Holder where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<T, U> core::convert::Into<U> for walthamstow_kernel::leases::Holder where U: core::convert::From<T>
+pub fn walthamstow_kernel::leases::Holder::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for walthamstow_kernel::leases::Holder where U: core::convert::Into<T>
+pub type walthamstow_kernel::leases::Holder::Error = core::convert::Infallible
+pub fn walthamstow_kernel::leases::Holder::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for walthamstow_kernel::leases::Holder where U: core::convert::TryFrom<T>
+pub type walthamstow_kernel::leases::Holder::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn walthamstow_kernel::leases::Holder::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for walthamstow_kernel::leases::Holder where T: core::clone::Clone
+pub type walthamstow_kernel::leases::Holder::Owned = T
+pub fn walthamstow_kernel::leases::Holder::clone_into(&self, target: &mut T)
+pub fn walthamstow_kernel::leases::Holder::to_owned(&self) -> T
+impl<T> core::any::Any for walthamstow_kernel::leases::Holder where T: 'static + ?core::marker::Sized
+pub fn walthamstow_kernel::leases::Holder::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for walthamstow_kernel::leases::Holder where T: ?core::marker::Sized
+pub fn walthamstow_kernel::leases::Holder::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for walthamstow_kernel::leases::Holder where T: ?core::marker::Sized
+pub fn walthamstow_kernel::leases::Holder::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for walthamstow_kernel::leases::Holder where T: core::clone::Clone
+pub unsafe fn walthamstow_kernel::leases::Holder::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for walthamstow_kernel::leases::Holder
+pub fn walthamstow_kernel::leases::Holder::from(t: T) -> T
+impl<T> dyn_clone::DynClone for walthamstow_kernel::leases::Holder where T: core::clone::Clone
+pub fn walthamstow_kernel::leases::Holder::__clone_box(&self, _: dyn_clone::sealed::Private) -> *mut ()
+impl<T> either::into_either::IntoEither for walthamstow_kernel::leases::Holder
+impl<T> tracing::instrument::Instrument for walthamstow_kernel::leases::Holder
+impl<T> tracing::instrument::WithSubscriber for walthamstow_kernel::leases::Holder
+impl<T> typenum::type_operators::Same for walthamstow_kernel::leases::Holder
+pub type walthamstow_kernel::leases::Holder::Output = T
+impl<T> yansi::paint::Paint for walthamstow_kernel::leases::Holder where T: ?core::marker::Sized
+pub fn walthamstow_kernel::leases::Holder::attr(&self, value: yansi::attr_quirk::Attribute) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::bg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::bold(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::clear(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::conceal(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::dim(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::fg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::invert(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::italic(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::linger(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::mask(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::on_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::on_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::on_bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::on_bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::on_bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::on_bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::on_bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::on_bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::on_bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::on_bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::on_bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::on_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::on_fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::on_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::on_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::on_primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::on_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::on_rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::on_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::on_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::quirk(&self, value: yansi::attr_quirk::Quirk) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::rapid_blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::resetting(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::strike(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::underline(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::whenever(&self, value: yansi::condition::Condition) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::wrap(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Holder::yellow(&self) -> yansi::paint::Painted<&T>
+impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_kernel::leases::Holder where T: ?core::marker::Sized
+impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_kernel::leases::Holder where V: ppv_lite86::types::MultiLane<T>
+pub fn walthamstow_kernel::leases::Holder::vzip(self) -> V
+pub struct walthamstow_kernel::leases::Lease
+pub walthamstow_kernel::leases::Lease::document: clerkenwell_store::CollaborationDocumentId
+pub walthamstow_kernel::leases::Lease::epoch: u64
+pub walthamstow_kernel::leases::Lease::expires_at_ms: core::option::Option<i64>
+pub walthamstow_kernel::leases::Lease::holder: walthamstow_kernel::leases::Holder
+impl core::clone::Clone for walthamstow_kernel::leases::Lease
+pub fn walthamstow_kernel::leases::Lease::clone(&self) -> walthamstow_kernel::leases::Lease
+impl core::cmp::Eq for walthamstow_kernel::leases::Lease
+impl core::cmp::PartialEq for walthamstow_kernel::leases::Lease
+pub fn walthamstow_kernel::leases::Lease::eq(&self, other: &walthamstow_kernel::leases::Lease) -> bool
+impl core::fmt::Debug for walthamstow_kernel::leases::Lease
+pub fn walthamstow_kernel::leases::Lease::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for walthamstow_kernel::leases::Lease
+impl core::marker::Freeze for walthamstow_kernel::leases::Lease
+impl core::marker::Send for walthamstow_kernel::leases::Lease
+impl core::marker::Sync for walthamstow_kernel::leases::Lease
+impl core::marker::Unpin for walthamstow_kernel::leases::Lease
+impl core::panic::unwind_safe::RefUnwindSafe for walthamstow_kernel::leases::Lease
+impl core::panic::unwind_safe::UnwindSafe for walthamstow_kernel::leases::Lease
+impl<Q, K> equivalent::Equivalent<K> for walthamstow_kernel::leases::Lease where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn walthamstow_kernel::leases::Lease::equivalent(&self, key: &K) -> bool
+impl<Q, K> hashbrown::Equivalent<K> for walthamstow_kernel::leases::Lease where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn walthamstow_kernel::leases::Lease::equivalent(&self, key: &K) -> bool
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for walthamstow_kernel::leases::Lease where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for walthamstow_kernel::leases::Lease where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<T, U> core::convert::Into<U> for walthamstow_kernel::leases::Lease where U: core::convert::From<T>
+pub fn walthamstow_kernel::leases::Lease::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for walthamstow_kernel::leases::Lease where U: core::convert::Into<T>
+pub type walthamstow_kernel::leases::Lease::Error = core::convert::Infallible
+pub fn walthamstow_kernel::leases::Lease::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for walthamstow_kernel::leases::Lease where U: core::convert::TryFrom<T>
+pub type walthamstow_kernel::leases::Lease::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn walthamstow_kernel::leases::Lease::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for walthamstow_kernel::leases::Lease where T: core::clone::Clone
+pub type walthamstow_kernel::leases::Lease::Owned = T
+pub fn walthamstow_kernel::leases::Lease::clone_into(&self, target: &mut T)
+pub fn walthamstow_kernel::leases::Lease::to_owned(&self) -> T
+impl<T> core::any::Any for walthamstow_kernel::leases::Lease where T: 'static + ?core::marker::Sized
+pub fn walthamstow_kernel::leases::Lease::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for walthamstow_kernel::leases::Lease where T: ?core::marker::Sized
+pub fn walthamstow_kernel::leases::Lease::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for walthamstow_kernel::leases::Lease where T: ?core::marker::Sized
+pub fn walthamstow_kernel::leases::Lease::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for walthamstow_kernel::leases::Lease where T: core::clone::Clone
+pub unsafe fn walthamstow_kernel::leases::Lease::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for walthamstow_kernel::leases::Lease
+pub fn walthamstow_kernel::leases::Lease::from(t: T) -> T
+impl<T> dyn_clone::DynClone for walthamstow_kernel::leases::Lease where T: core::clone::Clone
+pub fn walthamstow_kernel::leases::Lease::__clone_box(&self, _: dyn_clone::sealed::Private) -> *mut ()
+impl<T> either::into_either::IntoEither for walthamstow_kernel::leases::Lease
+impl<T> tracing::instrument::Instrument for walthamstow_kernel::leases::Lease
+impl<T> tracing::instrument::WithSubscriber for walthamstow_kernel::leases::Lease
+impl<T> typenum::type_operators::Same for walthamstow_kernel::leases::Lease
+pub type walthamstow_kernel::leases::Lease::Output = T
+impl<T> yansi::paint::Paint for walthamstow_kernel::leases::Lease where T: ?core::marker::Sized
+pub fn walthamstow_kernel::leases::Lease::attr(&self, value: yansi::attr_quirk::Attribute) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::bg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::bold(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::clear(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::conceal(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::dim(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::fg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::invert(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::italic(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::linger(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::mask(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::on_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::on_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::on_bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::on_bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::on_bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::on_bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::on_bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::on_bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::on_bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::on_bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::on_bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::on_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::on_fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::on_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::on_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::on_primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::on_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::on_rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::on_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::on_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::quirk(&self, value: yansi::attr_quirk::Quirk) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::rapid_blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::resetting(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::strike(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::underline(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::whenever(&self, value: yansi::condition::Condition) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::wrap(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::Lease::yellow(&self) -> yansi::paint::Painted<&T>
+impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_kernel::leases::Lease where T: ?core::marker::Sized
+impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_kernel::leases::Lease where V: ppv_lite86::types::MultiLane<T>
+pub fn walthamstow_kernel::leases::Lease::vzip(self) -> V
+pub struct walthamstow_kernel::leases::MemoryLeases
+impl walthamstow_kernel::leases::MemoryLeases
+pub fn walthamstow_kernel::leases::MemoryLeases::new(clock: walthamstow_kernel::clock::WallClock, term: core::time::Duration) -> Self
+pub fn walthamstow_kernel::leases::MemoryLeases::while_held<T>(&self, lease: &walthamstow_kernel::leases::Lease, write: impl core::ops::function::FnOnce() -> T) -> core::option::Option<T>
+impl core::fmt::Debug for walthamstow_kernel::leases::MemoryLeases
+pub fn walthamstow_kernel::leases::MemoryLeases::fmt(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl walthamstow_kernel::leases::Leases for walthamstow_kernel::leases::MemoryLeases
+pub fn walthamstow_kernel::leases::MemoryLeases::acquire<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, document: &'life1 clerkenwell_store::CollaborationDocumentId, holder: &'life2 walthamstow_kernel::leases::Holder) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = walthamstow_kernel::error::KernelResult<core::option::Option<walthamstow_kernel::leases::Lease>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn walthamstow_kernel::leases::MemoryLeases::release<'life0, 'life1, 'async_trait>(&'life0 self, lease: &'life1 walthamstow_kernel::leases::Lease) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = walthamstow_kernel::error::KernelResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn walthamstow_kernel::leases::MemoryLeases::renew<'life0, 'life1, 'async_trait>(&'life0 self, lease: &'life1 walthamstow_kernel::leases::Lease) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = walthamstow_kernel::error::KernelResult<core::option::Option<walthamstow_kernel::leases::Lease>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl !core::marker::Freeze for walthamstow_kernel::leases::MemoryLeases
+impl core::marker::Send for walthamstow_kernel::leases::MemoryLeases
+impl core::marker::Sync for walthamstow_kernel::leases::MemoryLeases
+impl core::marker::Unpin for walthamstow_kernel::leases::MemoryLeases
+impl !core::panic::unwind_safe::RefUnwindSafe for walthamstow_kernel::leases::MemoryLeases
+impl !core::panic::unwind_safe::UnwindSafe for walthamstow_kernel::leases::MemoryLeases
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for walthamstow_kernel::leases::MemoryLeases where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for walthamstow_kernel::leases::MemoryLeases where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<T, U> core::convert::Into<U> for walthamstow_kernel::leases::MemoryLeases where U: core::convert::From<T>
+pub fn walthamstow_kernel::leases::MemoryLeases::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for walthamstow_kernel::leases::MemoryLeases where U: core::convert::Into<T>
+pub type walthamstow_kernel::leases::MemoryLeases::Error = core::convert::Infallible
+pub fn walthamstow_kernel::leases::MemoryLeases::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for walthamstow_kernel::leases::MemoryLeases where U: core::convert::TryFrom<T>
+pub type walthamstow_kernel::leases::MemoryLeases::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn walthamstow_kernel::leases::MemoryLeases::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for walthamstow_kernel::leases::MemoryLeases where T: 'static + ?core::marker::Sized
+pub fn walthamstow_kernel::leases::MemoryLeases::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for walthamstow_kernel::leases::MemoryLeases where T: ?core::marker::Sized
+pub fn walthamstow_kernel::leases::MemoryLeases::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for walthamstow_kernel::leases::MemoryLeases where T: ?core::marker::Sized
+pub fn walthamstow_kernel::leases::MemoryLeases::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for walthamstow_kernel::leases::MemoryLeases
+pub fn walthamstow_kernel::leases::MemoryLeases::from(t: T) -> T
+impl<T> either::into_either::IntoEither for walthamstow_kernel::leases::MemoryLeases
+impl<T> tracing::instrument::Instrument for walthamstow_kernel::leases::MemoryLeases
+impl<T> tracing::instrument::WithSubscriber for walthamstow_kernel::leases::MemoryLeases
+impl<T> typenum::type_operators::Same for walthamstow_kernel::leases::MemoryLeases
+pub type walthamstow_kernel::leases::MemoryLeases::Output = T
+impl<T> yansi::paint::Paint for walthamstow_kernel::leases::MemoryLeases where T: ?core::marker::Sized
+pub fn walthamstow_kernel::leases::MemoryLeases::attr(&self, value: yansi::attr_quirk::Attribute) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::bg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::bold(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::clear(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::conceal(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::dim(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::fg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::invert(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::italic(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::linger(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::mask(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::on_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::on_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::on_bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::on_bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::on_bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::on_bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::on_bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::on_bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::on_bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::on_bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::on_bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::on_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::on_fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::on_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::on_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::on_primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::on_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::on_rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::on_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::on_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::quirk(&self, value: yansi::attr_quirk::Quirk) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::rapid_blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::resetting(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::strike(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::underline(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::whenever(&self, value: yansi::condition::Condition) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::wrap(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::leases::MemoryLeases::yellow(&self) -> yansi::paint::Painted<&T>
+impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_kernel::leases::MemoryLeases where T: ?core::marker::Sized
+impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_kernel::leases::MemoryLeases where V: ppv_lite86::types::MultiLane<T>
+pub fn walthamstow_kernel::leases::MemoryLeases::vzip(self) -> V
+pub const walthamstow_kernel::leases::LEASES: walthamstow_kernel::journals::Journal
+pub trait walthamstow_kernel::leases::Leases: core::marker::Send + core::marker::Sync + core::fmt::Debug
+pub fn walthamstow_kernel::leases::Leases::acquire<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, document: &'life1 clerkenwell_store::CollaborationDocumentId, holder: &'life2 walthamstow_kernel::leases::Holder) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = walthamstow_kernel::error::KernelResult<core::option::Option<walthamstow_kernel::leases::Lease>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn walthamstow_kernel::leases::Leases::release<'life0, 'life1, 'async_trait>(&'life0 self, lease: &'life1 walthamstow_kernel::leases::Lease) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = walthamstow_kernel::error::KernelResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn walthamstow_kernel::leases::Leases::renew<'life0, 'life1, 'async_trait>(&'life0 self, lease: &'life1 walthamstow_kernel::leases::Lease) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = walthamstow_kernel::error::KernelResult<core::option::Option<walthamstow_kernel::leases::Lease>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl walthamstow_kernel::leases::Leases for walthamstow_kernel::leases::FileLeases
+pub fn walthamstow_kernel::leases::FileLeases::acquire<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, document: &'life1 clerkenwell_store::CollaborationDocumentId, holder: &'life2 walthamstow_kernel::leases::Holder) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = walthamstow_kernel::error::KernelResult<core::option::Option<walthamstow_kernel::leases::Lease>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn walthamstow_kernel::leases::FileLeases::release<'life0, 'life1, 'async_trait>(&'life0 self, _lease: &'life1 walthamstow_kernel::leases::Lease) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = walthamstow_kernel::error::KernelResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn walthamstow_kernel::leases::FileLeases::renew<'life0, 'life1, 'async_trait>(&'life0 self, lease: &'life1 walthamstow_kernel::leases::Lease) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = walthamstow_kernel::error::KernelResult<core::option::Option<walthamstow_kernel::leases::Lease>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+impl walthamstow_kernel::leases::Leases for walthamstow_kernel::leases::MemoryLeases
+pub fn walthamstow_kernel::leases::MemoryLeases::acquire<'life0, 'life1, 'life2, 'async_trait>(&'life0 self, document: &'life1 clerkenwell_store::CollaborationDocumentId, holder: &'life2 walthamstow_kernel::leases::Holder) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = walthamstow_kernel::error::KernelResult<core::option::Option<walthamstow_kernel::leases::Lease>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait, 'life2: 'async_trait
+pub fn walthamstow_kernel::leases::MemoryLeases::release<'life0, 'life1, 'async_trait>(&'life0 self, lease: &'life1 walthamstow_kernel::leases::Lease) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = walthamstow_kernel::error::KernelResult<()>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
+pub fn walthamstow_kernel::leases::MemoryLeases::renew<'life0, 'life1, 'async_trait>(&'life0 self, lease: &'life1 walthamstow_kernel::leases::Lease) -> core::pin::Pin<alloc::boxed::Box<(dyn core::future::future::Future<Output = walthamstow_kernel::error::KernelResult<core::option::Option<walthamstow_kernel::leases::Lease>>> + core::marker::Send + 'async_trait)>> where Self: 'async_trait, 'life0: 'async_trait, 'life1: 'async_trait
 pub mod walthamstow_kernel::local_store
 pub struct walthamstow_kernel::local_store::FileLocalStore
 impl walthamstow_kernel::local_store::FileLocalStore

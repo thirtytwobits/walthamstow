@@ -2,10 +2,12 @@
 //!
 //! A collaborative entity's documents in one store: seeding, reading, the
 //! authoring state a writer edits from, importing a writer's update,
-//! rewriting, removing and listing what was accepted. A product supplies each
-//! entity's spec and validator, and which documents have files to publish.
+//! rewriting, removing, listing what was accepted, and publishing it to the
+//! canonical store. A product supplies each entity's spec and validator, and the
+//! codec that renders its documents for the canonical store.
 
-use crate::publications::{PendingCommit, PublicationJournal};
+use crate::canonical::{DocumentCodec, Operations, Part, Publication, Pulled};
+use crate::outbox::{Outbox, PendingCommit};
 use crate::reason_codes;
 use clerkenwell_doc::CollaborationReplica;
 use clerkenwell_events::Principal;
@@ -18,6 +20,7 @@ use clerkenwell_store::{
     CollaborationVersion, ImportFence, PeerBlock,
 };
 use serde_json::Value;
+use std::sync::Arc;
 use walthamstow_kernel::{KernelError, KernelResult};
 
 /// A product's meaning for one generated collaborative entity.
@@ -102,29 +105,48 @@ pub struct AcceptedRead {
     pub version: CollaborationVersion,
 }
 
+/// How a collaborative entity's documents reach the canonical store: the outbox they wait in,
+/// and the codec that renders them.
+#[derive(Debug, Clone)]
+pub struct Publishing {
+    pub outbox: Outbox,
+    pub codec: Arc<dyn DocumentCodec>,
+}
+
+/// What publishing one document did.
+#[derive(Debug, Clone)]
+pub struct Published {
+    /// The version the canonical store holds now; `None` when the document was removed.
+    pub version: Option<CollaborationVersion>,
+    /// The accepted state published; `None` for a removal.
+    pub state: Option<Value>,
+    /// The parts the codec rendered it into; none for a removal.
+    pub parts: Vec<Part>,
+}
+
 /// One collaborative entity's documents in one store.
 #[derive(Debug, Clone)]
 pub struct CollaborativeDocuments {
     service: CollaborationService,
     resource: &'static CollaborativeResource,
-    /// Marks each document until its workspace files render what was
-    /// accepted; `None` for documents that have no files.
-    publications: Option<PublicationJournal>,
+    /// How each document reaches the canonical store; `None` for documents
+    /// that are kept nowhere else.
+    publishing: Option<Publishing>,
 }
 
 impl CollaborativeDocuments {
-    /// `resource`'s documents in the store `service` serves. `publications`
-    /// marks each document until the files rendering it catch up with what
-    /// was accepted; `None` for documents that have no files.
+    /// `resource`'s documents in the store `service` serves. `publishing`
+    /// marks each document until the canonical store holds what was accepted,
+    /// and renders it there; `None` for documents kept nowhere else.
     pub fn new(
         service: CollaborationService,
         resource: &'static CollaborativeResource,
-        publications: Option<PublicationJournal>,
+        publishing: Option<Publishing>,
     ) -> Self {
         Self {
             service,
             resource,
-            publications,
+            publishing,
         }
     }
 
@@ -134,39 +156,18 @@ impl CollaborativeDocuments {
 
     /// Marks the document for a commit about to be made to it.
     fn pending(&self, resource_id: &str) -> KernelResult<Option<PendingCommit>> {
-        self.publications
+        self.publishing
             .as_ref()
-            .map(|journal| journal.mark(&self.id(resource_id)))
+            .map(|publishing| publishing.outbox.mark(&self.id(resource_id)))
             .transpose()
     }
 
-    /// Whether `resource_id` waits for its files to be written from what was
-    /// accepted. Documents that have no files never wait.
+    /// Whether `resource_id` waits for the canonical store to hold what was
+    /// accepted. Documents kept nowhere else never wait.
     pub fn publication_pending(&self, resource_id: &str) -> bool {
-        self.publications
+        self.publishing
             .as_ref()
-            .is_some_and(|journal| journal.is_marked(&self.id(resource_id)))
-    }
-
-    /// Records that the document's files render `version`, or that no
-    /// accepted document remains when it is `None`. The mark stays unless
-    /// `version` is the one accepted now.
-    pub fn published(
-        &self,
-        resource_id: &str,
-        version: Option<&CollaborationVersion>,
-    ) -> KernelResult<()> {
-        let Some(journal) = &self.publications else {
-            return Ok(());
-        };
-        let document = self.id(resource_id);
-        journal.clear(&document, || {
-            let accepted = self
-                .service
-                .summary(&document)?
-                .map(|summary| summary.version);
-            Ok(accepted.as_ref() == version)
-        })
+            .is_some_and(|publishing| publishing.outbox.is_marked(&self.id(resource_id)))
     }
 
     fn check_with(
@@ -238,20 +239,6 @@ impl CollaborativeDocuments {
         self.seed(resource_id, seed, check)
     }
 
-    /// Seeds the document from `seed`, its file's content, unless a document
-    /// is stored, in whatever format. The file already holds what is accepted.
-    pub fn bootstrap_from_file(
-        &self,
-        resource_id: &str,
-        seed: &Value,
-        check: impl Fn(&Value) -> KernelResult<()>,
-    ) -> KernelResult<()> {
-        if self.summary(resource_id)?.is_some() {
-            return Ok(());
-        }
-        self.seed(resource_id, seed, check)
-    }
-
     fn seed(
         &self,
         resource_id: &str,
@@ -289,6 +276,36 @@ impl CollaborativeDocuments {
             schema_version,
             update_base64,
             incarnation,
+            self.check_with(resource_id, check),
+        )?;
+        Ok(())
+    }
+
+    /// Seeds the document from what the canonical store holds of it unless a
+    /// document is stored, in whatever format: from its operations, under the
+    /// store's incarnation, when the store keeps them, and otherwise from its
+    /// parts. A document seeded from parts holds a version the store does not
+    /// name, so it waits to be published.
+    pub fn bootstrap_pulled(
+        &self,
+        resource_id: &str,
+        pulled: &Pulled,
+        check: impl Fn(&Value) -> KernelResult<()>,
+    ) -> KernelResult<()> {
+        if self.summary(resource_id)?.is_some() {
+            return Ok(());
+        }
+        let (Some(operations), Some(version)) = (&pulled.operations, &pulled.version) else {
+            let seed = self.parse(resource_id, &pulled.parts)?;
+            let _pending = self.pending(resource_id)?;
+            return self.seed(resource_id, &seed, check);
+        };
+        self.service.bootstrap_update(
+            self.resource.spec,
+            &self.id(resource_id),
+            operations.schema_version,
+            &operations.update_base64,
+            Some(&version.incarnation),
             self.check_with(resource_id, check),
         )?;
         Ok(())
@@ -369,15 +386,177 @@ impl CollaborativeDocuments {
     }
 
     /// Removes the document, as `actor` asked, and returns the version it
-    /// removed; `None` when there was none to remove. Its mark stays until
-    /// [`published`](Self::published) records that its files are gone too.
+    /// removed; `None` when there was none to remove. Its mark records the
+    /// version before the removal, and again if a commit landed meanwhile,
+    /// and stays until [`publish`](Self::publish) removes it from the
+    /// canonical store too.
     pub fn remove(
         &self,
         resource_id: &str,
         actor: &Principal,
     ) -> KernelResult<Option<CollaborationVersion>> {
-        let _pending = self.pending(resource_id)?;
-        Ok(self.service.delete(actor, &self.id(resource_id))?)
+        let pending = self.pending(resource_id)?;
+        let removes = |version: &CollaborationVersion| {
+            pending
+                .as_ref()
+                .map_or(Ok(()), |pending| pending.removes(version))
+        };
+        if let Some(summary) = self.summary(resource_id)? {
+            removes(&summary.version)?;
+        }
+        let removed = self.service.delete(actor, &self.id(resource_id))?;
+        if let Some(removed) = &removed {
+            removes(removed)?;
+        }
+        Ok(removed)
+    }
+
+    /// The publishing documents of this entity have; an error for documents
+    /// kept nowhere else.
+    fn publishing(&self) -> KernelResult<&Publishing> {
+        self.publishing.as_ref().ok_or_else(|| {
+            KernelError::internal(format!(
+                "{} documents are kept in no canonical store.",
+                self.resource.spec.name
+            ))
+        })
+    }
+
+    /// What the canonical store holds of the document; `None` when it holds
+    /// none.
+    pub async fn pull(&self, resource_id: &str) -> KernelResult<Option<Pulled>> {
+        self.publishing()?
+            .outbox
+            .canonical()
+            .pull(&self.id(resource_id))
+            .await
+    }
+
+    /// The state `parts` render, as the entity's codec reads them.
+    pub fn parse(&self, resource_id: &str, parts: &[Part]) -> KernelResult<Value> {
+        self.publishing()?.codec.parse(&self.id(resource_id), parts)
+    }
+
+    /// Publishes the document's accepted state to the canonical store, or its
+    /// removal when none is accepted, and clears its mark once no commit to it
+    /// is under way and the store holds the version accepted now. The lease is
+    /// taken for the write alone, once the document is rendered. Publications
+    /// of one document land in the order they read it. `None` for documents
+    /// kept nowhere else.
+    pub async fn publish(&self, resource_id: &str) -> KernelResult<Option<Published>> {
+        let Some(publishing) = &self.publishing else {
+            return Ok(None);
+        };
+        let document = self.id(resource_id);
+        let outbox = &publishing.outbox;
+        let canonical = outbox.canonical();
+        let _turn = outbox.turn(&document).await;
+        if self.summary(resource_id)?.is_none() {
+            // The store loses only a document this working copy removed.
+            if let Some(removed) = outbox.removed(&document)? {
+                let lease = outbox.lease(&document).await?;
+                let result = self
+                    .remove_under(&document, &lease, &removed, canonical.as_ref())
+                    .await;
+                outbox.release(&lease).await?;
+                result?;
+            }
+            outbox.clear(&document, || Ok(self.summary(resource_id)?.is_none()))?;
+            return Ok(Some(Published {
+                version: None,
+                state: None,
+                parts: Vec::new(),
+            }));
+        }
+        let accepted = self.accepted_state(resource_id, None)?;
+        let state = CollaborationReplica::from_versioned_update_base64(
+            self.resource.spec,
+            accepted.schema_version,
+            &accepted.update_base64,
+        )
+        .and_then(|replica| replica.materialized_document(&accepted.etag))
+        .map_err(|error| KernelError::internal(error.to_string()))?;
+        let held = canonical
+            .pull(&document)
+            .await?
+            .map(|pulled| pulled.parts)
+            .unwrap_or_default();
+        let parts = publishing.codec.render(&document, &state, &held).await?;
+        let publication = Publication {
+            version: accepted.version,
+            operations: Operations {
+                schema_version: accepted.schema_version,
+                update_base64: accepted.update_base64,
+            },
+            parts,
+        };
+        let lease = outbox.lease(&document).await?;
+        let published = self
+            .publish_under(&document, &lease, &publication, canonical.as_ref())
+            .await;
+        outbox.release(&lease).await?;
+        let version = published?;
+        outbox.clear(&document, || {
+            Ok(self.summary(resource_id)?.map(|summary| summary.version) == Some(version.clone()))
+        })?;
+        Ok(Some(Published {
+            version: Some(version),
+            state: Some(state),
+            parts: publication.parts,
+        }))
+    }
+
+    /// Publishes `publication` while `lease` holds the document, unless the store holds
+    /// operations of the document's history that the publication lacks: another holder
+    /// published them after this one read its state.
+    async fn publish_under(
+        &self,
+        document: &CollaborationDocumentId,
+        lease: &walthamstow_kernel::leases::Lease,
+        publication: &Publication,
+        canonical: &dyn crate::canonical::CanonicalStore,
+    ) -> KernelResult<CollaborationVersion> {
+        let held = canonical
+            .pull(document)
+            .await?
+            .and_then(|pulled| pulled.version);
+        if held.is_some_and(|held| {
+            held.incarnation == publication.version.incarnation
+                && !publication.version.covers(&held)
+        }) {
+            return Err(KernelError::conflict(format!(
+                "The canonical store holds {} \"{}\" operations this working copy lacks; pull \
+                 them before publishing.",
+                document.entity, document.resource_id
+            )));
+        }
+        canonical.publish(document, lease, publication).await
+    }
+
+    /// Removes the document from the store while `lease` holds it, unless the store holds
+    /// operations of its history that `removed`, the version this working copy removed, lacks:
+    /// another holder published them after this one removed it.
+    async fn remove_under(
+        &self,
+        document: &CollaborationDocumentId,
+        lease: &walthamstow_kernel::leases::Lease,
+        removed: &CollaborationVersion,
+        canonical: &dyn crate::canonical::CanonicalStore,
+    ) -> KernelResult<()> {
+        let held = canonical
+            .pull(document)
+            .await?
+            .and_then(|pulled| pulled.version);
+        if held
+            .is_some_and(|held| held.incarnation == removed.incarnation && !removed.covers(&held))
+        {
+            return Err(KernelError::conflict(format!(
+                "The canonical store holds {} \"{}\" operations published after this working copy \
+                 removed it; pull them before removing it.",
+                document.entity, document.resource_id
+            )));
+        }
+        canonical.remove(document, lease).await
     }
 
     /// Commits `actor`'s edit to the accepted document, as any writer's edit is
@@ -486,6 +665,8 @@ impl CollaborativeDocuments {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::canonical::tests::NoteCodec;
+    use crate::canonical::{CanonicalStore, DocumentCodec, MemoryCanonicalStore};
     use clerkenwell_events::ActorKind;
     use clerkenwell_schema::{
         GeneratedCollaborationConflict, GeneratedCollaborationFieldSpec,
@@ -493,10 +674,12 @@ mod tests {
     };
     use clerkenwell_store::{CommitPolicy, PeerKey};
     use std::num::NonZeroU32;
+    use std::sync::OnceLock;
     use std::time::Duration;
     use walthamstow_kernel::collaboration_storage::FileCollaborationStorage;
     use walthamstow_kernel::durability::WriteDurability;
-    use walthamstow_kernel::local_store::FileLocalStore;
+    use walthamstow_kernel::leases::{Holder, MemoryLeases};
+    use walthamstow_kernel::local_store::{LocalStore, MemoryLocalStore};
     use walthamstow_kernel::WallClock;
 
     const fn field(
@@ -599,106 +782,446 @@ mod tests {
         serde_json::json!({ "note_id": id, "body": "text" })
     }
 
-    #[test]
-    fn a_removed_document_waits_for_its_files_until_they_are_published_gone() {
-        let store = tempfile::tempdir().unwrap();
-        let data = tempfile::tempdir().unwrap();
-        let journal = || {
-            PublicationJournal::open(FileLocalStore::open(data.path(), DURABILITY).unwrap())
-                .unwrap()
-        };
-        let documents = CollaborativeDocuments::new(service(store.path()), &NOTES, Some(journal()));
-        documents
-            .bootstrap("one", &note("one"), |_| Ok(()))
-            .unwrap();
-        let version = documents.summary("one").unwrap().unwrap().version;
-        documents.published("one", Some(&version)).unwrap();
-        assert!(!documents.publication_pending("one"));
-
-        documents.remove("one", &writer()).unwrap();
-        assert!(documents.summary("one").unwrap().is_none());
-        assert!(
-            documents.publication_pending("one"),
-            "the removed document's files are not yet known to be gone"
-        );
-        assert!(
-            journal().is_marked(&CollaborationDocumentId::new("Note", "one")),
-            "the mark is found again after a restart"
-        );
-
-        documents.published("one", None).unwrap();
-        assert!(!documents.publication_pending("one"));
-        assert!(!journal().is_marked(&CollaborationDocumentId::new("Note", "one")));
+    fn leases() -> Arc<MemoryLeases> {
+        Arc::new(MemoryLeases::new(
+            WallClock::new(|| std::time::UNIX_EPOCH),
+            Duration::from_secs(60),
+        ))
     }
 
-    #[test]
-    fn a_stale_publication_finishing_after_a_removal_keeps_the_removal_pending() {
+    /// One engine's working copy of notes, publishing to `canonical`.
+    struct Engine {
+        _store: tempfile::TempDir,
+        outbox: Outbox,
+        documents: CollaborativeDocuments,
+    }
+
+    fn engine(
+        canonical: Arc<MemoryCanonicalStore>,
+        leases: Arc<MemoryLeases>,
+        codec: Arc<dyn DocumentCodec>,
+    ) -> Engine {
         let store = tempfile::tempdir().unwrap();
-        let data = tempfile::tempdir().unwrap();
-        let journal =
-            PublicationJournal::open(FileLocalStore::open(data.path(), DURABILITY).unwrap())
-                .unwrap();
-        let documents = CollaborativeDocuments::new(service(store.path()), &NOTES, Some(journal));
+        let local: Arc<dyn LocalStore> = Arc::new(MemoryLocalStore::new());
+        let outbox =
+            Outbox::open(local, canonical, leases, Holder::new("engine").unwrap()).unwrap();
+        let documents = CollaborativeDocuments::new(
+            service(store.path()),
+            &NOTES,
+            Some(Publishing {
+                outbox: outbox.clone(),
+                codec,
+            }),
+        );
+        Engine {
+            _store: store,
+            outbox,
+            documents,
+        }
+    }
+
+    fn notes() -> (Arc<MemoryCanonicalStore>, Engine) {
+        let leases = leases();
+        let canonical = Arc::new(MemoryCanonicalStore::new(leases.clone()));
+        let engine = engine(canonical.clone(), leases, Arc::new(NoteCodec));
+        (canonical, engine)
+    }
+
+    fn id(resource_id: &str) -> CollaborationDocumentId {
+        CollaborationDocumentId::new("Note", resource_id)
+    }
+
+    #[tokio::test]
+    async fn a_published_document_is_held_at_the_version_accepted() {
+        let (canonical, engine) = notes();
+        let documents = &engine.documents;
         documents
             .bootstrap("one", &note("one"), |_| Ok(()))
             .unwrap();
-        let stale = documents.summary("one").unwrap().unwrap().version;
+        assert!(documents.publication_pending("one"));
+
+        let published = documents.publish("one").await.unwrap().unwrap();
+        let accepted = documents.summary("one").unwrap().unwrap();
+        assert_eq!(published.version.as_ref(), Some(&accepted.version));
+        let state = published.state.expect("a published document's state");
         assert_eq!(
-            documents.remove("one", &writer()).unwrap().as_ref(),
-            Some(&stale),
+            (&state["note_id"], &state["body"]),
+            (&note("one")["note_id"], &note("one")["body"])
+        );
+        assert!(!documents.publication_pending("one"));
+
+        let held = canonical.pull(&id("one")).await.unwrap().unwrap();
+        assert_eq!(held.version, Some(accepted.version));
+        assert_eq!(held.parts, published.parts);
+        assert_eq!(
+            documents.parse("one", &held.parts).unwrap()["body"],
+            note("one")["body"],
+            "the codec reads back what it rendered"
+        );
+        assert!(held.operations.is_some());
+    }
+
+    #[tokio::test]
+    async fn a_removed_document_waits_until_its_removal_is_published() {
+        let (canonical, engine) = notes();
+        let documents = &engine.documents;
+        documents
+            .bootstrap("one", &note("one"), |_| Ok(()))
+            .unwrap();
+        documents.publish("one").await.unwrap();
+
+        let removed = documents.remove("one", &writer()).unwrap();
+        assert!(
+            removed.is_some(),
             "a removal returns the version it removed"
         );
+        assert!(documents.publication_pending("one"));
+        assert!(canonical.pull(&id("one")).await.unwrap().is_some());
 
-        documents.published("one", Some(&stale)).unwrap();
-        assert!(
-            documents.publication_pending("one"),
-            "files written from the removed document do not settle its removal"
-        );
-        documents.published("one", None).unwrap();
+        let published = documents.publish("one").await.unwrap().unwrap();
+        assert_eq!(published.version, None);
+        assert!(!documents.publication_pending("one"));
+        assert_eq!(canonical.pull(&id("one")).await.unwrap(), None);
+    }
+
+    #[tokio::test]
+    async fn a_commit_under_way_keeps_the_mark_through_a_publication() {
+        let (_, engine) = notes();
+        let documents = &engine.documents;
+        documents
+            .bootstrap("one", &note("one"), |_| Ok(()))
+            .unwrap();
+        let under_way = engine.outbox.mark(&id("one")).unwrap();
+        documents.publish("one").await.unwrap();
+        assert!(documents.publication_pending("one"));
+        drop(under_way);
+        documents.publish("one").await.unwrap();
         assert!(!documents.publication_pending("one"));
     }
 
-    #[test]
-    fn documents_that_have_no_files_never_wait_for_publication() {
+    #[tokio::test]
+    async fn documents_kept_nowhere_else_never_wait_for_publication() {
         let store = tempfile::tempdir().unwrap();
         let documents = CollaborativeDocuments::new(service(store.path()), &NOTES, None);
-        assert!(!documents.publication_pending("one"));
         documents
             .bootstrap("one", &note("one"), |_| Ok(()))
             .unwrap();
         assert!(!documents.publication_pending("one"));
+        assert!(documents.publish("one").await.unwrap().is_none());
         documents.remove("one", &writer()).unwrap();
         assert!(!documents.publication_pending("one"));
     }
 
-    #[test]
-    fn a_publication_clears_the_mark_only_at_the_version_accepted() {
-        let store = tempfile::tempdir().unwrap();
-        let data = tempfile::tempdir().unwrap();
-        let journal =
-            PublicationJournal::open(FileLocalStore::open(data.path(), DURABILITY).unwrap())
-                .unwrap();
-        let documents = CollaborativeDocuments::new(service(store.path()), &NOTES, Some(journal));
-        documents
-            .bootstrap("one", &note("one"), |_| Ok(()))
-            .unwrap();
-        let earlier = documents.summary("one").unwrap().unwrap().version;
-        documents.remove("one", &writer()).unwrap();
-        documents
-            .bootstrap("one", &note("one"), |_| Ok(()))
-            .unwrap();
-        let accepted = documents.summary("one").unwrap().unwrap().version;
-        assert_ne!(
-            accepted, earlier,
-            "a document created again has a new history"
-        );
+    /// Notes rendered as [`NoteCodec`] renders them, after a change to the document has
+    /// landed while it renders.
+    #[derive(Debug)]
+    struct Racing {
+        documents: OnceLock<CollaborativeDocuments>,
+        removes: bool,
+        raced: std::sync::atomic::AtomicBool,
+    }
 
-        documents.published("one", Some(&earlier)).unwrap();
-        assert!(
-            documents.publication_pending("one"),
-            "files rendering the removed document's history do not render this one"
-        );
-        documents.published("one", Some(&accepted)).unwrap();
+    #[async_trait::async_trait]
+    impl DocumentCodec for Racing {
+        async fn render(
+            &self,
+            document: &CollaborationDocumentId,
+            state: &Value,
+            held: &[Part],
+        ) -> KernelResult<Vec<Part>> {
+            let documents = self.documents.get().expect("the documents are set");
+            if !self.raced.swap(true, std::sync::atomic::Ordering::SeqCst) {
+                if self.removes {
+                    documents.remove(&document.resource_id, &writer())?;
+                } else {
+                    documents.rewrite_as(
+                        &writer(),
+                        &document.resource_id,
+                        "racing",
+                        "change while rendering",
+                        |value| {
+                            value["body"] = Value::String("changed".into());
+                            true
+                        },
+                    )?;
+                }
+            }
+            NoteCodec.render(document, state, held).await
+        }
+
+        fn parse(&self, document: &CollaborationDocumentId, parts: &[Part]) -> KernelResult<Value> {
+            NoteCodec.parse(document, parts)
+        }
+
+        fn resource_of(&self, part: &Part) -> KernelResult<Option<String>> {
+            NoteCodec.resource_of(part)
+        }
+    }
+
+    #[tokio::test]
+    async fn a_change_landing_while_a_publication_renders_keeps_the_document_waiting() {
+        for removes in [false, true] {
+            let leases = leases();
+            let canonical = Arc::new(MemoryCanonicalStore::new(leases.clone()));
+            let codec = Arc::new(Racing {
+                documents: OnceLock::new(),
+                removes,
+                raced: Default::default(),
+            });
+            let engine = engine(canonical.clone(), leases, codec.clone());
+            codec.documents.set(engine.documents.clone()).unwrap();
+            let documents = &engine.documents;
+            documents
+                .bootstrap("one", &note("one"), |_| Ok(()))
+                .unwrap();
+
+            let stale = documents.publish("one").await.unwrap().unwrap();
+            assert!(
+                documents.publication_pending("one"),
+                "the store holds a version the change has moved past ({removes})"
+            );
+            assert_ne!(
+                stale.version,
+                documents
+                    .summary("one")
+                    .unwrap()
+                    .map(|summary| summary.version)
+            );
+
+            documents.publish("one").await.unwrap();
+            assert!(!documents.publication_pending("one"), "{removes}");
+            assert_eq!(
+                canonical
+                    .pull(&id("one"))
+                    .await
+                    .unwrap()
+                    .and_then(|held| held.version),
+                documents
+                    .summary("one")
+                    .unwrap()
+                    .map(|summary| summary.version)
+            );
+        }
+    }
+
+    /// Notes rendered as [`NoteCodec`] renders them, after the engine's clock has moved past a
+    /// lease's term.
+    #[derive(Debug)]
+    struct Slow {
+        now: Arc<std::sync::atomic::AtomicU64>,
+    }
+
+    #[async_trait::async_trait]
+    impl DocumentCodec for Slow {
+        async fn render(
+            &self,
+            document: &CollaborationDocumentId,
+            state: &Value,
+            held: &[Part],
+        ) -> KernelResult<Vec<Part>> {
+            self.now
+                .fetch_add(120_000, std::sync::atomic::Ordering::SeqCst);
+            NoteCodec.render(document, state, held).await
+        }
+
+        fn parse(&self, document: &CollaborationDocumentId, parts: &[Part]) -> KernelResult<Value> {
+            NoteCodec.parse(document, parts)
+        }
+
+        fn resource_of(&self, part: &Part) -> KernelResult<Option<String>> {
+            NoteCodec.resource_of(part)
+        }
+    }
+
+    #[tokio::test]
+    async fn a_render_that_outlasts_a_lease_term_still_publishes() {
+        let now = Arc::new(std::sync::atomic::AtomicU64::new(0));
+        let read = now.clone();
+        let leases = Arc::new(MemoryLeases::new(
+            WallClock::new(move || {
+                std::time::UNIX_EPOCH
+                    + Duration::from_millis(read.load(std::sync::atomic::Ordering::SeqCst))
+            }),
+            Duration::from_secs(60),
+        ));
+        let canonical = Arc::new(MemoryCanonicalStore::new(leases.clone()));
+        let engine = engine(canonical.clone(), leases, Arc::new(Slow { now }));
+        let documents = &engine.documents;
+        documents
+            .bootstrap("one", &note("one"), |_| Ok(()))
+            .unwrap();
+        documents.publish("one").await.unwrap();
         assert!(!documents.publication_pending("one"));
+        assert!(canonical.pull(&id("one")).await.unwrap().is_some());
+    }
+
+    #[tokio::test]
+    async fn a_publication_lacking_what_another_holder_published_is_refused() {
+        let leases = leases();
+        let canonical = Arc::new(MemoryCanonicalStore::new(leases.clone()));
+        let first = engine(canonical.clone(), leases.clone(), Arc::new(NoteCodec));
+        first
+            .documents
+            .bootstrap("one", &note("one"), |_| Ok(()))
+            .unwrap();
+        first.documents.publish("one").await.unwrap();
+
+        let second = engine(canonical.clone(), leases, Arc::new(NoteCodec));
+        let pulled = second.documents.pull("one").await.unwrap().unwrap();
+        second
+            .documents
+            .bootstrap_pulled("one", &pulled, |_| Ok(()))
+            .unwrap();
+        let edit = |documents: &CollaborativeDocuments, body: &str| {
+            let body = body.to_owned();
+            documents
+                .rewrite_as(&writer(), "one", &body.clone(), "edit", move |value| {
+                    value["body"] = Value::String(body);
+                    true
+                })
+                .unwrap()
+                .unwrap();
+        };
+        edit(&second.documents, "second");
+        second.documents.publish("one").await.unwrap();
+        let published = canonical.pull(&id("one")).await.unwrap().unwrap();
+
+        edit(&first.documents, "first");
+        assert!(first.documents.publish("one").await.is_err());
+        assert!(first.documents.publication_pending("one"));
+        assert_eq!(
+            canonical.pull(&id("one")).await.unwrap().unwrap(),
+            published
+        );
+    }
+
+    /// Two engines over one canonical store, each holding "one" as the first published it.
+    async fn two_engines() -> (Arc<MemoryCanonicalStore>, Engine, Engine) {
+        let leases = leases();
+        let canonical = Arc::new(MemoryCanonicalStore::new(leases.clone()));
+        let first = engine(canonical.clone(), leases.clone(), Arc::new(NoteCodec));
+        first
+            .documents
+            .bootstrap("one", &note("one"), |_| Ok(()))
+            .unwrap();
+        first.documents.publish("one").await.unwrap();
+        let second = engine(canonical.clone(), leases, Arc::new(NoteCodec));
+        let pulled = second.documents.pull("one").await.unwrap().unwrap();
+        second
+            .documents
+            .bootstrap_pulled("one", &pulled, |_| Ok(()))
+            .unwrap();
+        (canonical, first, second)
+    }
+
+    #[tokio::test]
+    async fn a_removal_lacking_what_another_holder_published_is_refused() {
+        let (canonical, first, second) = two_engines().await;
+        first.documents.remove("one", &writer()).unwrap().unwrap();
+        second
+            .documents
+            .rewrite_as(&writer(), "one", "edited", "edit", |value| {
+                value["body"] = Value::String("edited".into());
+                true
+            })
+            .unwrap()
+            .unwrap();
+        second.documents.publish("one").await.unwrap();
+        let published = canonical.pull(&id("one")).await.unwrap().unwrap();
+
+        assert!(first.documents.publish("one").await.is_err());
+        assert!(first.documents.publication_pending("one"));
+        assert_eq!(
+            canonical.pull(&id("one")).await.unwrap().unwrap(),
+            published
+        );
+    }
+
+    #[tokio::test]
+    async fn a_document_this_working_copy_never_removed_stays_in_the_store() {
+        let leases = leases();
+        let canonical = Arc::new(MemoryCanonicalStore::new(leases.clone()));
+        let first = engine(canonical.clone(), leases.clone(), Arc::new(NoteCodec));
+        first
+            .documents
+            .bootstrap("one", &note("one"), |_| Ok(()))
+            .unwrap();
+        first.documents.publish("one").await.unwrap();
+        let published = canonical.pull(&id("one")).await.unwrap();
+
+        // A commit to "one" that never landed, in a working copy that never held it.
+        let second = engine(canonical.clone(), leases, Arc::new(NoteCodec));
+        drop(second.outbox.mark(&id("one")).unwrap());
+        second.documents.publish("one").await.unwrap();
+        assert!(!second.documents.publication_pending("one"));
+        assert_eq!(canonical.pull(&id("one")).await.unwrap(), published);
+    }
+
+    #[tokio::test]
+    async fn a_document_seeded_from_the_stores_operations_keeps_its_version() {
+        let leases = leases();
+        let canonical = Arc::new(MemoryCanonicalStore::new(leases.clone()));
+        let first = engine(canonical.clone(), leases.clone(), Arc::new(NoteCodec));
+        first
+            .documents
+            .bootstrap("one", &note("one"), |_| Ok(()))
+            .unwrap();
+        first.documents.publish("one").await.unwrap();
+
+        let second = engine(canonical, leases, Arc::new(NoteCodec));
+        let pulled = second.documents.pull("one").await.unwrap().unwrap();
+        second
+            .documents
+            .bootstrap_pulled("one", &pulled, |_| Ok(()))
+            .unwrap();
+        assert_eq!(
+            second
+                .documents
+                .summary("one")
+                .unwrap()
+                .map(|summary| summary.version),
+            pulled.version
+        );
+        assert_eq!(
+            second.documents.document("one").unwrap().unwrap()["body"],
+            note("one")["body"]
+        );
+        assert!(!second.documents.publication_pending("one"));
+    }
+
+    #[tokio::test]
+    async fn a_document_seeded_from_parts_alone_waits_to_be_published() {
+        let (canonical, engine) = notes();
+        let documents = &engine.documents;
+        canonical.write_outside(
+            &id("one"),
+            vec![crate::canonical::Part {
+                name: crate::canonical::PartName::new("one.yaml").unwrap(),
+                bytes: b"one\nwritten by hand".to_vec(),
+            }],
+        );
+        let pulled = documents.pull("one").await.unwrap().unwrap();
+        assert_eq!(pulled.version, None);
+        documents
+            .bootstrap_pulled("one", &pulled, |_| Ok(()))
+            .unwrap();
+        assert_eq!(
+            documents.document("one").unwrap().unwrap()["body"],
+            "written by hand"
+        );
+        assert!(documents.publication_pending("one"));
+        documents.publish("one").await.unwrap();
+        assert!(!documents.publication_pending("one"));
+        assert_eq!(
+            canonical
+                .pull(&id("one"))
+                .await
+                .unwrap()
+                .and_then(|held| held.version),
+            documents
+                .summary("one")
+                .unwrap()
+                .map(|summary| summary.version)
+        );
     }
 }

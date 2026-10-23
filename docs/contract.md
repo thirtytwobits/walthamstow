@@ -51,6 +51,8 @@ Walthamstow refuses a link wherever it names an entry itself:
 
 - `journals/`, each journal, and every entry in a journal
 - `staging/` and each staging directory
+- each file the file canonical store keeps a part in, and each directory between it and its
+  entity's directory
 - the collaboration cache root that `prepare_cache_root` is given, and each entity directory
 - publication marks
 - each upgrade's operation directory, its originals and its staged files
@@ -127,16 +129,62 @@ an envelope this layout generates.
 returns `None`, after syncing the entity directory. `compare_and_remove` removes only when the
 stored version equals the expected one.
 
-## Publication marks
+## Leases
 
-A product marks a document before it commits to it. The mark stays until one of these is true:
+A lease is the right to change one document in ways that do not merge. It names its document,
+its holder and an epoch that rises with each grant. A store checks the lease in the same atomic
+step as the write it fences, and refuses a write under a lease that no longer holds or names
+another document.
 
-- no commit to the document is under way, and its files render the version accepted now
+`FileLeases` grants one lease over every document of a workspace: the workspace lock, held for as
+long as the engine runs, under an epoch one past the last hold's, kept in the `leases` journal. `MemoryLeases` grants each
+document its own lease, which lapses a term after it was granted or renewed, on the engine's
+clock.
+
+## The canonical store
+
+A canonical store keeps collaborative documents as the product's codec renders them, in named
+parts. A document renders at least one part, no two whose names fold alike, and none whose name
+holds another beneath it. No part's last name is one a durable write stages a file under. Every
+store is given the same publication, the version, every accepted operation and the parts, and
+keeps what it can of it. Publishing what a store holds changes nothing. `admit` refuses parts a
+store cannot keep as a document's, before anything is written.
+
+`FileCanonicalStore` writes each part as a file under its entity's directory. In the
+`canonical-files` journal it records the version each document's files render and a digest of
+each file. A document's files are those the record names that still hold what the store wrote,
+and every file the codec names as the document's. When they are not exactly what the record
+names, they were written outside any engine, and the store holds them with no version. Each
+entity's files are read and written under one lock, which every store over the entity's directory
+in one process shares, whatever the case of the path that names it. It admits no part the codec
+names as another document's. A publication checks every part before it writes any, and never
+writes over or removes a file the codec names as another document's, whatever the store wrote
+there before. Every file the store holds of the document that a publication omits is dropped.
+Dropped parts are removed first, with the directories they leave holding nothing but files a
+stopped write staged, so a part may take the place of one as a file or a directory, in any case.
+A part renamed only in case is renamed in place before it is written, and never onto another
+document's file. Discovery passes over hidden entries and the files a stopped write staged.
+
+`MemoryCanonicalStore` keeps each document's version, operations and parts.
+
+## The outbox
+
+A product marks a document before it commits to it. Publishing the document renders its accepted
+state with the entity's codec and publishes it to the canonical store under the document's lease,
+taken for the write alone. Publications of one document land in the order they read it. A
+publication is refused while the store holds operations of the document's history that it lacks:
+another holder published them after it read its state. A removal's mark records the version
+removed, before the removal and again if a commit landed meanwhile. Publishing the removal
+removes the document from the store only when its mark records one, and is refused while the
+store holds operations of its history that version lacks. The mark stays until one of these
+is true:
+
+- no commit to the document is under way, and the store holds the version accepted now
 - its removal is published
 
-A version names the document's incarnation, so files rendering a document that was removed and
-created again never clear its mark. Each mark is a record in the `collaboration-publications`
-journal, and every open over one local store shares one journal.
+A version names the document's incarnation, so a store holding a removed document's history
+never clears the mark of a document created again under its name. Each mark is a record in the
+`collaboration-publications` journal, and every open over one local store shares one outbox.
 
 ## Upgrades
 

@@ -1065,6 +1065,128 @@ impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_kernel::error::KernelError
 pub fn walthamstow_kernel::error::KernelError::vzip(self) -> V
 pub type walthamstow_kernel::error::KernelResult<T> = core::result::Result<T, walthamstow_kernel::error::KernelError>
 pub mod walthamstow_kernel::files
+pub struct walthamstow_kernel::files::Identity
+impl core::clone::Clone for walthamstow_kernel::files::Identity
+pub fn walthamstow_kernel::files::Identity::clone(&self) -> walthamstow_kernel::files::Identity
+impl core::cmp::Eq for walthamstow_kernel::files::Identity
+impl core::cmp::Ord for walthamstow_kernel::files::Identity
+pub fn walthamstow_kernel::files::Identity::cmp(&self, other: &walthamstow_kernel::files::Identity) -> core::cmp::Ordering
+impl core::cmp::PartialEq for walthamstow_kernel::files::Identity
+pub fn walthamstow_kernel::files::Identity::eq(&self, other: &walthamstow_kernel::files::Identity) -> bool
+impl core::cmp::PartialOrd for walthamstow_kernel::files::Identity
+pub fn walthamstow_kernel::files::Identity::partial_cmp(&self, other: &walthamstow_kernel::files::Identity) -> core::option::Option<core::cmp::Ordering>
+impl core::fmt::Debug for walthamstow_kernel::files::Identity
+pub fn walthamstow_kernel::files::Identity::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::hash::Hash for walthamstow_kernel::files::Identity
+pub fn walthamstow_kernel::files::Identity::hash<__H: core::hash::Hasher>(&self, state: &mut __H)
+impl core::marker::StructuralPartialEq for walthamstow_kernel::files::Identity
+impl core::marker::Freeze for walthamstow_kernel::files::Identity
+impl core::marker::Send for walthamstow_kernel::files::Identity
+impl core::marker::Sync for walthamstow_kernel::files::Identity
+impl core::marker::Unpin for walthamstow_kernel::files::Identity
+impl core::panic::unwind_safe::RefUnwindSafe for walthamstow_kernel::files::Identity
+impl core::panic::unwind_safe::UnwindSafe for walthamstow_kernel::files::Identity
+impl<Q, K> equivalent::Comparable<K> for walthamstow_kernel::files::Identity where Q: core::cmp::Ord + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn walthamstow_kernel::files::Identity::compare(&self, key: &K) -> core::cmp::Ordering
+impl<Q, K> equivalent::Equivalent<K> for walthamstow_kernel::files::Identity where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn walthamstow_kernel::files::Identity::equivalent(&self, key: &K) -> bool
+impl<Q, K> hashbrown::Equivalent<K> for walthamstow_kernel::files::Identity where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn walthamstow_kernel::files::Identity::equivalent(&self, key: &K) -> bool
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for walthamstow_kernel::files::Identity where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for walthamstow_kernel::files::Identity where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<T, U> core::convert::Into<U> for walthamstow_kernel::files::Identity where U: core::convert::From<T>
+pub fn walthamstow_kernel::files::Identity::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for walthamstow_kernel::files::Identity where U: core::convert::Into<T>
+pub type walthamstow_kernel::files::Identity::Error = core::convert::Infallible
+pub fn walthamstow_kernel::files::Identity::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for walthamstow_kernel::files::Identity where U: core::convert::TryFrom<T>
+pub type walthamstow_kernel::files::Identity::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn walthamstow_kernel::files::Identity::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for walthamstow_kernel::files::Identity where T: core::clone::Clone
+pub type walthamstow_kernel::files::Identity::Owned = T
+pub fn walthamstow_kernel::files::Identity::clone_into(&self, target: &mut T)
+pub fn walthamstow_kernel::files::Identity::to_owned(&self) -> T
+impl<T> core::any::Any for walthamstow_kernel::files::Identity where T: 'static + ?core::marker::Sized
+pub fn walthamstow_kernel::files::Identity::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for walthamstow_kernel::files::Identity where T: ?core::marker::Sized
+pub fn walthamstow_kernel::files::Identity::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for walthamstow_kernel::files::Identity where T: ?core::marker::Sized
+pub fn walthamstow_kernel::files::Identity::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for walthamstow_kernel::files::Identity where T: core::clone::Clone
+pub unsafe fn walthamstow_kernel::files::Identity::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for walthamstow_kernel::files::Identity
+pub fn walthamstow_kernel::files::Identity::from(t: T) -> T
+impl<T> dyn_clone::DynClone for walthamstow_kernel::files::Identity where T: core::clone::Clone
+pub fn walthamstow_kernel::files::Identity::__clone_box(&self, _: dyn_clone::sealed::Private) -> *mut ()
+impl<T> either::into_either::IntoEither for walthamstow_kernel::files::Identity
+impl<T> tracing::instrument::Instrument for walthamstow_kernel::files::Identity
+impl<T> tracing::instrument::WithSubscriber for walthamstow_kernel::files::Identity
+impl<T> typenum::type_operators::Same for walthamstow_kernel::files::Identity
+pub type walthamstow_kernel::files::Identity::Output = T
+impl<T> yansi::paint::Paint for walthamstow_kernel::files::Identity where T: ?core::marker::Sized
+pub fn walthamstow_kernel::files::Identity::attr(&self, value: yansi::attr_quirk::Attribute) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::bg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::bold(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::clear(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::conceal(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::dim(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::fg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::invert(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::italic(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::linger(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::mask(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::on_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::on_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::on_bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::on_bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::on_bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::on_bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::on_bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::on_bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::on_bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::on_bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::on_bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::on_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::on_fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::on_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::on_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::on_primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::on_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::on_rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::on_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::on_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::quirk(&self, value: yansi::attr_quirk::Quirk) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::rapid_blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::resetting(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::strike(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::underline(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::whenever(&self, value: yansi::condition::Condition) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::wrap(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::files::Identity::yellow(&self) -> yansi::paint::Painted<&T>
+impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_kernel::files::Identity where T: ?core::marker::Sized
+impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_kernel::files::Identity where V: ppv_lite86::types::MultiLane<T>
+pub fn walthamstow_kernel::files::Identity::vzip(self) -> V
+pub fn walthamstow_kernel::files::identity(path: &std::path::Path) -> std::io::error::Result<walthamstow_kernel::files::Identity>
 pub const fn walthamstow_kernel::files::is_windows_device_name(name: &str) -> bool
 pub fn walthamstow_kernel::files::read_files(dir: &std::path::Path) -> anyhow::Result<alloc::collections::btree::map::BTreeMap<std::path::PathBuf, alloc::vec::Vec<u8>>>
 pub fn walthamstow_kernel::files::safe_id(id: &str) -> anyhow::Result<()>

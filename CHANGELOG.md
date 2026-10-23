@@ -13,8 +13,9 @@
 - `LocalStore` keeps the engine's local records: `get`, `compare_and_swap`, `list` and `remove`,
   each record under a `JournalKey` and replaced only over the `Tag` its writer read.
   `FileLocalStore` owns each journal's directory and keeps each record in a file named by a
-  digest of its key, which the file holds, so a key never becomes a path. `MemoryLocalStore`
-  keeps records in memory.
+  digest of its key, which the file holds, so a key never becomes a path. Every open of one data
+  directory shares one store, which `files::identity` tells by the directory itself, not the
+  path that reached it. `MemoryLocalStore` keeps records in memory.
 - Breaking: `PublicationJournal::open` takes the `LocalStore` its marks are kept in, and every
   open over one store shares one journal. A mark's record is named by its document. Marks an
   earlier release left are refused: that release publishes what they mark.

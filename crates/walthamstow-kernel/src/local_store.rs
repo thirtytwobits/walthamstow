@@ -9,6 +9,7 @@
 //! them in memory, for an engine with no disk and for tests.
 
 use crate::durability::WriteDurability;
+use crate::files::{identity, Identity};
 use crate::hashing::sha256_hex;
 use crate::journals::Journal;
 use crate::{KernelError, KernelResult};
@@ -206,9 +207,9 @@ impl LocalStore for MemoryLocalStore {
     }
 }
 
-/// The stores open in this process, by their canonical data directory, so every open of one
-/// shares its locks.
-static OPEN: Mutex<BTreeMap<PathBuf, Weak<FileLocalStore>>> = Mutex::new(BTreeMap::new());
+/// The stores open in this process, by their data directory's identity, so every open of one
+/// shares its locks, whatever path reached it.
+static OPEN: Mutex<BTreeMap<Identity, Weak<FileLocalStore>>> = Mutex::new(BTreeMap::new());
 
 /// The extension of a record's file.
 const RECORD_SUFFIX: &str = ".record";
@@ -274,9 +275,10 @@ impl FileLocalStore {
         let canonical = data_dir
             .canonicalize()
             .map_err(|error| internal(data_dir, error))?;
+        let identity = identity(&canonical).map_err(|error| internal(data_dir, error))?;
         let mut open = OPEN.lock().unwrap_or_else(PoisonError::into_inner);
         open.retain(|_, store| store.strong_count() > 0);
-        if let Some(store) = open.get(&canonical).and_then(Weak::upgrade) {
+        if let Some(store) = open.get(&identity).and_then(Weak::upgrade) {
             if store.durability != durability {
                 return Err(internal(
                     data_dir,
@@ -291,7 +293,7 @@ impl FileLocalStore {
             locks: Mutex::new(HashMap::new()),
             listing: RwLock::new(()),
         });
-        open.insert(canonical, Arc::downgrade(&store));
+        open.insert(identity, Arc::downgrade(&store));
         Ok(store)
     }
 
@@ -783,14 +785,26 @@ mod tests {
 
     #[test]
     fn every_open_of_a_data_directory_shares_one_store_at_its_canonical_path() {
-        let data = tempfile::tempdir().unwrap();
-        std::fs::create_dir(data.path().join("nested")).unwrap();
-        let first = FileLocalStore::open(data.path(), WriteDurability::System).unwrap();
-        let second =
-            FileLocalStore::open(&data.path().join("nested/.."), WriteDurability::System).unwrap();
-        assert!(Arc::ptr_eq(&first, &second));
-        assert_eq!(first.data_dir, data.path().canonicalize().unwrap());
-        assert!(FileLocalStore::open(data.path(), WriteDurability::Device).is_err());
+        let root = tempfile::tempdir().unwrap();
+        let data = root.path().join("Data");
+        std::fs::create_dir_all(data.join("nested")).unwrap();
+        let first = FileLocalStore::open(&data, WriteDurability::System).unwrap();
+        let mut others = vec![data.join("nested/..")];
+        #[cfg(unix)]
+        {
+            std::os::unix::fs::symlink(&data, root.path().join("linked")).unwrap();
+            others.push(root.path().join("linked"));
+        }
+        // The same directory, where the file system folds case.
+        if root.path().join("data").exists() {
+            others.push(root.path().join("data"));
+        }
+        for other in others {
+            let second = FileLocalStore::open(&other, WriteDurability::System).unwrap();
+            assert!(Arc::ptr_eq(&first, &second), "{}", other.display());
+        }
+        assert_eq!(first.data_dir, data.canonicalize().unwrap());
+        assert!(FileLocalStore::open(&data, WriteDurability::Device).is_err());
     }
 
     #[test]

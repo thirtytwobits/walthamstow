@@ -105,7 +105,8 @@ one engine process, every operation on a record holds that record's lock, and a 
 every write, so it sees the records as they were at one moment. A write stages a file beside the
 record and renames it into place, and a read settles what it finds, a record or none. Any other
 entry in a journal's directory is refused, including what an earlier release left there: that
-release finishes it. Every open of one data directory shares one store.
+release finishes it. Every open of one data directory shares one store, whatever path reaches
+the directory: a link, or a name in another case on a file system that folds case.
 
 ## Collaboration storage
 

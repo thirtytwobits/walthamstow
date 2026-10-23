@@ -54,12 +54,42 @@ pub const fn is_windows_device_name(name: &str) -> bool {
     named(&stem, b"com") || named(&stem, b"lpt")
 }
 
-/// Whether Windows can name an entry `component`: one name, not empty, holding no separator and
-/// no character it reserves, with no trailing dot or space, which it strips, and no device
-/// name, with or without an extension.
+/// What one file or directory is, however a path reaches it: through a link, or by a name in
+/// another case on a file system that folds case. Unix tells entries apart by device and inode,
+/// Windows by the path it resolves each to, every name in the case it is kept in.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct Identity {
+    #[cfg(unix)]
+    entry: (u64, u64),
+    #[cfg(windows)]
+    entry: PathBuf,
+}
+
+/// The identity of the entry at `path`.
+pub fn identity(path: &Path) -> std::io::Result<Identity> {
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::MetadataExt;
+        let metadata = std::fs::metadata(path)?;
+        Ok(Identity {
+            entry: (metadata.dev(), metadata.ino()),
+        })
+    }
+    #[cfg(windows)]
+    {
+        Ok(Identity {
+            entry: path.canonicalize()?,
+        })
+    }
+}
+
+/// Whether Windows can name an entry `component`: one name, not empty, at most 255 UTF-16 code
+/// units, holding no separator and no character it reserves, with no trailing dot or space,
+/// which it strips, and no device name, with or without an extension.
 pub fn windows_allows(component: &str) -> bool {
     let stem = component.split('.').next().unwrap_or_default();
     !component.is_empty()
+        && component.encode_utf16().count() <= 255
         && !component
             .chars()
             .any(|character| character.is_ascii_control() || "<>:\"|?*/\\".contains(character))
@@ -125,6 +155,32 @@ mod tests {
         for allowed in ["note.yaml", "console", ".media", "Ünïcode"] {
             assert!(windows_allows(allowed), "{allowed:?}");
         }
+        // A name's length is counted in UTF-16 code units, two to each of these.
+        assert!(windows_allows(&"😀".repeat(127)));
+        assert!(!windows_allows(&"😀".repeat(128)));
+        assert!(windows_allows(&"a".repeat(255)));
+        assert!(!windows_allows(&"a".repeat(256)));
+    }
+
+    #[test]
+    fn an_entry_reached_by_another_path_has_one_identity() {
+        let root = tempfile::tempdir().unwrap();
+        let data = root.path().join("Data");
+        std::fs::create_dir(&data).unwrap();
+        std::fs::create_dir(root.path().join("other")).unwrap();
+        assert_eq!(
+            identity(&data).unwrap(),
+            identity(&root.path().join("other/../Data")).unwrap()
+        );
+        assert_ne!(
+            identity(&data).unwrap(),
+            identity(&root.path().join("other")).unwrap()
+        );
+        let folded = root.path().join("data");
+        if folded.exists() {
+            assert_eq!(identity(&data).unwrap(), identity(&folded).unwrap());
+        }
+        assert!(identity(&root.path().join("absent")).is_err());
     }
 
     #[test]

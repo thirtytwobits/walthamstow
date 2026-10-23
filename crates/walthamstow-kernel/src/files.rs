@@ -54,13 +54,15 @@ pub const fn is_windows_device_name(name: &str) -> bool {
     named(&stem, b"com") || named(&stem, b"lpt")
 }
 
-/// Whether Windows can name an entry `component`: no character it reserves, no trailing dot or
-/// space, which it strips, and no device name, with or without an extension.
+/// Whether Windows can name an entry `component`: one name, not empty, holding no separator and
+/// no character it reserves, with no trailing dot or space, which it strips, and no device
+/// name, with or without an extension.
 pub fn windows_allows(component: &str) -> bool {
     let stem = component.split('.').next().unwrap_or_default();
-    !component
-        .chars()
-        .any(|character| character.is_ascii_control() || "<>:\"|?*".contains(character))
+    !component.is_empty()
+        && !component
+            .chars()
+            .any(|character| character.is_ascii_control() || "<>:\"|?*/\\".contains(character))
         && !component.ends_with(['.', ' '])
         && !is_windows_device_name(stem)
 }
@@ -102,6 +104,28 @@ pub fn read_files(dir: &Path) -> Result<BTreeMap<PathBuf, Vec<u8>>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn windows_allows_one_plain_name_and_nothing_else() {
+        for refused in [
+            "",
+            "a/b",
+            "a\\b",
+            "con",
+            "con.txt",
+            "COM1.yaml",
+            "note.",
+            "note ",
+            "a:b",
+            "what?",
+            "tab\tname",
+        ] {
+            assert!(!windows_allows(refused), "{refused:?}");
+        }
+        for allowed in ["note.yaml", "console", ".media", "Ünïcode"] {
+            assert!(windows_allows(allowed), "{allowed:?}");
+        }
+    }
 
     #[test]
     fn an_identity_is_safe_only_as_one_visible_path_component() {

@@ -333,15 +333,11 @@ impl FileLocalStore {
         file
     }
 
-    /// The names and bytes a record's file holds, refused unless its name is the digest of
-    /// those names.
-    fn decode(path: &Path, name: &str, file: &[u8]) -> KernelResult<(Vec<String>, Vec<u8>)> {
-        let line = file
-            .iter()
-            .position(|byte| *byte == b'\n')
-            .ok_or_else(|| internal(path, "a record's file names its key on its first line"))?;
+    /// The names a record's file holds on its first line, `line`, refused unless its name is
+    /// the digest of those names.
+    fn decode_key(path: &Path, name: &str, line: &[u8]) -> KernelResult<Vec<String>> {
         let names: Vec<String> =
-            serde_json::from_slice(&file[..line]).map_err(|error| internal(path, error))?;
+            serde_json::from_slice(line).map_err(|error| internal(path, error))?;
         if names.is_empty() || names.iter().any(String::is_empty) {
             return Err(internal(path, "a record's key names it by non-empty names"));
         }
@@ -349,7 +345,34 @@ impl FileLocalStore {
         if format!("{}{RECORD_SUFFIX}", sha256_hex(&named)) != name {
             return Err(internal(path, "this file holds a record of another key"));
         }
+        Ok(names)
+    }
+
+    /// The names and bytes a record's file holds.
+    fn decode(path: &Path, name: &str, file: &[u8]) -> KernelResult<(Vec<String>, Vec<u8>)> {
+        let line = file
+            .iter()
+            .position(|byte| *byte == b'\n')
+            .ok_or_else(|| internal(path, "a record's file names its key on its first line"))?;
+        let names = Self::decode_key(path, name, &file[..line])?;
         Ok((names, file[line + 1..].to_vec()))
+    }
+
+    /// The names the record's file at `path` holds, read from its first line alone.
+    fn read_key(path: &Path, name: &str) -> KernelResult<Vec<String>> {
+        use std::io::BufRead;
+        let file = std::fs::File::open(path).map_err(|error| internal(path, error))?;
+        let mut line = Vec::new();
+        std::io::BufReader::new(file)
+            .read_until(b'\n', &mut line)
+            .map_err(|error| internal(path, error))?;
+        if line.pop() != Some(b'\n') {
+            return Err(internal(
+                path,
+                "a record's file names its key on its first line",
+            ));
+        }
+        Self::decode_key(path, name, &line)
     }
 
     /// The bytes of the record at `key`, in the file at `path` named `name`; `None` when there
@@ -457,8 +480,7 @@ impl LocalStore for FileLocalStore {
             if is_staged_file(&name) {
                 continue;
             }
-            let file = std::fs::read(&path).map_err(|error| internal(&path, error))?;
-            let (names, _) = Self::decode(&path, &name, &file)?;
+            let names = Self::read_key(&path, &name)?;
             let key = JournalKey {
                 journal: prefix.journal,
                 names,

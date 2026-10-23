@@ -63,11 +63,24 @@ impl Inner {
     fn locked(&self) -> MutexGuard<'_, HashMap<CollaborationDocumentId, usize>> {
         self.marked.lock().unwrap_or_else(PoisonError::into_inner)
     }
+}
 
-    /// The record `document`'s mark is kept in.
-    fn key(document: &CollaborationDocumentId) -> KernelResult<JournalKey> {
-        JournalKey::new(JOURNAL, [&document.entity, &document.resource_id])
-    }
+/// The record of `document` in `journal`: one name, the document's entity and resource as a JSON
+/// pair, which is never empty whatever the identity.
+pub(crate) fn document_key(journal: Journal, document: &CollaborationDocumentId) -> JournalKey {
+    let pair = serde_json::to_string(&(&document.entity, &document.resource_id))
+        .expect("a pair of strings encodes");
+    JournalKey::new(journal, [pair]).expect("a JSON pair is not empty")
+}
+
+/// The document a record [`document_key`] names belongs to.
+pub(crate) fn key_document(key: &JournalKey) -> KernelResult<CollaborationDocumentId> {
+    let [pair] = key.names() else {
+        return Err(KernelError::internal(format!("{key} names no document.")));
+    };
+    let (entity, resource_id): (String, String) = serde_json::from_str(pair)
+        .map_err(|error| KernelError::internal(format!("{key} names no document: {error}")))?;
+    Ok(CollaborationDocumentId::new(entity, resource_id))
 }
 
 /// Whether `store` is the store `held` refers to.
@@ -90,12 +103,7 @@ impl PublicationJournal {
         }
         let mut marked = HashMap::new();
         for key in store.list(&JournalKey::journal(JOURNAL))? {
-            let [entity, resource_id] = key.names() else {
-                return Err(KernelError::internal(format!(
-                    "{key} names no document's publication mark."
-                )));
-            };
-            marked.insert(CollaborationDocumentId::new(entity, resource_id), 0);
+            marked.insert(key_document(&key)?, 0);
         }
         let inner = Arc::new(Inner {
             store: store.clone(),
@@ -110,7 +118,7 @@ impl PublicationJournal {
     /// at least until the returned commit is dropped.
     pub fn mark(&self, document: &CollaborationDocumentId) -> KernelResult<PendingCommit> {
         let mut marked = self.inner.locked();
-        let key = Inner::key(document)?;
+        let key = document_key(JOURNAL, document);
         if self.inner.store.get(&key)?.is_none() {
             self.inner
                 .store
@@ -138,7 +146,7 @@ impl PublicationJournal {
         if !published()? {
             return Ok(());
         }
-        let key = Inner::key(document)?;
+        let key = document_key(JOURNAL, document);
         // An earlier clear may have removed it already.
         if let Some((_, tag)) = self.inner.store.get(&key)? {
             if !self.inner.store.remove(&key, &tag)? {
@@ -210,6 +218,27 @@ mod tests {
         drop(journal);
         let reopened = PublicationJournal::open(store).unwrap();
         assert_eq!(reopened.marked(), vec![document("pending")]);
+    }
+
+    #[test]
+    fn a_document_of_any_identity_is_marked_and_found_again() {
+        let store = memory();
+        let journal = PublicationJournal::open(store.clone()).unwrap();
+        let documents = [
+            CollaborationDocumentId::new("Note", ""),
+            CollaborationDocumentId::new("", "x"),
+            CollaborationDocumentId::new("Note", "a/b\"c"),
+        ];
+        for document in &documents {
+            drop(journal.mark(document).unwrap());
+        }
+        drop(journal);
+        let reopened = PublicationJournal::open(store).unwrap();
+        for document in &documents {
+            assert!(reopened.is_marked(document), "{document:?}");
+            reopened.clear(document, || Ok(true)).unwrap();
+            assert!(!reopened.is_marked(document), "{document:?}");
+        }
     }
 
     #[test]

@@ -15,7 +15,10 @@ type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 const CRATES: &[(&str, &[&str])] = &[
     ("walthamstow-kernel", &[]),
     ("walthamstow-workspace", &["walthamstow-kernel"]),
-    ("walthamstow-upgrades", &["walthamstow-kernel"]),
+    (
+        "walthamstow-upgrades",
+        &["walthamstow-kernel", "walthamstow-workspace"],
+    ),
 ];
 
 /// Crate families a Walthamstow crate never builds on: the products and frameworks above it.

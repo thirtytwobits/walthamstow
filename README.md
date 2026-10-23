@@ -11,8 +11,9 @@ the parts of an engine daemon that do not depend on what the product is.
   product's codec, and the outbox of documents it has not yet acknowledged. For a file-backed
   workspace it covers directories within the root, listing and parsing documents, schemas, mounts
   and the walk of a schema into field guidance.
-- `walthamstow-upgrades`: explicit document upgrades. A fenced, staged publication replaces a
-  workspace's files, and its journal recovers an interrupted one.
+- `walthamstow-upgrades`: explicit document upgrades. Each document's parts are replaced in the
+  canonical store, fenced by what the upgrade read, under a journal that recovers an
+  interrupted upgrade.
 
 A product registers into the kernel. It supplies its entities, validators and events, and returns
 its own error, which converts from `KernelError`. Walthamstow builds on Clerkenwell and on no
@@ -26,7 +27,7 @@ model it holds to.
 Take the crates from a release tag:
 
 ```toml
-walthamstow-kernel = { git = "https://github.com/thirtytwobits/walthamstow", tag = "v0.1.0" }
+walthamstow-kernel = { git = "https://github.com/thirtytwobits/walthamstow", tag = "v0.2.0" }
 ```
 
 Clerkenwell's crates build on a Loro fork, and workspace patches do not propagate to dependents.

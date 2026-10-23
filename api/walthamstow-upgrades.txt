@@ -25,6 +25,8 @@ impl core::panic::unwind_safe::UnwindSafe for walthamstow_upgrades::publication:
 impl<Q, K> equivalent::Equivalent<K> for walthamstow_upgrades::publication::Replacement where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
 pub fn walthamstow_upgrades::publication::Replacement::equivalent(&self, key: &K) -> bool
 impl<Q, K> hashbrown::Equivalent<K> for walthamstow_upgrades::publication::Replacement where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+impl<Q, K> hashbrown::Equivalent<K> for walthamstow_upgrades::publication::Replacement where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn walthamstow_upgrades::publication::Replacement::equivalent(&self, key: &K) -> bool
 pub fn walthamstow_upgrades::publication::Replacement::equivalent(&self, key: &K) -> bool
 impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for walthamstow_upgrades::publication::Replacement where ST: ?core::marker::Sized, DT: ?core::marker::Sized
 impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for walthamstow_upgrades::publication::Replacement where ST: ?core::marker::Sized, DT: ?core::marker::Sized
@@ -55,6 +57,9 @@ pub fn walthamstow_upgrades::publication::Replacement::__clone_box(&self, _: dyn
 impl<T> either::into_either::IntoEither for walthamstow_upgrades::publication::Replacement
 impl<T> serde_columnar::column::rle::Rleable for walthamstow_upgrades::publication::Replacement where T: core::clone::Clone + core::cmp::PartialEq + serde_core::ser::Serialize + for<'de> serde_core::de::Deserialize<'de>
 impl<T> serde_core::de::DeserializeOwned for walthamstow_upgrades::publication::Replacement where T: for<'de> serde_core::de::Deserialize<'de>
+impl<T> tower_http::follow_redirect::policy::PolicyExt for walthamstow_upgrades::publication::Replacement where T: ?core::marker::Sized
+pub fn walthamstow_upgrades::publication::Replacement::and<P, B, E>(self, other: P) -> tower_http::follow_redirect::policy::and::And<T, P> where T: tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+pub fn walthamstow_upgrades::publication::Replacement::or<P, B, E>(self, other: P) -> tower_http::follow_redirect::policy::or::Or<T, P> where T: tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
 impl<T> tracing::instrument::Instrument for walthamstow_upgrades::publication::Replacement
 impl<T> tracing::instrument::WithSubscriber for walthamstow_upgrades::publication::Replacement
 impl<T> typenum::type_operators::Same for walthamstow_upgrades::publication::Replacement
@@ -127,121 +132,240 @@ pub fn walthamstow_upgrades::publication::file_hash(path: &std::path::Path) -> a
 pub fn walthamstow_upgrades::publication::publish(durability: walthamstow_kernel::durability::WriteDurability, live: &std::path::Path, staged: &std::path::Path, replacements: &[walthamstow_upgrades::publication::Replacement]) -> anyhow::Result<()>
 pub fn walthamstow_upgrades::publication::read_regular(path: &std::path::Path) -> anyhow::Result<alloc::vec::Vec<u8>>
 pub mod walthamstow_upgrades::workspace
-pub struct walthamstow_upgrades::workspace::Operation
-pub walthamstow_upgrades::workspace::Operation::operation_id: alloc::string::String
-pub walthamstow_upgrades::workspace::Operation::paths: alloc::vec::Vec<std::path::PathBuf>
-impl core::clone::Clone for walthamstow_upgrades::workspace::Operation
-pub fn walthamstow_upgrades::workspace::Operation::clone(&self) -> walthamstow_upgrades::workspace::Operation
-impl core::fmt::Debug for walthamstow_upgrades::workspace::Operation
-pub fn walthamstow_upgrades::workspace::Operation::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
-impl serde_core::ser::Serialize for walthamstow_upgrades::workspace::Operation
-pub fn walthamstow_upgrades::workspace::Operation::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
-impl<'de> serde_core::de::Deserialize<'de> for walthamstow_upgrades::workspace::Operation
-pub fn walthamstow_upgrades::workspace::Operation::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
-impl core::marker::Freeze for walthamstow_upgrades::workspace::Operation
-impl core::marker::Send for walthamstow_upgrades::workspace::Operation
-impl core::marker::Sync for walthamstow_upgrades::workspace::Operation
-impl core::marker::Unpin for walthamstow_upgrades::workspace::Operation
-impl core::panic::unwind_safe::RefUnwindSafe for walthamstow_upgrades::workspace::Operation
-impl core::panic::unwind_safe::UnwindSafe for walthamstow_upgrades::workspace::Operation
-impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for walthamstow_upgrades::workspace::Operation where ST: ?core::marker::Sized, DT: ?core::marker::Sized
-impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for walthamstow_upgrades::workspace::Operation where ST: ?core::marker::Sized, DT: ?core::marker::Sized
-impl<T, U> core::convert::Into<U> for walthamstow_upgrades::workspace::Operation where U: core::convert::From<T>
-pub fn walthamstow_upgrades::workspace::Operation::into(self) -> U
-impl<T, U> core::convert::TryFrom<U> for walthamstow_upgrades::workspace::Operation where U: core::convert::Into<T>
-pub type walthamstow_upgrades::workspace::Operation::Error = core::convert::Infallible
-pub fn walthamstow_upgrades::workspace::Operation::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
-impl<T, U> core::convert::TryInto<U> for walthamstow_upgrades::workspace::Operation where U: core::convert::TryFrom<T>
-pub type walthamstow_upgrades::workspace::Operation::Error = <U as core::convert::TryFrom<T>>::Error
-pub fn walthamstow_upgrades::workspace::Operation::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> alloc::borrow::ToOwned for walthamstow_upgrades::workspace::Operation where T: core::clone::Clone
-pub type walthamstow_upgrades::workspace::Operation::Owned = T
-pub fn walthamstow_upgrades::workspace::Operation::clone_into(&self, target: &mut T)
-pub fn walthamstow_upgrades::workspace::Operation::to_owned(&self) -> T
-impl<T> core::any::Any for walthamstow_upgrades::workspace::Operation where T: 'static + ?core::marker::Sized
-pub fn walthamstow_upgrades::workspace::Operation::type_id(&self) -> core::any::TypeId
-impl<T> core::borrow::Borrow<T> for walthamstow_upgrades::workspace::Operation where T: ?core::marker::Sized
-pub fn walthamstow_upgrades::workspace::Operation::borrow(&self) -> &T
-impl<T> core::borrow::BorrowMut<T> for walthamstow_upgrades::workspace::Operation where T: ?core::marker::Sized
-pub fn walthamstow_upgrades::workspace::Operation::borrow_mut(&mut self) -> &mut T
-impl<T> core::clone::CloneToUninit for walthamstow_upgrades::workspace::Operation where T: core::clone::Clone
-pub unsafe fn walthamstow_upgrades::workspace::Operation::clone_to_uninit(&self, dest: *mut u8)
-impl<T> core::convert::From<T> for walthamstow_upgrades::workspace::Operation
-pub fn walthamstow_upgrades::workspace::Operation::from(t: T) -> T
-impl<T> dyn_clone::DynClone for walthamstow_upgrades::workspace::Operation where T: core::clone::Clone
-pub fn walthamstow_upgrades::workspace::Operation::__clone_box(&self, _: dyn_clone::sealed::Private) -> *mut ()
-impl<T> either::into_either::IntoEither for walthamstow_upgrades::workspace::Operation
-impl<T> serde_core::de::DeserializeOwned for walthamstow_upgrades::workspace::Operation where T: for<'de> serde_core::de::Deserialize<'de>
-impl<T> tracing::instrument::Instrument for walthamstow_upgrades::workspace::Operation
-impl<T> tracing::instrument::WithSubscriber for walthamstow_upgrades::workspace::Operation
-impl<T> typenum::type_operators::Same for walthamstow_upgrades::workspace::Operation
-pub type walthamstow_upgrades::workspace::Operation::Output = T
-impl<T> yansi::paint::Paint for walthamstow_upgrades::workspace::Operation where T: ?core::marker::Sized
-pub fn walthamstow_upgrades::workspace::Operation::attr(&self, value: yansi::attr_quirk::Attribute) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::bg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::black(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::blink(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::blue(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::bold(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::bright(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::bright_black(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::bright_blue(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::bright_cyan(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::bright_green(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::bright_magenta(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::bright_red(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::bright_white(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::bright_yellow(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::clear(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::conceal(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::cyan(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::dim(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::fg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::fixed(&self, color: u8) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::green(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::invert(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::italic(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::linger(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::magenta(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::mask(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::on_black(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::on_blue(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::on_bright(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::on_bright_black(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::on_bright_blue(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::on_bright_cyan(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::on_bright_green(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::on_bright_magenta(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::on_bright_red(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::on_bright_white(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::on_bright_yellow(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::on_cyan(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::on_fixed(&self, color: u8) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::on_green(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::on_magenta(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::on_primary(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::on_red(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::on_rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::on_white(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::on_yellow(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::primary(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::quirk(&self, value: yansi::attr_quirk::Quirk) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::rapid_blink(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::red(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::resetting(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::strike(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::underline(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::whenever(&self, value: yansi::condition::Condition) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::white(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::wrap(&self) -> yansi::paint::Painted<&T>
-pub fn walthamstow_upgrades::workspace::Operation::yellow(&self) -> yansi::paint::Painted<&T>
-impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_upgrades::workspace::Operation where T: ?core::marker::Sized
-impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_upgrades::workspace::Operation where V: ppv_lite86::types::MultiLane<T>
-pub fn walthamstow_upgrades::workspace::Operation::vzip(self) -> V
+pub struct walthamstow_upgrades::workspace::Change
+pub walthamstow_upgrades::workspace::Change::document: clerkenwell_store::CollaborationDocumentId
+pub walthamstow_upgrades::workspace::Change::expected: alloc::vec::Vec<walthamstow_workspace::canonical::Part>
+pub walthamstow_upgrades::workspace::Change::parts: alloc::vec::Vec<walthamstow_workspace::canonical::Part>
+impl core::clone::Clone for walthamstow_upgrades::workspace::Change
+pub fn walthamstow_upgrades::workspace::Change::clone(&self) -> walthamstow_upgrades::workspace::Change
+impl core::cmp::Eq for walthamstow_upgrades::workspace::Change
+impl core::cmp::PartialEq for walthamstow_upgrades::workspace::Change
+pub fn walthamstow_upgrades::workspace::Change::eq(&self, other: &walthamstow_upgrades::workspace::Change) -> bool
+impl core::fmt::Debug for walthamstow_upgrades::workspace::Change
+pub fn walthamstow_upgrades::workspace::Change::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for walthamstow_upgrades::workspace::Change
+impl core::marker::Freeze for walthamstow_upgrades::workspace::Change
+impl core::marker::Send for walthamstow_upgrades::workspace::Change
+impl core::marker::Sync for walthamstow_upgrades::workspace::Change
+impl core::marker::Unpin for walthamstow_upgrades::workspace::Change
+impl core::panic::unwind_safe::RefUnwindSafe for walthamstow_upgrades::workspace::Change
+impl core::panic::unwind_safe::UnwindSafe for walthamstow_upgrades::workspace::Change
+impl<Q, K> equivalent::Equivalent<K> for walthamstow_upgrades::workspace::Change where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn walthamstow_upgrades::workspace::Change::equivalent(&self, key: &K) -> bool
+impl<Q, K> hashbrown::Equivalent<K> for walthamstow_upgrades::workspace::Change where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+impl<Q, K> hashbrown::Equivalent<K> for walthamstow_upgrades::workspace::Change where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn walthamstow_upgrades::workspace::Change::equivalent(&self, key: &K) -> bool
+pub fn walthamstow_upgrades::workspace::Change::equivalent(&self, key: &K) -> bool
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for walthamstow_upgrades::workspace::Change where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for walthamstow_upgrades::workspace::Change where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<T, U> core::convert::Into<U> for walthamstow_upgrades::workspace::Change where U: core::convert::From<T>
+pub fn walthamstow_upgrades::workspace::Change::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for walthamstow_upgrades::workspace::Change where U: core::convert::Into<T>
+pub type walthamstow_upgrades::workspace::Change::Error = core::convert::Infallible
+pub fn walthamstow_upgrades::workspace::Change::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for walthamstow_upgrades::workspace::Change where U: core::convert::TryFrom<T>
+pub type walthamstow_upgrades::workspace::Change::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn walthamstow_upgrades::workspace::Change::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for walthamstow_upgrades::workspace::Change where T: core::clone::Clone
+pub type walthamstow_upgrades::workspace::Change::Owned = T
+pub fn walthamstow_upgrades::workspace::Change::clone_into(&self, target: &mut T)
+pub fn walthamstow_upgrades::workspace::Change::to_owned(&self) -> T
+impl<T> core::any::Any for walthamstow_upgrades::workspace::Change where T: 'static + ?core::marker::Sized
+pub fn walthamstow_upgrades::workspace::Change::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for walthamstow_upgrades::workspace::Change where T: ?core::marker::Sized
+pub fn walthamstow_upgrades::workspace::Change::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for walthamstow_upgrades::workspace::Change where T: ?core::marker::Sized
+pub fn walthamstow_upgrades::workspace::Change::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for walthamstow_upgrades::workspace::Change where T: core::clone::Clone
+pub unsafe fn walthamstow_upgrades::workspace::Change::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for walthamstow_upgrades::workspace::Change
+pub fn walthamstow_upgrades::workspace::Change::from(t: T) -> T
+impl<T> dyn_clone::DynClone for walthamstow_upgrades::workspace::Change where T: core::clone::Clone
+pub fn walthamstow_upgrades::workspace::Change::__clone_box(&self, _: dyn_clone::sealed::Private) -> *mut ()
+impl<T> either::into_either::IntoEither for walthamstow_upgrades::workspace::Change
+impl<T> tower_http::follow_redirect::policy::PolicyExt for walthamstow_upgrades::workspace::Change where T: ?core::marker::Sized
+pub fn walthamstow_upgrades::workspace::Change::and<P, B, E>(self, other: P) -> tower_http::follow_redirect::policy::and::And<T, P> where T: tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+pub fn walthamstow_upgrades::workspace::Change::or<P, B, E>(self, other: P) -> tower_http::follow_redirect::policy::or::Or<T, P> where T: tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+impl<T> tracing::instrument::Instrument for walthamstow_upgrades::workspace::Change
+impl<T> tracing::instrument::WithSubscriber for walthamstow_upgrades::workspace::Change
+impl<T> typenum::type_operators::Same for walthamstow_upgrades::workspace::Change
+pub type walthamstow_upgrades::workspace::Change::Output = T
+impl<T> yansi::paint::Paint for walthamstow_upgrades::workspace::Change where T: ?core::marker::Sized
+pub fn walthamstow_upgrades::workspace::Change::attr(&self, value: yansi::attr_quirk::Attribute) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::bg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::bold(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::clear(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::conceal(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::dim(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::fg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::invert(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::italic(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::linger(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::mask(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::on_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::on_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::on_bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::on_bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::on_bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::on_bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::on_bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::on_bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::on_bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::on_bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::on_bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::on_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::on_fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::on_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::on_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::on_primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::on_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::on_rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::on_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::on_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::quirk(&self, value: yansi::attr_quirk::Quirk) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::rapid_blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::resetting(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::strike(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::underline(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::whenever(&self, value: yansi::condition::Condition) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::wrap(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Change::yellow(&self) -> yansi::paint::Painted<&T>
+impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_upgrades::workspace::Change where T: ?core::marker::Sized
+impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_upgrades::workspace::Change where V: ppv_lite86::types::MultiLane<T>
+pub fn walthamstow_upgrades::workspace::Change::vzip(self) -> V
+pub struct walthamstow_upgrades::workspace::Upgrades
+impl walthamstow_upgrades::workspace::Upgrades
+pub async fn walthamstow_upgrades::workspace::Upgrades::apply(&self, operation_id: &str, changes: &[walthamstow_upgrades::workspace::Change]) -> walthamstow_kernel::error::KernelResult<()>
+pub async fn walthamstow_upgrades::workspace::Upgrades::authorise(&self, operation_id: &str, changes: &[walthamstow_upgrades::workspace::Change]) -> walthamstow_kernel::error::KernelResult<()>
+pub fn walthamstow_upgrades::workspace::Upgrades::changes(&self, operation_id: &str) -> walthamstow_kernel::error::KernelResult<core::option::Option<alloc::vec::Vec<walthamstow_upgrades::workspace::Change>>>
+pub fn walthamstow_upgrades::workspace::Upgrades::new(local: alloc::sync::Arc<dyn walthamstow_kernel::local_store::LocalStore>, canonical: alloc::sync::Arc<dyn walthamstow_workspace::canonical::CanonicalStore>, leases: alloc::sync::Arc<dyn walthamstow_kernel::leases::Leases>, holder: walthamstow_kernel::leases::Holder) -> Self
+pub async fn walthamstow_upgrades::workspace::Upgrades::recover(&self) -> walthamstow_kernel::error::KernelResult<()>
+impl core::clone::Clone for walthamstow_upgrades::workspace::Upgrades
+pub fn walthamstow_upgrades::workspace::Upgrades::clone(&self) -> walthamstow_upgrades::workspace::Upgrades
+impl core::fmt::Debug for walthamstow_upgrades::workspace::Upgrades
+pub fn walthamstow_upgrades::workspace::Upgrades::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for walthamstow_upgrades::workspace::Upgrades
+impl core::marker::Send for walthamstow_upgrades::workspace::Upgrades
+impl core::marker::Sync for walthamstow_upgrades::workspace::Upgrades
+impl core::marker::Unpin for walthamstow_upgrades::workspace::Upgrades
+impl !core::panic::unwind_safe::RefUnwindSafe for walthamstow_upgrades::workspace::Upgrades
+impl !core::panic::unwind_safe::UnwindSafe for walthamstow_upgrades::workspace::Upgrades
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for walthamstow_upgrades::workspace::Upgrades where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for walthamstow_upgrades::workspace::Upgrades where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<T, U> core::convert::Into<U> for walthamstow_upgrades::workspace::Upgrades where U: core::convert::From<T>
+pub fn walthamstow_upgrades::workspace::Upgrades::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for walthamstow_upgrades::workspace::Upgrades where U: core::convert::Into<T>
+pub type walthamstow_upgrades::workspace::Upgrades::Error = core::convert::Infallible
+pub fn walthamstow_upgrades::workspace::Upgrades::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for walthamstow_upgrades::workspace::Upgrades where U: core::convert::TryFrom<T>
+pub type walthamstow_upgrades::workspace::Upgrades::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn walthamstow_upgrades::workspace::Upgrades::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for walthamstow_upgrades::workspace::Upgrades where T: core::clone::Clone
+pub type walthamstow_upgrades::workspace::Upgrades::Owned = T
+pub fn walthamstow_upgrades::workspace::Upgrades::clone_into(&self, target: &mut T)
+pub fn walthamstow_upgrades::workspace::Upgrades::to_owned(&self) -> T
+impl<T> core::any::Any for walthamstow_upgrades::workspace::Upgrades where T: 'static + ?core::marker::Sized
+pub fn walthamstow_upgrades::workspace::Upgrades::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for walthamstow_upgrades::workspace::Upgrades where T: ?core::marker::Sized
+pub fn walthamstow_upgrades::workspace::Upgrades::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for walthamstow_upgrades::workspace::Upgrades where T: ?core::marker::Sized
+pub fn walthamstow_upgrades::workspace::Upgrades::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for walthamstow_upgrades::workspace::Upgrades where T: core::clone::Clone
+pub unsafe fn walthamstow_upgrades::workspace::Upgrades::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for walthamstow_upgrades::workspace::Upgrades
+pub fn walthamstow_upgrades::workspace::Upgrades::from(t: T) -> T
+impl<T> dyn_clone::DynClone for walthamstow_upgrades::workspace::Upgrades where T: core::clone::Clone
+pub fn walthamstow_upgrades::workspace::Upgrades::__clone_box(&self, _: dyn_clone::sealed::Private) -> *mut ()
+impl<T> either::into_either::IntoEither for walthamstow_upgrades::workspace::Upgrades
+impl<T> tower_http::follow_redirect::policy::PolicyExt for walthamstow_upgrades::workspace::Upgrades where T: ?core::marker::Sized
+pub fn walthamstow_upgrades::workspace::Upgrades::and<P, B, E>(self, other: P) -> tower_http::follow_redirect::policy::and::And<T, P> where T: tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+pub fn walthamstow_upgrades::workspace::Upgrades::or<P, B, E>(self, other: P) -> tower_http::follow_redirect::policy::or::Or<T, P> where T: tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+impl<T> tracing::instrument::Instrument for walthamstow_upgrades::workspace::Upgrades
+impl<T> tracing::instrument::WithSubscriber for walthamstow_upgrades::workspace::Upgrades
+impl<T> typenum::type_operators::Same for walthamstow_upgrades::workspace::Upgrades
+pub type walthamstow_upgrades::workspace::Upgrades::Output = T
+impl<T> yansi::paint::Paint for walthamstow_upgrades::workspace::Upgrades where T: ?core::marker::Sized
+pub fn walthamstow_upgrades::workspace::Upgrades::attr(&self, value: yansi::attr_quirk::Attribute) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::bg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::bold(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::clear(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::conceal(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::dim(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::fg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::invert(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::italic(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::linger(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::mask(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::on_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::on_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::on_bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::on_bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::on_bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::on_bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::on_bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::on_bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::on_bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::on_bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::on_bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::on_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::on_fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::on_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::on_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::on_primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::on_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::on_rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::on_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::on_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::quirk(&self, value: yansi::attr_quirk::Quirk) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::rapid_blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::resetting(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::strike(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::underline(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::whenever(&self, value: yansi::condition::Condition) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::wrap(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Upgrades::yellow(&self) -> yansi::paint::Painted<&T>
+impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_upgrades::workspace::Upgrades where T: ?core::marker::Sized
+impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_upgrades::workspace::Upgrades where V: ppv_lite86::types::MultiLane<T>
+pub fn walthamstow_upgrades::workspace::Upgrades::vzip(self) -> V
 pub const walthamstow_upgrades::workspace::JOURNAL: walthamstow_kernel::journals::Journal
-pub fn walthamstow_upgrades::workspace::authorise(durability: walthamstow_kernel::durability::WriteDurability, work: &std::path::Path, operation_id: &str, sources: &alloc::collections::btree::map::BTreeMap<std::path::PathBuf, alloc::vec::Vec<u8>>, changes: &alloc::collections::btree::map::BTreeMap<std::path::PathBuf, alloc::vec::Vec<u8>>) -> anyhow::Result<walthamstow_upgrades::workspace::Operation>
-pub fn walthamstow_upgrades::workspace::finish(durability: walthamstow_kernel::durability::WriteDurability, root: &std::path::Path, work: &std::path::Path, operation: &mut walthamstow_upgrades::workspace::Operation) -> anyhow::Result<()>
-pub fn walthamstow_upgrades::workspace::prepared_dir(work: &std::path::Path) -> std::path::PathBuf
-pub fn walthamstow_upgrades::workspace::recover(root: &std::path::Path, data_dir: &std::path::Path, durability: walthamstow_kernel::durability::WriteDurability) -> anyhow::Result<()>
-pub fn walthamstow_upgrades::workspace::work_dir(data_dir: &std::path::Path, operation_id: &str) -> anyhow::Result<std::path::PathBuf>
+pub fn walthamstow_upgrades::workspace::refuse_unfinished_earlier_upgrade(data_dir: &std::path::Path) -> walthamstow_kernel::error::KernelResult<()>

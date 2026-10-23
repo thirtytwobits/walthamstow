@@ -8,8 +8,8 @@
 //! write, and each entity's files are read and written under one lock.
 
 use super::{
-    distinct, document_key, lapsed, rendered, CanonicalStore, DocumentCodec, Part, PartName,
-    Publication, Pulled,
+    between, distinct, document_key, lapsed, rendered, CanonicalStore, DocumentCodec, Part,
+    PartName, Publication, Pulled,
 };
 use async_trait::async_trait;
 use clerkenwell_store::{CollaborationDocumentId, CollaborationVersion};
@@ -34,7 +34,8 @@ pub const RENDERINGS: Journal = Journal::new("canonical-files");
 struct Rendering {
     entity: String,
     resource_id: String,
-    version: CollaborationVersion,
+    /// The version the files render; `None` for files an upgrade wrote.
+    version: Option<CollaborationVersion>,
     /// The SHA-256 of each part's file, by the part's name.
     parts: BTreeMap<String, String>,
 }
@@ -536,6 +537,33 @@ impl FileCanonicalStore {
         Ok(true)
     }
 
+    /// Records that `document`'s files render `parts` at `version`, over the record `held`
+    /// names, if any.
+    fn record(
+        &self,
+        document: &CollaborationDocumentId,
+        held: Option<&Tag>,
+        version: Option<CollaborationVersion>,
+        parts: &[Part],
+    ) -> KernelResult<()> {
+        let next = Rendering {
+            entity: document.entity.clone(),
+            resource_id: document.resource_id.clone(),
+            version,
+            parts: current(parts),
+        };
+        let bytes = serde_json::to_vec(&next).expect("a rendering encodes");
+        let key = document_key(RENDERINGS, document);
+        self.local
+            .compare_and_swap(&key, held, &bytes)?
+            .ok_or_else(|| {
+                KernelError::internal(format!(
+                    "Rendering record {key} changed while it was written."
+                ))
+            })?;
+        Ok(())
+    }
+
     fn remove_rendering(&self, document: &CollaborationDocumentId, tag: &Tag) -> KernelResult<()> {
         let key = document_key(RENDERINGS, document);
         if !self.local.remove(&key, tag)? {
@@ -629,7 +657,7 @@ impl CanonicalStore for FileCanonicalStore {
         let rendering = held.rendering;
         if let Some((rendering, _)) = &rendering {
             if held.rendered
-                && rendering.version == publication.version
+                && rendering.version.as_ref() == Some(&publication.version)
                 && rendering.renders(&publication.parts)
             {
                 return Ok(publication.version.clone());
@@ -653,25 +681,12 @@ impl CanonicalStore for FileCanonicalStore {
         self.remove_files(&entity.directory, removals)?;
         self.rename_files(renames)?;
         self.write(writes)?;
-        let next = Rendering {
-            entity: document.entity.clone(),
-            resource_id: document.resource_id.clone(),
-            version: publication.version.clone(),
-            parts: publication
-                .parts
-                .iter()
-                .map(|part| (part.name.as_str().to_owned(), sha256_hex(&part.bytes)))
-                .collect(),
-        };
-        let bytes = serde_json::to_vec(&next).expect("a rendering encodes");
-        let key = document_key(RENDERINGS, document);
-        self.local
-            .compare_and_swap(&key, rendering.as_ref().map(|(_, tag)| tag), &bytes)?
-            .ok_or_else(|| {
-                KernelError::internal(format!(
-                    "Rendering record {key} changed while it was written."
-                ))
-            })?;
+        self.record(
+            document,
+            rendering.as_ref().map(|(_, tag)| tag),
+            Some(publication.version.clone()),
+            &publication.parts,
+        )?;
         Ok(publication.version.clone())
     }
 
@@ -686,7 +701,7 @@ impl CanonicalStore for FileCanonicalStore {
             version: held
                 .rendering
                 .filter(|_| held.rendered)
-                .map(|(rendering, _)| rendering.version),
+                .and_then(|(rendering, _)| rendering.version),
             operations: None,
             parts: held.parts,
         }))
@@ -744,6 +759,41 @@ impl CanonicalStore for FileCanonicalStore {
             self.remove_rendering(document, tag)?;
         }
         Ok(())
+    }
+
+    async fn replace(
+        &self,
+        document: &CollaborationDocumentId,
+        lease: &Lease,
+        expected: &[Part],
+        parts: &[Part],
+    ) -> KernelResult<bool> {
+        self.require_lease(document, lease)?;
+        self.admit(document, parts)?;
+        let entity = self.entity(&document.entity)?;
+        let _entity = entity.lock.lock().unwrap_or_else(PoisonError::into_inner);
+        let held = self.held(entity, document)?;
+        if !between(&held.parts, expected, parts) {
+            return Ok(false);
+        }
+        // What the store holds of the document now is its, whatever the rendering records.
+        let current = current(&held.parts);
+        let (renamed, dropped) = dropped(&current, parts)?;
+        let removals = Self::removals(entity, document, &current, dropped)?;
+        let renames = Self::renames(entity, document, &current, renamed)?;
+        let writes = Self::writes(entity, document, &current, &removals, &renames, parts)?;
+        self.remove_files(&entity.directory, removals)?;
+        self.rename_files(renames)?;
+        self.write(writes)?;
+        // No version names what the upgrade wrote, and the record holds its files as the
+        // document's.
+        let rendering = held.rendering.as_ref().map(|(_, tag)| tag);
+        if !parts.is_empty() {
+            self.record(document, rendering, None, parts)?;
+        } else if let Some(tag) = rendering {
+            self.remove_rendering(document, tag)?;
+        }
+        Ok(true)
     }
 }
 
@@ -1115,6 +1165,18 @@ mod tests {
             workspace.store.pull(&one).await.unwrap().unwrap().parts,
             second
         );
+
+        // As an upgrade replaces it.
+        std::fs::write(notes.join("note.yaml"), &first[0].bytes).unwrap();
+        assert!(workspace
+            .store
+            .replace(&one, &lease(&workspace, "one").await, &first, &second)
+            .await
+            .unwrap());
+        assert_eq!(
+            workspace.store.pull(&one).await.unwrap().unwrap().parts,
+            second
+        );
     }
 
     #[tokio::test]
@@ -1260,6 +1322,46 @@ mod tests {
             std::fs::read(notes.join("note.yaml")).unwrap(),
             b"one\nsame"
         );
+    }
+
+    #[tokio::test]
+    async fn a_replacement_holds_what_it_wrote_and_writes_no_part_of_another_document() {
+        let workspace = workspace();
+        let one = document("one");
+        let first = vec![part("one.yaml", "one\nformat: 1")];
+        workspace
+            .store
+            .publish(
+                &one,
+                &lease(&workspace, "one").await,
+                &publication(version("a", 1), first.clone()),
+            )
+            .await
+            .unwrap();
+        assert!(workspace
+            .store
+            .replace(
+                &one,
+                &lease(&workspace, "one").await,
+                &first,
+                &[part("one.yaml", "two\nformat: 2")]
+            )
+            .await
+            .is_err());
+        assert_eq!(
+            workspace.store.pull(&one).await.unwrap().unwrap().parts,
+            first
+        );
+
+        // Parts the codec names as no document's are the document's as the store wrote them.
+        let unnamed = vec![part("one.yaml", "\nformat: 2")];
+        assert!(workspace
+            .store
+            .replace(&one, &lease(&workspace, "one").await, &first, &unnamed)
+            .await
+            .unwrap());
+        let pulled = workspace.store.pull(&one).await.unwrap().unwrap();
+        assert_eq!((pulled.version, pulled.parts), (None, unnamed));
     }
 
     #[tokio::test]

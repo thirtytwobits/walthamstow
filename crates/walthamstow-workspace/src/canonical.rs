@@ -138,6 +138,32 @@ pub trait CanonicalStore: Send + Sync + fmt::Debug {
     /// Refuses `parts` the store cannot keep as `document`'s: parts whose names fold alike or
     /// hold another beneath them, and parts it would hold as another document's.
     fn admit(&self, document: &CollaborationDocumentId, parts: &[Part]) -> KernelResult<()>;
+
+    /// Replaces `document`'s parts with `parts`, which no version names, only while `lease`
+    /// holds the document and what the store holds lies [`between`] `expected`, the parts an
+    /// upgrade read (none for a document it adds), and `parts`. A replacement that stopped part
+    /// way is finished by repeating it. No parts removes the document. Returns whether it
+    /// replaced them. For upgrades.
+    async fn replace(
+        &self,
+        document: &CollaborationDocumentId,
+        lease: &Lease,
+        expected: &[Part],
+        parts: &[Part],
+    ) -> KernelResult<bool>;
+}
+
+/// Whether `held`, the parts a store holds of a document, lies between `expected`, the parts
+/// an upgrade read, and `parts`, the parts it writes: each held part is one of either, its
+/// name compared case-folded. A replacement that stopped part way leaves its document between
+/// the two, whether it had removed what it drops, renamed a part in case or written some parts.
+pub fn between(held: &[Part], expected: &[Part], parts: &[Part]) -> bool {
+    let alike = |held: &Part, other: &Part| {
+        held.bytes == other.bytes
+            && held.name.as_str().to_lowercase() == other.name.as_str().to_lowercase()
+    };
+    held.iter()
+        .all(|part| expected.iter().chain(parts).any(|other| alike(part, other)))
 }
 
 /// The refusal of a write whose lease no longer holds.
@@ -398,6 +424,84 @@ pub(crate) mod tests {
         );
         assert!(store.remove(&two, &lease(&one)).await.is_err());
         assert_eq!(store.pull(&one).await.unwrap(), None);
+
+        // Replacement, as an upgrade makes it.
+        let held = store.pull(&two).await.unwrap().unwrap().parts;
+        let upgraded = vec![part("two.yaml", "two\nupgraded")];
+        assert!(
+            !store
+                .replace(
+                    &two,
+                    &lease(&two),
+                    &[part("two.yaml", "two\nstale")],
+                    &upgraded
+                )
+                .await
+                .unwrap(),
+            "a replacement of parts the store no longer holds replaces nothing"
+        );
+        assert!(store
+            .replace(&two, &lapsed_lease(&two), &held, &upgraded)
+            .await
+            .is_err());
+        assert!(store
+            .replace(&two, &lease(&one), &held, &upgraded)
+            .await
+            .is_err());
+        assert!(store
+            .replace(&two, &lease(&two), &held, &upgraded)
+            .await
+            .unwrap());
+        let replaced = store.pull(&two).await.unwrap().unwrap();
+        assert_eq!(replaced.version, None, "no version names upgraded parts");
+        assert_eq!(replaced.parts, upgraded);
+
+        // A replacement that stopped part way is finished by repeating it.
+        let read = vec![
+            part("two-old.yaml", "two\nold"),
+            part("two.yaml", "two\nupgraded"),
+        ];
+        let written = vec![
+            part("two-new.yaml", "two\nnew"),
+            part("two.yaml", "two\nagain"),
+        ];
+        assert!(store
+            .replace(&two, &lease(&two), &upgraded, &read)
+            .await
+            .unwrap());
+        let hybrid = vec![read[0].clone(), written[1].clone()];
+        assert!(store
+            .replace(&two, &lease(&two), &read, &hybrid)
+            .await
+            .unwrap());
+        assert!(store
+            .replace(&two, &lease(&two), &read, &written)
+            .await
+            .unwrap());
+        assert_eq!(store.pull(&two).await.unwrap().unwrap().parts, written);
+        assert!(
+            store
+                .replace(&two, &lease(&two), &read, &written)
+                .await
+                .unwrap(),
+            "a replacement already made is made again"
+        );
+        assert!(!store
+            .replace(&two, &lease(&two), &read, &[part("two.yaml", "two\nother")])
+            .await
+            .unwrap());
+
+        let added = vec![part("one.yaml", "one\nadded")];
+        assert!(store
+            .replace(&one, &lease(&one), &[], &added)
+            .await
+            .unwrap());
+        assert_eq!(store.pull(&one).await.unwrap().unwrap().parts, added);
+        assert!(store
+            .replace(&one, &lease(&one), &added, &[])
+            .await
+            .unwrap());
+        assert_eq!(store.pull(&one).await.unwrap(), None, "no parts removes it");
 
         let unnamed = document("");
         let unnamed_lease = leases.acquire(&unnamed, holder).await.unwrap().unwrap();

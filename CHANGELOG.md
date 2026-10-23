@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.2.0
+## 0.2.0 — 2026-10-22
 
 - Breaking: Walthamstow builds on Clerkenwell 0.10.0.
   - `CollaborativeDocuments::published` and `AcceptedRead` carry a `CollaborationVersion` in
@@ -39,6 +39,15 @@
   from the store only a document its working copy removed, refused the same way. `pull`,
   `parse` and `bootstrap_pulled` read documents back from the canonical store.
   `bootstrap_from_file` goes: `bootstrap` seeds a document and marks it for publication.
+- Breaking: upgrades work over the ports. `CanonicalStore::replace` writes a document's upgraded
+  parts, which no version names, only while every part the store holds lies `between` the parts
+  the upgrade read and those it writes, so repeating a replacement that stopped part way finishes
+  it. `workspace::Upgrades` journals each upgrade in the `document-upgrades` journal of the local
+  store once the canonical store admits its parts and every document holds only parts it read or
+  writes, publishes it document by document after checking every document again, and recovers
+  an interrupted one. One upgrade is unfinished at a time. `authorise` is async. An upgrade release 0.1.0 left unfinished in `workspace-upgrades` is refused
+  (`refuse_unfinished_earlier_upgrade`): the release that began it finishes it.
+  `publication::publish` stays for staged file publications.
 
 ## 0.1.0 — 2026-10-20
 

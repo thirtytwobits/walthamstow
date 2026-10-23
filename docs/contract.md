@@ -55,7 +55,7 @@ Walthamstow refuses a link wherever it names an entry itself:
   entity's directory
 - the collaboration cache root that `prepare_cache_root` is given, and each entity directory
 - publication marks
-- each upgrade's operation directory, its originals and its staged files
+- the files a publication stages and replaces
 
 A file Walthamstow reads as state must be a regular file. A link, FIFO, socket or device found
 there is refused unopened.
@@ -151,8 +151,8 @@ keeps what it can of it. Publishing what a store holds changes nothing. `admit` 
 store cannot keep as a document's, before anything is written.
 
 `FileCanonicalStore` writes each part as a file under its entity's directory. In the
-`canonical-files` journal it records the version each document's files render and a digest of
-each file. A document's files are those the record names that still hold what the store wrote,
+`canonical-files` journal it records the version each document's files render, none for files
+an upgrade wrote, and a digest of each file. A document's files are those the record names that still hold what the store wrote,
 and every file the codec names as the document's. When they are not exactly what the record
 names, they were written outside any engine, and the store holds them with no version. Each
 entity's files are read and written under one lock, which every store over the entity's directory
@@ -188,16 +188,28 @@ never clears the mark of a document created again under its name. Each mark is a
 
 ## Upgrades
 
-An operation id is lowercase ASCII letters, digits, `-` and `_`, and is not a device name. An
-upgrade works in `journals/workspace-upgrades/<operation id>/`:
+An upgrade reads documents from the canonical store, and the product transforms them. Its
+journal, in the `document-upgrades` journal, authorises replacing each document's parts with the
+transform's, and keeps the parts each document held. One upgrade is unfinished at a time, in the
+journal's `unfinished` record; another is refused until recovery finishes it. A finished upgrade
+is kept in a record named by its operation id: lowercase ASCII letters, digits, `-` and `_`, and
+no device name. An upgrade names each document once and an id not yet used, writes only parts the
+canonical store admits, and finds each document holding only parts it read or writes; anything
+else is refused before it is journalled.
 
-- `prepared/` holds the files it publishes
-- `original/` holds the files they replace
-- `operation.json` authorises publication
+A replacement writes only while each part the store holds of the document is one the upgrade read
+or one it writes, its name compared case-folded. A replacement that stopped part way leaves its
+document so, and repeating it finishes it. Before any document is replaced, every document is
+checked the same way. Each replacement holds the document's lease, and no version names what it
+writes. Recovery finishes the unfinished upgrade.
 
-A publication names each file once, compared case-folded, by normal components only. Every
-replacement is checked against the hash its live file held when staged before any file is
-written.
+An upgrade that release 0.1.0 began and left unfinished, in `journals/workspace-upgrades/`, is
+refused, as is anything there but a directory: the release that began it finishes it at its next
+start.
+
+`publication::publish` publishes staged files over live ones. It names each file once, compared
+case-folded, by normal components only, and checks every replacement against the hash its live
+file held when staged before any file is written.
 
 ## Schema guidance
 

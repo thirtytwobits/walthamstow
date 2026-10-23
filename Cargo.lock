@@ -2516,7 +2516,7 @@ checksum = "5c3082ca00d5a5ef149bb8b555a72ae84c9c59f7250f013ac822ac2e49b19c64"
 
 [[package]]
 name = "walthamstow-kernel"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -2538,18 +2538,22 @@ dependencies = [
 
 [[package]]
 name = "walthamstow-upgrades"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
+ "base64 0.22.1",
+ "clerkenwell-store",
  "serde",
  "serde_json",
  "tempfile",
+ "tokio",
  "walthamstow-kernel",
+ "walthamstow-workspace",
 ]
 
 [[package]]
 name = "walthamstow-workspace"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -2760,7 +2764,7 @@ checksum = "3ad82d2a33cdc9674dc7465672f271e096168fcdbe0f799d9e6db8c5892679dc"
 
 [[package]]
 name = "xtask"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "regex-lite",
  "serde_json",

@@ -9,9 +9,13 @@ publish = false
 
 [dependencies]
 anyhow.workspace = true
-walthamstow-kernel = { path = "../walthamstow-kernel", version = "0.1.0" }
+base64.workspace = true
+clerkenwell-store.workspace = true
+walthamstow-kernel = { path = "../walthamstow-kernel", version = "0.2.0" }
+walthamstow-workspace = { path = "../walthamstow-workspace", version = "0.2.0" }
 serde.workspace = true
 serde_json.workspace = true
 
 [dev-dependencies]
 tempfile.workspace = true
+tokio.workspace = true

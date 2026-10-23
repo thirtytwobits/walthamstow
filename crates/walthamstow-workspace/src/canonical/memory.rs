@@ -4,7 +4,7 @@
 //! fenced by [`MemoryLeases`].
 
 use super::{
-    distinct, lapsed, names_document, rendered, CanonicalStore, Part, Publication, Pulled,
+    between, distinct, lapsed, names_document, rendered, CanonicalStore, Part, Publication, Pulled,
 };
 use async_trait::async_trait;
 use clerkenwell_store::{CollaborationDocumentId, CollaborationVersion};
@@ -99,6 +99,42 @@ impl CanonicalStore for MemoryCanonicalStore {
         self.leases
             .while_held(lease, || {
                 self.held().remove(&key(document));
+            })
+            .ok_or_else(|| lapsed(document))
+    }
+
+    async fn replace(
+        &self,
+        document: &CollaborationDocumentId,
+        lease: &Lease,
+        expected: &[Part],
+        parts: &[Part],
+    ) -> KernelResult<bool> {
+        names_document(document, lease)?;
+        self.admit(document, parts)?;
+        self.leases
+            .while_held(lease, || {
+                let mut held = self.held();
+                let current = held
+                    .get(&key(document))
+                    .map(|held| held.parts.as_slice())
+                    .unwrap_or_default();
+                if !between(current, expected, parts) {
+                    return false;
+                }
+                if parts.is_empty() {
+                    held.remove(&key(document));
+                } else {
+                    held.insert(
+                        key(document),
+                        Pulled {
+                            version: None,
+                            operations: None,
+                            parts: parts.to_vec(),
+                        },
+                    );
+                }
+                true
             })
             .ok_or_else(|| lapsed(document))
     }

@@ -213,9 +213,6 @@ static OPEN: Mutex<BTreeMap<PathBuf, Weak<FileLocalStore>>> = Mutex::new(BTreeMa
 /// The extension of a record's file.
 const RECORD_SUFFIX: &str = ".record";
 
-/// The extension of the file a write stages before it renames it into place.
-const STAGED_SUFFIX: &str = ".tmp";
-
 /// Records kept as files: each journal's in its own directory, `journals/<journal>/`, which the
 /// store owns. A record's file is named by the SHA-256 of its key's names and holds those names
 /// as its first line, then the record's bytes. A write stages a file beside the record and
@@ -261,21 +258,12 @@ fn is_record_file(name: &str) -> bool {
         .is_some_and(|digest| hex(digest, 64))
 }
 
-/// Whether `name` is the name of a file a write staged beside a record: the record's digest, a
-/// random UUID in the form a write gives it, and the staged suffix.
+/// Whether `name` is the name of a file a write staged beside a record.
 fn is_staged_file(name: &str) -> bool {
-    let Some(staged) = name.strip_suffix(STAGED_SUFFIX) else {
-        return false;
-    };
-    let Some((digest, id)) = staged.split_once('.') else {
-        return false;
-    };
-    hex(digest, 64)
-        && uuid::Uuid::try_parse(id).is_ok_and(|parsed| {
-            parsed.get_version() == Some(uuid::Version::Random)
-                && parsed.get_variant() == uuid::Variant::RFC4122
-                && parsed.hyphenated().to_string() == id
-        })
+    crate::durability::staged_by_write(name)
+        && name
+            .split_once('.')
+            .is_some_and(|(digest, _)| hex(digest, 64))
 }
 
 impl FileLocalStore {
@@ -509,6 +497,9 @@ impl LocalStore for FileLocalStore {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// The suffix of a file a write stages.
+    const STAGED_SUFFIX: &str = ".tmp";
 
     const JOURNAL: Journal = Journal::new("records");
     const OTHER: Journal = Journal::new("other-records");

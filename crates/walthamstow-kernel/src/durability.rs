@@ -124,6 +124,22 @@ fn parent(path: &Path) -> Option<&Path> {
     path.parent().map(present)
 }
 
+/// Whether `name` is a file name [`write_synced`] stages a write under: the name it writes, its
+/// extension replaced by a random UUID and `.tmp`. A stop before the rename leaves it behind.
+pub fn staged_by_write(name: &str) -> bool {
+    let Some(stem) = name.strip_suffix(".tmp") else {
+        return false;
+    };
+    let Some((_, id)) = stem.rsplit_once('.') else {
+        return false;
+    };
+    uuid::Uuid::try_parse(id).is_ok_and(|parsed| {
+        parsed.get_version() == Some(uuid::Version::Random)
+            && parsed.get_variant() == uuid::Variant::RFC4122
+            && parsed.hyphenated().to_string() == id
+    })
+}
+
 /// Writes `bytes` to `path` by a rename, durable as `durability` asks once it
 /// returns, with any directory it had to create. A file it replaces keeps its
 /// permissions.
@@ -161,6 +177,29 @@ pub fn write_synced(durability: WriteDurability, path: &Path, bytes: &[u8]) -> a
 #[cfg(test)]
 mod tests {
     use super::WriteDurability;
+
+    #[test]
+    fn a_staged_name_is_the_written_name_with_a_random_uuid_for_its_extension() {
+        let staged = |name: &str| {
+            std::path::Path::new(name)
+                .with_extension(format!("{}.tmp", uuid::Uuid::new_v4()))
+                .to_string_lossy()
+                .into_owned()
+        };
+        for written in ["note.yaml", "notes", "a.b.yaml"] {
+            assert!(super::staged_by_write(&staged(written)), "{written}");
+        }
+        for unlike in [
+            "note.tmp",
+            "note.yaml",
+            "note.00000000-0000-0000-0000-000000000000.tmp",
+            "note.0B1E2F3A-4C5D-4E6F-8A9B-0C1D2E3F4A5B.tmp",
+            "note.0b1e2f3a4c5d4e6f8a9b0c1d2e3f4a5b.tmp",
+            "note.0b1e2f3a-4c5d-1e6f-8a9b-0c1d2e3f4a5b.tmp",
+        ] {
+            assert!(!super::staged_by_write(unlike), "{unlike}");
+        }
+    }
     use std::io::Write;
 
     #[test]

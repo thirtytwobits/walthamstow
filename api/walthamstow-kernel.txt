@@ -934,6 +934,7 @@ impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusi
 impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_kernel::durability::WriteDurability where V: ppv_lite86::types::MultiLane<T>
 pub fn walthamstow_kernel::durability::WriteDurability::vzip(self) -> V
 pub fn walthamstow_kernel::durability::create_dir_all_synced(durability: walthamstow_kernel::durability::WriteDurability, directory: &std::path::Path) -> std::io::error::Result<()>
+pub fn walthamstow_kernel::durability::staged_by_write(name: &str) -> bool
 pub fn walthamstow_kernel::durability::write_synced(durability: walthamstow_kernel::durability::WriteDurability, path: &std::path::Path, bytes: &[u8]) -> anyhow::Result<()>
 pub mod walthamstow_kernel::error
 pub struct walthamstow_kernel::error::KernelError

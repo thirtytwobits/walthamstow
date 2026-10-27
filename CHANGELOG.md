@@ -2,6 +2,20 @@
 
 ## 0.3.0
 
+- `walthamstow-ops` contributes `walthamstow.workspace.status`, `.documents`, `.upgrade` and
+  `.recover`, and `walthamstow.journals.list`, to Clapham 0.3.0. Each runs under a `Lease`: the
+  daemon's, or one an in-process front end takes for each operation and is refused with
+  `workspace_held` while another engine holds it. The operations run over a `Workspace`, a
+  `FileWorkspace` or a `MemoryWorkspace`. The product supplies each entity's `DocumentFormat` and
+  the `Upgrade`s it registers.
+- `publication::publish` refuses a file changed after staging with the reason `upgrade_stale`.
+  `publication::publish_first` and `workspace::finish_first` publish an upgrade for the first
+  time, refusing a file already at its target too. `publication::check_publication_paths`
+  refuses two paths that differ only in case with the reason `upgrade_paths_collide`, and
+  `workspace::authorise` refuses them before writing. `workspace::pending` names each upgrade a
+  journal authorises that is still to finish.
+  `workspace::retire` removes a completed upgrade's directory, and `workspace::abandon` an
+  upgrade whose first publication was refused, its journal first.
 - Breaking: `workspace::recover` returns a `Recovery`: the upgrades it published, and those whose
   staging it discarded, by operation id. It refuses an upgrade's directory whose name is not
   UTF-8.

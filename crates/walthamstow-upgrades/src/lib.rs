@@ -4,4 +4,5 @@
 //! each by what it held when staged, and recovery of an upgrade a journal authorised.
 
 pub mod publication;
+pub mod reason_codes;
 pub mod workspace;

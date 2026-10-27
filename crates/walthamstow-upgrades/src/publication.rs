@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 use std::path::{Component, Path, PathBuf};
 use walthamstow_kernel::durability::{write_synced, WriteDurability};
 use walthamstow_kernel::hashing::sha256_hex;
+use walthamstow_kernel::KernelError;
 
 /// One file a publication replaces.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -43,6 +44,27 @@ pub fn check_relative_path(path: &Path) -> Result<()> {
             .any(|part| !matches!(part, Component::Normal(_)))
     {
         bail!("Invalid publication path {}.", path.display());
+    }
+    Ok(())
+}
+
+/// Refuses `paths` unless [`check_relative_path`] accepts each and no two differ only in case.
+/// Two that do are refused as a conflict with the reason
+/// [`UPGRADE_PATHS_COLLIDE`](crate::reason_codes::UPGRADE_PATHS_COLLIDE), naming the second as
+/// `path`, since a file system that folds case holds them as one file.
+pub fn check_publication_paths<'a>(paths: impl IntoIterator<Item = &'a Path>) -> Result<()> {
+    let mut named = std::collections::BTreeSet::new();
+    for path in paths {
+        check_relative_path(path)?;
+        if !named.insert(path.to_string_lossy().to_lowercase()) {
+            return Err(KernelError::conflict(format!(
+                "{} is named twice, compared case-folded, in one publication.",
+                path.display()
+            ))
+            .with_data(serde_json::json!({ "path": path }))
+            .with_reason(crate::reason_codes::UPGRADE_PATHS_COLLIDE)
+            .into());
+        }
     }
     Ok(())
 }
@@ -87,12 +109,37 @@ pub(crate) fn refuse_links(root: &Path, path: &Path) -> Result<()> {
 /// Publishes each replacement from `staged` into `live`. Every replacement is checked before
 /// any is written: a live file already at its target is left alone, one still at its source is
 /// replaced, and one that is neither, or that lies through a link, refuses the whole
-/// publication. Publishing again after an interruption finishes it.
+/// publication. A file that is neither is refused as a conflict with the reason
+/// [`UPGRADE_STALE`](crate::reason_codes::UPGRADE_STALE), naming its `path`. Publishing again
+/// after an interruption finishes it.
 pub fn publish(
     durability: WriteDurability,
     live: &Path,
     staged: &Path,
     replacements: &[Replacement],
+) -> Result<()> {
+    publish_as(durability, live, staged, replacements, true)
+}
+
+/// Publishes each replacement from `staged` into `live` for the first time, as [`publish`]
+/// does, except that every live file must still be at its source: one already at its target
+/// refuses the whole publication too, since nothing has published it yet.
+pub fn publish_first(
+    durability: WriteDurability,
+    live: &Path,
+    staged: &Path,
+    replacements: &[Replacement],
+) -> Result<()> {
+    publish_as(durability, live, staged, replacements, false)
+}
+
+/// Publishes each replacement, accepting a live file already at its target when `resuming`.
+fn publish_as(
+    durability: WriteDurability,
+    live: &Path,
+    staged: &Path,
+    replacements: &[Replacement],
+    resuming: bool,
 ) -> Result<()> {
     let _publishing = PUBLISHING
         .lock()
@@ -103,33 +150,30 @@ pub fn publish(
             staged.display()
         );
     }
-    let mut named = std::collections::BTreeSet::new();
-    for replacement in replacements {
-        check_relative_path(&replacement.path)?;
-        // A file system that folds case gives paths differing only in case one file.
-        if !named.insert(replacement.path.to_string_lossy().to_lowercase()) {
-            bail!(
-                "{} is replaced more than once in one publication.",
-                replacement.path.display()
-            );
-        }
-    }
+    check_publication_paths(
+        replacements
+            .iter()
+            .map(|replacement| replacement.path.as_path()),
+    )?;
     let mut publications = Vec::new();
     for replacement in replacements {
         refuse_links(live, &replacement.path)?;
         let live_path = live.join(&replacement.path);
         let current = file_hash(&live_path)?;
-        if current.as_ref() == Some(&replacement.target_hash) {
+        if resuming && current.as_ref() == Some(&replacement.target_hash) {
             // An interrupted publication may have written it without syncing its entry.
             durability
                 .sync_directory(live_path.parent().expect("a published file has a parent"))?;
             continue;
         }
         if current != replacement.source_hash {
-            bail!(
+            return Err(KernelError::conflict(format!(
                 "{} changed after it was staged.",
                 replacement.path.display()
-            );
+            ))
+            .with_data(serde_json::json!({ "path": replacement.path }))
+            .with_reason(crate::reason_codes::UPGRADE_STALE)
+            .into());
         }
         refuse_links(staged, &replacement.path)?;
         let bytes = read_regular(&staged.join(&replacement.path))?;
@@ -221,8 +265,35 @@ mod tests {
         ]);
         write_synced(DURABILITY, &live.path().join("b.json"), b"edited b").unwrap();
         let before = contents(live.path());
-        assert!(publish(DURABILITY, live.path(), staged.path(), &replacements).is_err());
+        let refused = publish(DURABILITY, live.path(), staged.path(), &replacements).unwrap_err();
+        let refused = refused.downcast_ref::<KernelError>().unwrap();
+        assert_eq!(
+            refused.reason_code(),
+            Some(crate::reason_codes::UPGRADE_STALE)
+        );
+        assert_eq!(refused.data.as_ref().unwrap()["path"], "b.json");
         assert_eq!(contents(live.path()), before);
+    }
+
+    #[test]
+    fn a_first_publication_refuses_a_file_already_at_its_target() {
+        let (live, staged, replacements) = stage(&[
+            ("a.json", Some(b"old a"), b"new a"),
+            ("b.json", Some(b"old b"), b"new b"),
+        ]);
+        write_synced(DURABILITY, &live.path().join("b.json"), b"new b").unwrap();
+        let before = contents(live.path());
+        let refused =
+            publish_first(DURABILITY, live.path(), staged.path(), &replacements).unwrap_err();
+        let refused = refused.downcast_ref::<KernelError>().unwrap();
+        assert_eq!(
+            refused.reason_code(),
+            Some(crate::reason_codes::UPGRADE_STALE)
+        );
+        assert_eq!(refused.data.as_ref().unwrap()["path"], "b.json");
+        assert_eq!(contents(live.path()), before);
+        publish(DURABILITY, live.path(), staged.path(), &replacements).unwrap();
+        assert_eq!(std::fs::read(live.path().join("a.json")).unwrap(), b"new a");
     }
 
     #[test]
@@ -230,7 +301,11 @@ mod tests {
         let (live, staged, replacements) = stage(&[("a.json", Some(b"old a"), b"new a")]);
         write_synced(DURABILITY, &staged.path().join("a.json"), b"tampered").unwrap();
         let before = contents(live.path());
-        assert!(publish(DURABILITY, live.path(), staged.path(), &replacements).is_err());
+        let refused = publish(DURABILITY, live.path(), staged.path(), &replacements).unwrap_err();
+        assert!(refused
+            .downcast_ref::<KernelError>()
+            .and_then(KernelError::reason_code)
+            .is_none());
         assert_eq!(contents(live.path()), before);
     }
 

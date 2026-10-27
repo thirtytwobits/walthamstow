@@ -5,7 +5,10 @@
 //! publishes, `original/` the files they replace, and `operation.json` the journal that
 //! authorises publication.
 
-use crate::publication::{check_relative_path, publish, read_regular, refuse_links, Replacement};
+use crate::publication::{
+    check_publication_paths, check_relative_path, publish, publish_first, read_regular,
+    refuse_links, Replacement,
+};
 use anyhow::{bail, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
@@ -65,8 +68,8 @@ pub fn prepared_dir(work: &Path) -> PathBuf {
 
 /// Authorises publishing `changes` over the workspace files they replace, which `sources`
 /// holds by path: keeps each replaced file under `original/` and writes the committing journal.
-/// A path that does not stay beneath the workspace refuses the upgrade before anything is
-/// written.
+/// A path that does not stay beneath the workspace, or two that differ only in case, refuse the
+/// upgrade before anything is written.
 pub fn authorise(
     durability: WriteDurability,
     work: &Path,
@@ -74,9 +77,7 @@ pub fn authorise(
     sources: &BTreeMap<PathBuf, Vec<u8>>,
     changes: &BTreeMap<PathBuf, Vec<u8>>,
 ) -> Result<Operation> {
-    for path in changes.keys() {
-        check_relative_path(path)?;
-    }
+    check_publication_paths(changes.keys().map(PathBuf::as_path))?;
     let mut operation = Operation {
         operation_id: operation_id.to_owned(),
         status: COMMITTING.into(),
@@ -103,12 +104,35 @@ pub fn authorise(
 }
 
 /// Publishes an authorised upgrade into the workspace at `root`, marks it complete and
-/// removes its staging.
+/// removes its staging. A file already at its target is left alone, so finishing an
+/// interrupted publication completes it.
 pub fn finish(
     durability: WriteDurability,
     root: &Path,
     work: &Path,
     operation: &mut Operation,
+) -> Result<()> {
+    finish_as(durability, root, work, operation, true)
+}
+
+/// Publishes an upgrade just authorised, as [`finish`] does, but only while every file it
+/// replaces still holds its source. A file at its target refuses it too, with the reason
+/// [`UPGRADE_STALE`](crate::reason_codes::UPGRADE_STALE), before any file is written.
+pub fn finish_first(
+    durability: WriteDurability,
+    root: &Path,
+    work: &Path,
+    operation: &mut Operation,
+) -> Result<()> {
+    finish_as(durability, root, work, operation, false)
+}
+
+fn finish_as(
+    durability: WriteDurability,
+    root: &Path,
+    work: &Path,
+    operation: &mut Operation,
+    resuming: bool,
 ) -> Result<()> {
     for path in &operation.paths {
         check_relative_path(path)?;
@@ -135,7 +159,11 @@ pub fn finish(
             target_hash: target_hash.clone(),
         });
     }
-    publish(durability, root, &prepared_dir(work), &replacements)?;
+    if resuming {
+        publish(durability, root, &prepared_dir(work), &replacements)?;
+    } else {
+        publish_first(durability, root, &prepared_dir(work), &replacements)?;
+    }
     operation.status = COMPLETE.into();
     write_journal(durability, work, operation)?;
     remove_staging(work).map(drop)
@@ -150,16 +178,19 @@ pub struct Recovery {
     pub discarded: Vec<String>,
 }
 
-/// Finishes each authorised upgrade and discards staging no journal authorises. An upgrade's
-/// directory whose name is not UTF-8 is refused.
-pub fn recover(root: &Path, data_dir: &Path, durability: WriteDurability) -> Result<Recovery> {
-    let mut recovery = Recovery::default();
-    let operations = match std::fs::read_dir(JOURNAL.unlinked_root(data_dir)?) {
-        Ok(operations) => operations,
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(recovery),
+/// One upgrade's directory: its operation id, its path and its journal, when it has one.
+type Found = (String, PathBuf, Option<Operation>);
+
+/// Each upgrade's directory under `data_dir`, in id order. Anything there but a directory, a
+/// directory whose name is not UTF-8, and a journal that cannot be read are refused.
+fn operations(data_dir: &Path) -> Result<Vec<Found>> {
+    let entries = match std::fs::read_dir(JOURNAL.unlinked_root(data_dir)?) {
+        Ok(entries) => entries,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
         Err(error) => return Err(error.into()),
     };
-    for entry in operations {
+    let mut found = Vec::new();
+    for entry in entries {
         let entry = entry?;
         let work = entry.path();
         if !entry.file_type()?.is_dir() {
@@ -175,26 +206,92 @@ pub fn recover(root: &Path, data_dir: &Path, durability: WriteDurability) -> Res
             );
         };
         let path = work.join(JOURNAL_FILE);
-        let journal = match std::fs::symlink_metadata(&path) {
-            Ok(_) => read_regular(&path)?,
-            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
-                std::fs::remove_dir_all(&work)?;
-                recovery.discarded.push(id);
-                continue;
-            }
+        let operation = match std::fs::symlink_metadata(&path) {
+            Ok(_) => Some(serde_json::from_slice(&read_regular(&path)?)?),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => None,
             Err(error) => return Err(error.into()),
         };
-        let mut operation: Operation = serde_json::from_slice(&journal)?;
-        if operation.status == COMMITTING {
-            finish(durability, root, &work, &mut operation)?;
-            recovery.finished.push(id);
-        } else if remove_staging(&work)? && operation.status != COMPLETE {
-            recovery.discarded.push(id);
+        found.push((id, work, operation));
+    }
+    found.sort_by(|left, right| left.0.cmp(&right.0));
+    Ok(found)
+}
+
+/// The operation id of each upgrade under `data_dir` a journal authorises and no publication
+/// has finished, in id order. [`recover`] finishes them.
+pub fn pending(data_dir: &Path) -> Result<Vec<String>> {
+    Ok(operations(data_dir)?
+        .into_iter()
+        .filter(|(_, _, operation)| {
+            operation
+                .as_ref()
+                .is_some_and(|operation| operation.status == COMMITTING)
+        })
+        .map(|(id, ..)| id)
+        .collect())
+}
+
+/// Finishes each authorised upgrade and discards staging no journal authorises. An upgrade's
+/// directory whose name is not UTF-8 is refused.
+pub fn recover(root: &Path, data_dir: &Path, durability: WriteDurability) -> Result<Recovery> {
+    let mut recovery = Recovery::default();
+    for (id, work, operation) in operations(data_dir)? {
+        match operation {
+            None => {
+                std::fs::remove_dir_all(&work)?;
+                recovery.discarded.push(id);
+            }
+            Some(mut operation) if operation.status == COMMITTING => {
+                finish(durability, root, &work, &mut operation)?;
+                recovery.finished.push(id);
+            }
+            Some(operation) => {
+                if remove_staging(&work)? && operation.status != COMPLETE {
+                    recovery.discarded.push(id);
+                }
+            }
         }
     }
-    recovery.finished.sort();
-    recovery.discarded.sort();
     Ok(recovery)
+}
+
+/// Removes the directory `work` of a completed upgrade, with the originals it replaced, and
+/// returns whether it did. An upgrade with no journal, or one still to finish, is left for
+/// [`recover`].
+pub fn retire(work: &Path) -> Result<bool> {
+    let path = work.join(JOURNAL_FILE);
+    let journal = match std::fs::symlink_metadata(&path) {
+        Ok(_) => read_regular(&path)?,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(false),
+        Err(error) => return Err(error.into()),
+    };
+    let operation: Operation = serde_json::from_slice(&journal)?;
+    if operation.status != COMPLETE {
+        return Ok(false);
+    }
+    std::fs::remove_dir_all(work)?;
+    Ok(true)
+}
+
+/// Removes the directory `work` of an authorised upgrade whose [`finish_first`] refused, which
+/// wrote no file, so recovery does not try it again. An upgrade a publication has begun to
+/// write is finished by [`recover`], never abandoned. The journal is removed, durably, before
+/// the files it names, so an abandonment that stops midway leaves staging no journal
+/// authorises, which recovery discards.
+pub fn abandon(durability: WriteDurability, work: &Path) -> Result<()> {
+    disarm(durability, work)?;
+    std::fs::remove_dir_all(work)?;
+    Ok(())
+}
+
+/// Removes the journal that authorises the upgrade in `work`, durably.
+fn disarm(durability: WriteDurability, work: &Path) -> Result<()> {
+    match std::fs::remove_file(work.join(JOURNAL_FILE)) {
+        Err(error) if error.kind() != std::io::ErrorKind::NotFound => return Err(error.into()),
+        _ => {}
+    }
+    durability.sync_directory(work)?;
+    Ok(())
 }
 
 fn write_journal(durability: WriteDurability, work: &Path, operation: &Operation) -> Result<()> {
@@ -318,6 +415,109 @@ mod tests {
         for id in ["uncommitted", "finished"] {
             assert!(!prepared_dir(&work_dir(data.path(), id).unwrap()).exists());
         }
+    }
+
+    #[test]
+    fn an_upgrade_naming_two_files_that_differ_only_in_case_is_refused_unjournalled() {
+        let data = tempfile::tempdir().unwrap();
+        let work = work_dir(data.path(), "colliding").unwrap();
+        let changes = BTreeMap::from([
+            (PathBuf::from("data/A.json"), b"upper".to_vec()),
+            (PathBuf::from("data/a.json"), b"lower".to_vec()),
+        ]);
+        let refused = authorise(DURABILITY, &work, "colliding", &changes, &changes).unwrap_err();
+        assert_eq!(
+            refused
+                .downcast_ref::<walthamstow_kernel::KernelError>()
+                .and_then(walthamstow_kernel::KernelError::reason_code),
+            Some(crate::reason_codes::UPGRADE_PATHS_COLLIDE)
+        );
+        assert!(!work.exists());
+        assert!(pending(data.path()).unwrap().is_empty());
+    }
+
+    #[test]
+    fn only_an_authorised_upgrade_still_to_finish_is_pending() {
+        let data = tempfile::tempdir().unwrap();
+        for (id, status) in [
+            ("authorised", COMMITTING),
+            ("finished", COMPLETE),
+            ("preparing", "preparing"),
+        ] {
+            let operation = Operation {
+                operation_id: id.into(),
+                status: status.into(),
+                paths: vec![],
+                source_hashes: BTreeMap::new(),
+                target_hashes: BTreeMap::new(),
+            };
+            write_journal(DURABILITY, &work_dir(data.path(), id).unwrap(), &operation).unwrap();
+        }
+        let unjournalled = work_dir(data.path(), "unjournalled").unwrap();
+        write_synced(
+            DURABILITY,
+            &prepared_dir(&unjournalled).join("a.json"),
+            b"a",
+        )
+        .unwrap();
+        assert_eq!(pending(data.path()).unwrap(), ["authorised"]);
+    }
+
+    #[test]
+    fn only_a_completed_upgrade_is_retired() {
+        let data = tempfile::tempdir().unwrap();
+        for (id, status, retired) in [
+            ("finished", COMPLETE, true),
+            ("authorised", COMMITTING, false),
+        ] {
+            let work = work_dir(data.path(), id).unwrap();
+            let operation = Operation {
+                operation_id: id.into(),
+                status: status.into(),
+                paths: vec![],
+                source_hashes: BTreeMap::new(),
+                target_hashes: BTreeMap::new(),
+            };
+            write_journal(DURABILITY, &work, &operation).unwrap();
+            assert_eq!(retire(&work).unwrap(), retired, "{id}");
+            assert_eq!(work.exists(), !retired, "{id}");
+        }
+        let unjournalled = work_dir(data.path(), "unjournalled").unwrap();
+        write_synced(
+            DURABILITY,
+            &prepared_dir(&unjournalled).join("a.json"),
+            b"a",
+        )
+        .unwrap();
+        assert!(!retire(&unjournalled).unwrap());
+        assert!(unjournalled.exists());
+    }
+
+    #[test]
+    fn an_abandonment_that_stops_after_disarming_its_journal_is_discarded_by_recovery() {
+        let workspace = tempfile::tempdir().unwrap();
+        let data = tempfile::tempdir().unwrap();
+        let path = PathBuf::from("data/first.json");
+        write_synced(DURABILITY, &workspace.path().join(&path), b"edited").unwrap();
+        let work = work_dir(data.path(), "abandoned").unwrap();
+        write_synced(DURABILITY, &prepared_dir(&work).join(&path), b"upgraded").unwrap();
+        authorise(
+            DURABILITY,
+            &work,
+            "abandoned",
+            &BTreeMap::from([(path.clone(), b"original".to_vec())]),
+            &BTreeMap::from([(path.clone(), b"upgraded".to_vec())]),
+        )
+        .unwrap();
+        disarm(DURABILITY, &work).unwrap();
+        std::fs::remove_dir_all(work.join("original")).unwrap();
+        let recovery = recover(workspace.path(), data.path(), DURABILITY).unwrap();
+        assert_eq!(recovery.discarded, ["abandoned"]);
+        assert!(!work.exists());
+        assert_eq!(
+            std::fs::read(workspace.path().join(&path)).unwrap(),
+            b"edited"
+        );
     }
 
     // APFS and NTFS refuse names that are not UTF-8.

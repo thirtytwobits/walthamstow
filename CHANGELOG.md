@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.0 — 2026-10-27
+
+- Breaking: Walthamstow builds on Clerkenwell 0.11.0 and Clapham 0.3.2, the Clapham that
+  `clerkenwell-ops` takes, so a product composes both pieces' operations in one set.
+- `CollaborativeDocuments::import` answers a retry of an operation the document retains as a
+  duplicate, with the result the operation was accepted with.
+- `docs/contract.md` states that a commit made to the store other than through
+  `CollaborativeDocuments`, such as through `clerkenwell-ops`, is not marked for publication.
+
 ## 0.3.0 — 2026-10-27
 
 - Breaking: Walthamstow builds on Clerkenwell 0.10.0.

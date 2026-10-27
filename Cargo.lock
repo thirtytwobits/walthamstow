@@ -118,6 +118,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "31b698c5f9a010f6573133b09e0de5408834d0c82f8d7475a89fc1867a71cd90"
 dependencies = [
  "axum-core",
+ "base64 0.22.1",
  "bytes",
  "form_urlencoded",
  "futures-util",
@@ -136,8 +137,10 @@ dependencies = [
  "serde_json",
  "serde_path_to_error",
  "serde_urlencoded",
+ "sha1",
  "sync_wrapper",
  "tokio",
+ "tokio-tungstenite",
  "tower",
  "tower-layer",
  "tower-service",
@@ -346,8 +349,8 @@ checksum = "1c133bc6a41be0d194c306b5506d15e6feeea7b1d6604bd3f8310dfb2ca96486"
 
 [[package]]
 name = "clapham"
-version = "0.3.0"
-source = "git+https://github.com/thirtytwobits/clapham?tag=v0.3.0#7370d5e90e1b8ede8c99d19298e0bd5ab525c64a"
+version = "0.3.2"
+source = "git+https://github.com/thirtytwobits/clapham?tag=v0.3.2#9aeee1968875ae5d55a9ff42f6208f2ed0640097"
 dependencies = [
  "futures-util",
  "jsonschema 0.60.2",
@@ -360,8 +363,8 @@ dependencies = [
 
 [[package]]
 name = "clapham-cli"
-version = "0.3.0"
-source = "git+https://github.com/thirtytwobits/clapham?tag=v0.3.0#7370d5e90e1b8ede8c99d19298e0bd5ab525c64a"
+version = "0.3.2"
+source = "git+https://github.com/thirtytwobits/clapham?tag=v0.3.2#9aeee1968875ae5d55a9ff42f6208f2ed0640097"
 dependencies = [
  "clap",
  "clap_complete",
@@ -378,8 +381,8 @@ dependencies = [
 
 [[package]]
 name = "clapham-conformance"
-version = "0.3.0"
-source = "git+https://github.com/thirtytwobits/clapham?tag=v0.3.0#7370d5e90e1b8ede8c99d19298e0bd5ab525c64a"
+version = "0.3.2"
+source = "git+https://github.com/thirtytwobits/clapham?tag=v0.3.2#9aeee1968875ae5d55a9ff42f6208f2ed0640097"
 dependencies = [
  "clapham",
  "clapham-cli",
@@ -397,8 +400,8 @@ dependencies = [
 
 [[package]]
 name = "clapham-mcp-client"
-version = "0.3.0"
-source = "git+https://github.com/thirtytwobits/clapham?tag=v0.3.0#7370d5e90e1b8ede8c99d19298e0bd5ab525c64a"
+version = "0.3.2"
+source = "git+https://github.com/thirtytwobits/clapham?tag=v0.3.2#9aeee1968875ae5d55a9ff42f6208f2ed0640097"
 dependencies = [
  "bytes",
  "clapham",
@@ -419,8 +422,8 @@ dependencies = [
 
 [[package]]
 name = "clapham-mcp-server"
-version = "0.3.0"
-source = "git+https://github.com/thirtytwobits/clapham?tag=v0.3.0#7370d5e90e1b8ede8c99d19298e0bd5ab525c64a"
+version = "0.3.2"
+source = "git+https://github.com/thirtytwobits/clapham?tag=v0.3.2#9aeee1968875ae5d55a9ff42f6208f2ed0640097"
 dependencies = [
  "axum",
  "bytes",
@@ -441,9 +444,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "clerkenwell-axum"
+version = "0.11.0"
+source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.11.0#2e083aaacb1a7e5f8c3602872b5919f6f0f489c9"
+dependencies = [
+ "axum",
+ "clerkenwell-events",
+ "clerkenwell-session",
+ "futures-util",
+ "schemars",
+ "serde",
+ "serde_json",
+ "tokio",
+]
+
+[[package]]
 name = "clerkenwell-doc"
-version = "0.10.0"
-source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.10.0#17b17766265352b38a376f5be78e03b824035905"
+version = "0.11.0"
+source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.11.0#2e083aaacb1a7e5f8c3602872b5919f6f0f489c9"
 dependencies = [
  "base64 0.23.1",
  "clerkenwell-schema",
@@ -455,17 +473,35 @@ dependencies = [
 
 [[package]]
 name = "clerkenwell-events"
-version = "0.10.0"
-source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.10.0#17b17766265352b38a376f5be78e03b824035905"
+version = "0.11.0"
+source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.11.0#2e083aaacb1a7e5f8c3602872b5919f6f0f489c9"
 dependencies = [
  "serde",
  "serde_json",
 ]
 
 [[package]]
+name = "clerkenwell-ops"
+version = "0.11.0"
+source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.11.0#2e083aaacb1a7e5f8c3602872b5919f6f0f489c9"
+dependencies = [
+ "base64 0.23.1",
+ "clapham",
+ "clerkenwell-axum",
+ "clerkenwell-events",
+ "clerkenwell-schema",
+ "clerkenwell-session",
+ "clerkenwell-store",
+ "futures-util",
+ "schemars",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "clerkenwell-schema"
-version = "0.10.0"
-source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.10.0#17b17766265352b38a376f5be78e03b824035905"
+version = "0.11.0"
+source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.11.0#2e083aaacb1a7e5f8c3602872b5919f6f0f489c9"
 dependencies = [
  "clerkenwell-events",
  "schemars",
@@ -474,9 +510,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "clerkenwell-session"
+version = "0.11.0"
+source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.11.0#2e083aaacb1a7e5f8c3602872b5919f6f0f489c9"
+dependencies = [
+ "clerkenwell-events",
+ "clerkenwell-schema",
+ "clerkenwell-store",
+ "schemars",
+ "serde",
+ "serde_json",
+ "sha2 0.11.1",
+]
+
+[[package]]
 name = "clerkenwell-store"
-version = "0.10.0"
-source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.10.0#17b17766265352b38a376f5be78e03b824035905"
+version = "0.11.0"
+source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.11.0#2e083aaacb1a7e5f8c3602872b5919f6f0f489c9"
 dependencies = [
  "base64 0.23.1",
  "chrono",
@@ -2650,6 +2700,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "sha1"
+version = "0.10.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a978451301f4db1d02937a4ab3ccce137717b81826e79b7d49ffe3244a13c3b8"
+dependencies = [
+ "cfg-if",
+ "cpufeatures 0.2.17",
+ "digest 0.10.7",
+]
+
+[[package]]
 name = "sha1_smol"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3000,6 +3061,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "tokio-tungstenite"
+version = "0.29.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8f72a05e828585856dacd553fba484c242c46e391fb0e58917c942ee9202915c"
+dependencies = [
+ "futures-util",
+ "log",
+ "tokio",
+ "tungstenite",
+]
+
+[[package]]
 name = "tokio-util"
 version = "0.7.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3129,6 +3202,22 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e421abadd41a4225275504ea4d6566923418b7f05506fbc9c0fe86ba7396114b"
 
 [[package]]
+name = "tungstenite"
+version = "0.29.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6c01152af293afb9c7c2a57e4b559c5620b421f6d133261c60dd2d0cdb38e6b8"
+dependencies = [
+ "bytes",
+ "data-encoding",
+ "http",
+ "httparse",
+ "log",
+ "rand 0.9.5",
+ "sha1",
+ "thiserror 2.0.21",
+]
+
+[[package]]
 name = "twox-hash"
 version = "2.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3233,7 +3322,7 @@ checksum = "5c3082ca00d5a5ef149bb8b555a72ae84c9c59f7250f013ac822ac2e49b19c64"
 
 [[package]]
 name = "walthamstow-kernel"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -3254,7 +3343,7 @@ dependencies = [
 
 [[package]]
 name = "walthamstow-ops"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "clapham",
@@ -3271,13 +3360,17 @@ dependencies = [
 
 [[package]]
 name = "walthamstow-ops-example"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "axum",
  "clapham",
  "clapham-cli",
  "clapham-conformance",
  "clapham-mcp-server",
+ "clerkenwell-events",
+ "clerkenwell-ops",
+ "clerkenwell-session",
+ "clerkenwell-store",
  "serde_json",
  "tokio",
  "walthamstow-kernel",
@@ -3286,7 +3379,7 @@ dependencies = [
 
 [[package]]
 name = "walthamstow-upgrades"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "serde",
@@ -3297,7 +3390,7 @@ dependencies = [
 
 [[package]]
 name = "walthamstow-workspace"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "clerkenwell-doc",
@@ -3612,7 +3705,7 @@ checksum = "3ad82d2a33cdc9674dc7465672f271e096168fcdbe0f799d9e6db8c5892679dc"
 
 [[package]]
 name = "xtask"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "regex-lite",
  "serde_json",

@@ -31,7 +31,7 @@ model it holds to.
 Take the crates from a release tag:
 
 ```toml
-walthamstow-kernel = { git = "https://github.com/thirtytwobits/walthamstow", tag = "v0.3.0" }
+walthamstow-kernel = { git = "https://github.com/thirtytwobits/walthamstow", tag = "v0.4.0" }
 ```
 
 Clerkenwell's crates build on a Loro fork, and workspace patches do not propagate to dependents.

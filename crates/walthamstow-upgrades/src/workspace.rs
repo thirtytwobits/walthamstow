@@ -138,14 +138,25 @@ pub fn finish(
     publish(durability, root, &prepared_dir(work), &replacements)?;
     operation.status = COMPLETE.into();
     write_journal(durability, work, operation)?;
-    remove_staging(work)
+    remove_staging(work).map(drop)
 }
 
-/// Finishes each authorised upgrade and discards staging no journal authorises.
-pub fn recover(root: &Path, data_dir: &Path, durability: WriteDurability) -> Result<()> {
+/// What [`recover`] did, each upgrade named by its operation id, in id order.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct Recovery {
+    /// The upgrades a journal authorised, which recovery published.
+    pub finished: Vec<String>,
+    /// The upgrades whose staging no journal authorised, which recovery discarded.
+    pub discarded: Vec<String>,
+}
+
+/// Finishes each authorised upgrade and discards staging no journal authorises. An upgrade's
+/// directory whose name is not UTF-8 is refused.
+pub fn recover(root: &Path, data_dir: &Path, durability: WriteDurability) -> Result<Recovery> {
+    let mut recovery = Recovery::default();
     let operations = match std::fs::read_dir(JOURNAL.unlinked_root(data_dir)?) {
         Ok(operations) => operations,
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(()),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(recovery),
         Err(error) => return Err(error.into()),
     };
     for entry in operations {
@@ -157,11 +168,18 @@ pub fn recover(root: &Path, data_dir: &Path, durability: WriteDurability) -> Res
                 work.display()
             );
         }
+        let Ok(id) = entry.file_name().into_string() else {
+            bail!(
+                "{} is not named in UTF-8; recovery names each upgrade it finds.",
+                work.display()
+            );
+        };
         let path = work.join(JOURNAL_FILE);
         let journal = match std::fs::symlink_metadata(&path) {
             Ok(_) => read_regular(&path)?,
             Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
                 std::fs::remove_dir_all(&work)?;
+                recovery.discarded.push(id);
                 continue;
             }
             Err(error) => return Err(error.into()),
@@ -169,11 +187,14 @@ pub fn recover(root: &Path, data_dir: &Path, durability: WriteDurability) -> Res
         let mut operation: Operation = serde_json::from_slice(&journal)?;
         if operation.status == COMMITTING {
             finish(durability, root, &work, &mut operation)?;
-        } else {
-            remove_staging(&work)?;
+            recovery.finished.push(id);
+        } else if remove_staging(&work)? && operation.status != COMPLETE {
+            recovery.discarded.push(id);
         }
     }
-    Ok(())
+    recovery.finished.sort();
+    recovery.discarded.sort();
+    Ok(recovery)
 }
 
 fn write_journal(durability: WriteDurability, work: &Path, operation: &Operation) -> Result<()> {
@@ -184,10 +205,12 @@ fn write_journal(durability: WriteDurability, work: &Path, operation: &Operation
     )
 }
 
-fn remove_staging(work: &Path) -> Result<()> {
+/// Removes the upgrade's staging, and returns whether there was any.
+fn remove_staging(work: &Path) -> Result<bool> {
     match std::fs::remove_dir_all(prepared_dir(work)) {
-        Err(error) if error.kind() != std::io::ErrorKind::NotFound => Err(error.into()),
-        _ => Ok(()),
+        Ok(()) => Ok(true),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(false),
+        Err(error) => Err(error.into()),
     }
 }
 
@@ -234,13 +257,16 @@ mod tests {
                 &changes.collect(),
             )
             .unwrap();
-            recover(root, data.path(), DURABILITY).unwrap();
+            let recovery = recover(root, data.path(), DURABILITY).unwrap();
+            assert_eq!(recovery.finished, ["authorised"]);
+            assert!(recovery.discarded.is_empty());
             for (index, path) in paths.iter().enumerate() {
                 assert_eq!(std::fs::read(root.join(path)).unwrap(), targets[index]);
             }
             assert!(!prepared_dir(&work).exists());
             let before = read_files(root).unwrap();
-            recover(root, data.path(), DURABILITY).unwrap();
+            let again = recover(root, data.path(), DURABILITY).unwrap();
+            assert_eq!(again, Recovery::default());
             assert_eq!(read_files(root).unwrap(), before);
         }
     }
@@ -260,8 +286,53 @@ mod tests {
         write_journal(DURABILITY, &work, &operation).unwrap();
         std::fs::write(workspace.path().join("authored.json"), b"authored").unwrap();
         let before = read_files(workspace.path()).unwrap();
-        recover(workspace.path(), data.path(), DURABILITY).unwrap();
+        let recovery = recover(workspace.path(), data.path(), DURABILITY).unwrap();
+        assert_eq!(recovery, Recovery::default());
         assert_eq!(read_files(workspace.path()).unwrap(), before);
+    }
+
+    #[test]
+    fn recovery_reports_the_staging_it_discards_but_not_a_finished_upgrade_s_leftovers() {
+        let workspace = tempfile::tempdir().unwrap();
+        let data = tempfile::tempdir().unwrap();
+        for (id, status) in [("uncommitted", "preparing"), ("finished", COMPLETE)] {
+            let work = work_dir(data.path(), id).unwrap();
+            let operation = Operation {
+                operation_id: id.into(),
+                status: status.into(),
+                paths: vec![],
+                source_hashes: BTreeMap::new(),
+                target_hashes: BTreeMap::new(),
+            };
+            write_journal(DURABILITY, &work, &operation).unwrap();
+            write_synced(
+                DURABILITY,
+                &prepared_dir(&work).join("data/first.json"),
+                b"staged",
+            )
+            .unwrap();
+        }
+        let recovery = recover(workspace.path(), data.path(), DURABILITY).unwrap();
+        assert!(recovery.finished.is_empty());
+        assert_eq!(recovery.discarded, ["uncommitted"]);
+        for id in ["uncommitted", "finished"] {
+            assert!(!prepared_dir(&work_dir(data.path(), id).unwrap()).exists());
+        }
+    }
+
+    // APFS and NTFS refuse names that are not UTF-8.
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn recovery_refuses_an_upgrade_it_cannot_name_and_leaves_it_alone() {
+        use std::os::unix::ffi::OsStrExt;
+        let workspace = tempfile::tempdir().unwrap();
+        let data = tempfile::tempdir().unwrap();
+        let unnamed = JOURNAL
+            .root(data.path())
+            .join(std::ffi::OsStr::from_bytes(b"\xff"));
+        std::fs::create_dir_all(prepared_dir(&unnamed)).unwrap();
+        assert!(recover(workspace.path(), data.path(), DURABILITY).is_err());
+        assert!(prepared_dir(&unnamed).exists());
     }
 
     #[test]
@@ -275,7 +346,8 @@ mod tests {
             b"staged",
         )
         .unwrap();
-        recover(workspace.path(), data.path(), DURABILITY).unwrap();
+        let recovery = recover(workspace.path(), data.path(), DURABILITY).unwrap();
+        assert_eq!(recovery.discarded, ["abandoned"]);
         assert!(!work.exists());
     }
 

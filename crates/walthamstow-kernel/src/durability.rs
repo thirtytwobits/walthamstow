@@ -55,20 +55,46 @@ fn open_directory(directory: &Path) -> io::Result<File> {
         .open(directory)
 }
 
+/// Who may reach what a write creates.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum Access {
+    /// The process's defaults. A file a write replaces keeps its permissions.
+    Inherited,
+    /// On Unix, the owner alone: files are created `0600` and directories `0700`. Elsewhere,
+    /// what the parent directory grants.
+    Owner,
+}
+
 /// Creates `directory` and every missing ancestor, each new entry durable as
 /// `durability` asks once it returns.
 pub fn create_dir_all_synced(durability: WriteDurability, directory: &Path) -> io::Result<()> {
-    create_dir_all_with(directory, |entry_of| durability.sync_directory(entry_of))
+    create_dir_all_with(directory, Access::Inherited, |entry_of| {
+        durability.sync_directory(entry_of)
+    })
+}
+
+/// Creates the directory `path`, reachable as `access` says.
+fn create_dir(path: &Path, access: Access) -> io::Result<()> {
+    let mut builder = std::fs::DirBuilder::new();
+    #[cfg(unix)]
+    if access == Access::Owner {
+        use std::os::unix::fs::DirBuilderExt;
+        builder.mode(0o700);
+    }
+    #[cfg(not(unix))]
+    let _ = access;
+    builder.create(path)
 }
 
 /// Held by each directory creation; see [`create_dir_all_with`].
 static CREATING: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
-/// Creates `directory` and every missing ancestor, calling `sync` on the directory holding
-/// each one it creates. When creating or syncing fails, what it created is removed again, so
-/// a retry creates it and syncs it once more.
+/// Creates `directory` and every missing ancestor, reachable as `access` says, calling `sync`
+/// on the directory holding each one it creates. When creating or syncing fails, what it
+/// created is removed again, so a retry creates it and syncs it once more.
 fn create_dir_all_with(
     directory: &Path,
+    access: Access,
     mut sync: impl FnMut(&Path) -> io::Result<()>,
 ) -> io::Result<()> {
     // One creation at a time, so none relies on a directory another is still settling or
@@ -93,7 +119,7 @@ fn create_dir_all_with(
     // Created one at a time, so a failure removes only the directories this call made.
     let mut made = Vec::new();
     let created = missing.iter().rev().try_for_each(|missing| {
-        match std::fs::create_dir(missing) {
+        match create_dir(missing, access) {
             Ok(()) => made.push(*missing),
             // Another caller made it meanwhile, and may not have synced its entry yet.
             Err(error) if error.kind() == io::ErrorKind::AlreadyExists => {}
@@ -144,18 +170,37 @@ pub fn staged_by_write(name: &str) -> bool {
 /// returns, with any directory it had to create. A file it replaces keeps its
 /// permissions.
 pub fn write_synced(durability: WriteDurability, path: &Path, bytes: &[u8]) -> anyhow::Result<()> {
+    write_synced_as(durability, path, bytes, Access::Inherited)
+}
+
+/// [`write_synced`], with the file and any directory it creates reachable as `access` says.
+pub(crate) fn write_synced_as(
+    durability: WriteDurability,
+    path: &Path,
+    bytes: &[u8],
+    access: Access,
+) -> anyhow::Result<()> {
     use std::io::Write;
     if let Some(directory) = parent(path) {
-        create_dir_all_synced(durability, directory)?;
+        create_dir_all_with(directory, access, |entry_of| {
+            durability.sync_directory(entry_of)
+        })?;
     }
     let tmp = path.with_extension(format!("{}.tmp", uuid::Uuid::new_v4()));
-    let mut file = std::fs::OpenOptions::new()
-        .write(true)
-        .create_new(true)
-        .open(&tmp)?;
+    let mut options = std::fs::OpenOptions::new();
+    options.write(true).create_new(true);
+    #[cfg(unix)]
+    if access == Access::Owner {
+        use std::os::unix::fs::OpenOptionsExt;
+        options.mode(0o600);
+    }
+    let mut file = options.open(&tmp)?;
     let staged = (|| -> io::Result<()> {
         match std::fs::metadata(path) {
-            Ok(replaced) => file.set_permissions(replaced.permissions())?,
+            Ok(replaced) if access == Access::Inherited => {
+                file.set_permissions(replaced.permissions())?
+            }
+            Ok(_) => {}
             Err(error) if error.kind() == io::ErrorKind::NotFound => {}
             Err(error) => return Err(error),
         }
@@ -233,6 +278,34 @@ mod tests {
 
     #[cfg(unix)]
     #[test]
+    fn an_owner_write_creates_and_replaces_only_what_its_owner_can_reach() {
+        use std::os::unix::fs::PermissionsExt;
+        let mode = |path: &std::path::Path| {
+            std::fs::metadata(path)
+                .expect("metadata")
+                .permissions()
+                .mode()
+                & 0o777
+        };
+        let dir = tempfile::tempdir().expect("tempdir");
+        let path = dir.path().join("a/b/record");
+        let write = |bytes: &[u8]| {
+            super::write_synced_as(WriteDurability::System, &path, bytes, super::Access::Owner)
+                .expect("write")
+        };
+        write(b"first");
+        assert_eq!(mode(&path) & 0o077, 0);
+        for created in ["a", "a/b"] {
+            assert_eq!(mode(&dir.path().join(created)) & 0o077, 0, "{created}");
+        }
+        std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o644)).expect("chmod");
+        write(b"second");
+        assert_eq!(std::fs::read(&path).expect("read"), b"second");
+        assert_eq!(mode(&path) & 0o077, 0);
+    }
+
+    #[cfg(unix)]
+    #[test]
     fn a_replaced_file_keeps_its_permissions() {
         use std::os::unix::fs::PermissionsExt;
         let dir = tempfile::tempdir().expect("tempdir");
@@ -254,13 +327,14 @@ mod tests {
     fn a_creation_that_cannot_be_synced_is_undone_and_made_again_on_retry() {
         let dir = tempfile::tempdir().expect("tempdir");
         let nested = dir.path().join("a/b/c");
-        let failed =
-            super::create_dir_all_with(&nested, |_| Err(std::io::Error::other("the sync failed")));
+        let failed = super::create_dir_all_with(&nested, super::Access::Inherited, |_| {
+            Err(std::io::Error::other("the sync failed"))
+        });
         assert!(failed.is_err());
         assert!(!dir.path().join("a").exists(), "the creation is undone");
 
         let mut synced = Vec::new();
-        super::create_dir_all_with(&nested, |entry_of| {
+        super::create_dir_all_with(&nested, super::Access::Inherited, |entry_of| {
             synced.push(entry_of.to_path_buf());
             Ok(())
         })
@@ -299,7 +373,7 @@ mod tests {
         let nested = dir.path().join("a/b/c");
         let theirs = dir.path().join("a/b");
         let mut calls = 0;
-        let failed = super::create_dir_all_with(&nested, |_| {
+        let failed = super::create_dir_all_with(&nested, super::Access::Inherited, |_| {
             calls += 1;
             if calls == 1 {
                 std::fs::create_dir(&theirs).expect("another caller makes a/b");
@@ -319,7 +393,7 @@ mod tests {
         let nested = dir.path().join("a/b/c");
         let theirs = dir.path().join("a/b");
         let mut synced = Vec::new();
-        super::create_dir_all_with(&nested, |entry_of| {
+        super::create_dir_all_with(&nested, super::Access::Inherited, |entry_of| {
             if synced.is_empty() {
                 std::fs::create_dir(&theirs).expect("another caller makes a/b");
             }
@@ -343,11 +417,11 @@ mod tests {
         let second = dir.path().join("a/b");
         let waiting = std::thread::scope(|scope| {
             let mut waiting = None;
-            let failed = super::create_dir_all_with(&first, |_| {
+            let failed = super::create_dir_all_with(&first, super::Access::Inherited, |_| {
                 let second = second.clone();
                 waiting = Some(scope.spawn(move || {
                     let mut synced = Vec::new();
-                    super::create_dir_all_with(&second, |entry_of| {
+                    super::create_dir_all_with(&second, super::Access::Inherited, |entry_of| {
                         synced.push(entry_of.to_path_buf());
                         Ok(())
                     })

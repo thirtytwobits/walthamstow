@@ -218,7 +218,8 @@ const RECORD_SUFFIX: &str = ".record";
 /// store owns. A record's file is named by the SHA-256 of its key's names and holds those names
 /// as its first line, then the record's bytes. A write stages a file beside the record and
 /// renames it into place, so a reader never sees a part of one. A record's tag is the SHA-256
-/// of its bytes.
+/// of its bytes. On Unix, every record a write leaves, and every directory it creates, is its
+/// owner's alone.
 pub struct FileLocalStore {
     /// The canonical data directory.
     data_dir: PathBuf,
@@ -441,8 +442,13 @@ impl LocalStore for FileLocalStore {
         if held.as_ref() != expected {
             return Ok(None);
         }
-        crate::durability::write_synced(self.durability, &path, &Self::encode(key, bytes))
-            .map_err(|error| internal(&path, error))?;
+        crate::durability::write_synced_as(
+            self.durability,
+            &path,
+            &Self::encode(key, bytes),
+            crate::durability::Access::Owner,
+        )
+        .map_err(|error| internal(&path, error))?;
         Ok(Some(digest_tag(bytes)))
     }
 
@@ -705,6 +711,35 @@ mod tests {
         let file = std::fs::read(files[0].path()).unwrap();
         assert!(file.starts_with(br#"["operation","journal.json"]"#));
         assert!(file.ends_with(b"held"));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_record_and_the_directories_a_write_creates_are_the_owner_s_alone() {
+        use std::os::unix::fs::PermissionsExt;
+        let mode = |path: &Path| std::fs::metadata(path).unwrap().permissions().mode() & 0o777;
+        let data = tempfile::tempdir().unwrap();
+        let store = FileLocalStore::open(data.path(), WriteDurability::System).unwrap();
+        let written = store
+            .compare_and_swap(&key(&["credential"]), None, b"first")
+            .unwrap()
+            .unwrap();
+        let file = JOURNAL
+            .root(data.path())
+            .join(FileLocalStore::file_name(&key(&["credential"])));
+        for path in [
+            data.path().join("journals"),
+            JOURNAL.root(data.path()),
+            file.clone(),
+        ] {
+            assert_eq!(mode(&path) & 0o077, 0, "{}", path.display());
+        }
+        std::fs::set_permissions(&file, std::fs::Permissions::from_mode(0o644)).unwrap();
+        store
+            .compare_and_swap(&key(&["credential"]), Some(&written), b"second")
+            .unwrap()
+            .unwrap();
+        assert_eq!(mode(&file) & 0o077, 0);
     }
 
     #[test]

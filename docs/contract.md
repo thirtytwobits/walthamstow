@@ -148,7 +148,9 @@ upgrade works in `journals/workspace-upgrades/<operation id>/`:
 - `original/` holds the files they replace
 - `operation.json` authorises publication
 
-A publication names each file once, compared case-folded, by normal components only. Every
+A publication names each file once, compared case-folded, by normal components only. An upgrade
+naming two files that differ only in case is refused with the reason `upgrade_paths_collide`
+before anything is written. Every
 replacement is checked against the hash its live file held when staged before any file is
 written.
 
@@ -182,6 +184,8 @@ operation declares for it.
 `workspace.upgrade` runs one registered upgrade over each document whose format, as the product
 tells it, that upgrade upgrades:
 
+- While an upgrade a journal authorises is still to finish, every upgrade is refused with
+  `upgrade_pending`, its preview included, until recovery finishes it.
 - A document in a format newer than the product knows refuses every upgrade with
   `document_newer`.
 - The upgrade replaces documents only while each holds what the upgrade read. Otherwise nothing is

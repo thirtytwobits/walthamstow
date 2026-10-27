@@ -10,7 +10,10 @@
   the `Upgrade`s it registers.
 - `publication::publish` refuses a file changed after staging with the reason `upgrade_stale`.
   `publication::publish_first` and `workspace::finish_first` publish an upgrade for the first
-  time, refusing a file already at its target too.
+  time, refusing a file already at its target too. `publication::check_publication_paths`
+  refuses two paths that differ only in case with the reason `upgrade_paths_collide`, and
+  `workspace::authorise` refuses them before writing. `workspace::pending` names each upgrade a
+  journal authorises that is still to finish.
   `workspace::retire` removes a completed upgrade's directory, and `workspace::abandon` an
   upgrade whose first publication was refused, its journal first.
 - Breaking: `workspace::recover` returns a `Recovery`: the upgrades it published, and those whose

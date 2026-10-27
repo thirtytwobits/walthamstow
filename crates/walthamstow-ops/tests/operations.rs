@@ -532,6 +532,26 @@ async fn recovery_finishes_an_upgrade_a_stop_interrupted() {
             false,
         )
     };
+    for preview in [true, false] {
+        let refused = set
+            .call(
+                &all,
+                operator(),
+                "walthamstow.workspace.upgrade",
+                json!({ "upgrade": UPGRADE }),
+                RecordSink::default(),
+                Cancellation::new(),
+                preview,
+            )
+            .await
+            .unwrap_err();
+        assert_eq!(refused.code, codes::UPGRADE_PENDING);
+        assert_eq!(refused.category, Category::Conflict);
+        assert_eq!(
+            refused.details.unwrap()["operation_ids"],
+            json!(["interrupted"])
+        );
+    }
     let recovered = call("walthamstow.workspace.recover").await.unwrap();
     assert_eq!(
         recovered.result.unwrap(),
@@ -628,6 +648,30 @@ fn a_publication_is_refused_when_a_document_already_holds_its_target() {
         &|path, bytes| write_synced(DURABILITY, &root.path().join(path), bytes).unwrap(),
         &|path| std::fs::read(root.path().join(path)).ok(),
     );
+}
+
+// Only Linux's file systems commonly keep names that differ only in case apart.
+#[cfg(target_os = "linux")]
+#[tokio::test]
+async fn an_upgrade_of_documents_that_differ_only_in_case_is_refused_unjournalled() {
+    let rig = files();
+    (rig.write)("notes/Old.json", &note(1, "upper"));
+    (rig.write)("notes/old.json", &note(1, "lower"));
+    let refused = rig
+        .call(
+            "walthamstow.workspace.upgrade",
+            json!({ "upgrade": UPGRADE }),
+        )
+        .await
+        .unwrap_err();
+    assert_eq!(refused.code, codes::UPGRADE_PATHS_COLLIDE);
+    assert_eq!(refused.category, Category::Conflict);
+    let recovered = rig
+        .call("walthamstow.workspace.recover", json!({}))
+        .await
+        .unwrap();
+    assert_eq!(recovered, json!({ "finished": [], "discarded": [] }));
+    assert_eq!((rig.read)("notes/old.json").unwrap(), note(1, "lower"));
 }
 
 // Windows separates components with a backslash, so no name holds one.

@@ -3,6 +3,7 @@ pub mod walthamstow_ops::codes
 pub const walthamstow_ops::codes::ALL: &[&str]
 pub const walthamstow_ops::codes::DOCUMENT_NEWER: &str
 pub const walthamstow_ops::codes::UPGRADE_FAILED: &str
+pub const walthamstow_ops::codes::UPGRADE_PATHS_COLLIDE: &str
 pub const walthamstow_ops::codes::UPGRADE_PENDING: &str
 pub const walthamstow_ops::codes::UPGRADE_STALE: &str
 pub const walthamstow_ops::codes::UPGRADE_UNKNOWN: &str
@@ -2098,6 +2099,7 @@ impl core::fmt::Debug for walthamstow_ops::workspace::FileWorkspace
 pub fn walthamstow_ops::workspace::FileWorkspace::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl walthamstow_ops::workspace::Workspace for walthamstow_ops::workspace::FileWorkspace
 pub fn walthamstow_ops::workspace::FileWorkspace::documents(&self, entity: &str) -> anyhow::Result<alloc::vec::Vec<(alloc::string::String, alloc::vec::Vec<u8>)>>
+pub fn walthamstow_ops::workspace::FileWorkspace::pending(&self) -> anyhow::Result<alloc::vec::Vec<alloc::string::String>>
 pub fn walthamstow_ops::workspace::FileWorkspace::publish(&self, operation_id: &str, sources: &alloc::collections::btree::map::BTreeMap<alloc::string::String, alloc::vec::Vec<u8>>, changes: &alloc::collections::btree::map::BTreeMap<alloc::string::String, alloc::vec::Vec<u8>>) -> anyhow::Result<()>
 pub fn walthamstow_ops::workspace::FileWorkspace::recover(&self) -> anyhow::Result<walthamstow_upgrades::workspace::Recovery>
 pub fn walthamstow_ops::workspace::FileWorkspace::root(&self) -> alloc::string::String
@@ -2206,6 +2208,7 @@ impl core::fmt::Debug for walthamstow_ops::workspace::MemoryWorkspace
 pub fn walthamstow_ops::workspace::MemoryWorkspace::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl walthamstow_ops::workspace::Workspace for walthamstow_ops::workspace::MemoryWorkspace
 pub fn walthamstow_ops::workspace::MemoryWorkspace::documents(&self, entity: &str) -> anyhow::Result<alloc::vec::Vec<(alloc::string::String, alloc::vec::Vec<u8>)>>
+pub fn walthamstow_ops::workspace::MemoryWorkspace::pending(&self) -> anyhow::Result<alloc::vec::Vec<alloc::string::String>>
 pub fn walthamstow_ops::workspace::MemoryWorkspace::publish(&self, _operation_id: &str, sources: &alloc::collections::btree::map::BTreeMap<alloc::string::String, alloc::vec::Vec<u8>>, changes: &alloc::collections::btree::map::BTreeMap<alloc::string::String, alloc::vec::Vec<u8>>) -> anyhow::Result<()>
 pub fn walthamstow_ops::workspace::MemoryWorkspace::recover(&self) -> anyhow::Result<walthamstow_upgrades::workspace::Recovery>
 pub fn walthamstow_ops::workspace::MemoryWorkspace::root(&self) -> alloc::string::String
@@ -2306,16 +2309,19 @@ impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_ops::workspace::MemoryWork
 pub fn walthamstow_ops::workspace::MemoryWorkspace::vzip(self) -> V
 pub trait walthamstow_ops::workspace::Workspace: core::marker::Send + core::marker::Sync
 pub fn walthamstow_ops::workspace::Workspace::documents(&self, entity: &str) -> anyhow::Result<alloc::vec::Vec<(alloc::string::String, alloc::vec::Vec<u8>)>>
+pub fn walthamstow_ops::workspace::Workspace::pending(&self) -> anyhow::Result<alloc::vec::Vec<alloc::string::String>>
 pub fn walthamstow_ops::workspace::Workspace::publish(&self, operation_id: &str, sources: &alloc::collections::btree::map::BTreeMap<alloc::string::String, alloc::vec::Vec<u8>>, changes: &alloc::collections::btree::map::BTreeMap<alloc::string::String, alloc::vec::Vec<u8>>) -> anyhow::Result<()>
 pub fn walthamstow_ops::workspace::Workspace::recover(&self) -> anyhow::Result<walthamstow_upgrades::workspace::Recovery>
 pub fn walthamstow_ops::workspace::Workspace::root(&self) -> alloc::string::String
 impl walthamstow_ops::workspace::Workspace for walthamstow_ops::workspace::FileWorkspace
 pub fn walthamstow_ops::workspace::FileWorkspace::documents(&self, entity: &str) -> anyhow::Result<alloc::vec::Vec<(alloc::string::String, alloc::vec::Vec<u8>)>>
+pub fn walthamstow_ops::workspace::FileWorkspace::pending(&self) -> anyhow::Result<alloc::vec::Vec<alloc::string::String>>
 pub fn walthamstow_ops::workspace::FileWorkspace::publish(&self, operation_id: &str, sources: &alloc::collections::btree::map::BTreeMap<alloc::string::String, alloc::vec::Vec<u8>>, changes: &alloc::collections::btree::map::BTreeMap<alloc::string::String, alloc::vec::Vec<u8>>) -> anyhow::Result<()>
 pub fn walthamstow_ops::workspace::FileWorkspace::recover(&self) -> anyhow::Result<walthamstow_upgrades::workspace::Recovery>
 pub fn walthamstow_ops::workspace::FileWorkspace::root(&self) -> alloc::string::String
 impl walthamstow_ops::workspace::Workspace for walthamstow_ops::workspace::MemoryWorkspace
 pub fn walthamstow_ops::workspace::MemoryWorkspace::documents(&self, entity: &str) -> anyhow::Result<alloc::vec::Vec<(alloc::string::String, alloc::vec::Vec<u8>)>>
+pub fn walthamstow_ops::workspace::MemoryWorkspace::pending(&self) -> anyhow::Result<alloc::vec::Vec<alloc::string::String>>
 pub fn walthamstow_ops::workspace::MemoryWorkspace::publish(&self, _operation_id: &str, sources: &alloc::collections::btree::map::BTreeMap<alloc::string::String, alloc::vec::Vec<u8>>, changes: &alloc::collections::btree::map::BTreeMap<alloc::string::String, alloc::vec::Vec<u8>>) -> anyhow::Result<()>
 pub fn walthamstow_ops::workspace::MemoryWorkspace::recover(&self) -> anyhow::Result<walthamstow_upgrades::workspace::Recovery>
 pub fn walthamstow_ops::workspace::MemoryWorkspace::root(&self) -> alloc::string::String
@@ -2693,6 +2699,7 @@ impl core::fmt::Debug for walthamstow_ops::workspace::FileWorkspace
 pub fn walthamstow_ops::workspace::FileWorkspace::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl walthamstow_ops::workspace::Workspace for walthamstow_ops::workspace::FileWorkspace
 pub fn walthamstow_ops::workspace::FileWorkspace::documents(&self, entity: &str) -> anyhow::Result<alloc::vec::Vec<(alloc::string::String, alloc::vec::Vec<u8>)>>
+pub fn walthamstow_ops::workspace::FileWorkspace::pending(&self) -> anyhow::Result<alloc::vec::Vec<alloc::string::String>>
 pub fn walthamstow_ops::workspace::FileWorkspace::publish(&self, operation_id: &str, sources: &alloc::collections::btree::map::BTreeMap<alloc::string::String, alloc::vec::Vec<u8>>, changes: &alloc::collections::btree::map::BTreeMap<alloc::string::String, alloc::vec::Vec<u8>>) -> anyhow::Result<()>
 pub fn walthamstow_ops::workspace::FileWorkspace::recover(&self) -> anyhow::Result<walthamstow_upgrades::workspace::Recovery>
 pub fn walthamstow_ops::workspace::FileWorkspace::root(&self) -> alloc::string::String
@@ -3119,6 +3126,7 @@ impl core::fmt::Debug for walthamstow_ops::workspace::MemoryWorkspace
 pub fn walthamstow_ops::workspace::MemoryWorkspace::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl walthamstow_ops::workspace::Workspace for walthamstow_ops::workspace::MemoryWorkspace
 pub fn walthamstow_ops::workspace::MemoryWorkspace::documents(&self, entity: &str) -> anyhow::Result<alloc::vec::Vec<(alloc::string::String, alloc::vec::Vec<u8>)>>
+pub fn walthamstow_ops::workspace::MemoryWorkspace::pending(&self) -> anyhow::Result<alloc::vec::Vec<alloc::string::String>>
 pub fn walthamstow_ops::workspace::MemoryWorkspace::publish(&self, _operation_id: &str, sources: &alloc::collections::btree::map::BTreeMap<alloc::string::String, alloc::vec::Vec<u8>>, changes: &alloc::collections::btree::map::BTreeMap<alloc::string::String, alloc::vec::Vec<u8>>) -> anyhow::Result<()>
 pub fn walthamstow_ops::workspace::MemoryWorkspace::recover(&self) -> anyhow::Result<walthamstow_upgrades::workspace::Recovery>
 pub fn walthamstow_ops::workspace::MemoryWorkspace::root(&self) -> alloc::string::String
@@ -3332,16 +3340,19 @@ impl<F> walthamstow_ops::formats::Upgrade for F where F: core::ops::function::Fn
 pub fn F::apply(&self, entity: &str, path: &str, bytes: &[u8]) -> core::result::Result<alloc::vec::Vec<u8>, alloc::string::String>
 pub trait walthamstow_ops::Workspace: core::marker::Send + core::marker::Sync
 pub fn walthamstow_ops::Workspace::documents(&self, entity: &str) -> anyhow::Result<alloc::vec::Vec<(alloc::string::String, alloc::vec::Vec<u8>)>>
+pub fn walthamstow_ops::Workspace::pending(&self) -> anyhow::Result<alloc::vec::Vec<alloc::string::String>>
 pub fn walthamstow_ops::Workspace::publish(&self, operation_id: &str, sources: &alloc::collections::btree::map::BTreeMap<alloc::string::String, alloc::vec::Vec<u8>>, changes: &alloc::collections::btree::map::BTreeMap<alloc::string::String, alloc::vec::Vec<u8>>) -> anyhow::Result<()>
 pub fn walthamstow_ops::Workspace::recover(&self) -> anyhow::Result<walthamstow_upgrades::workspace::Recovery>
 pub fn walthamstow_ops::Workspace::root(&self) -> alloc::string::String
 impl walthamstow_ops::workspace::Workspace for walthamstow_ops::workspace::FileWorkspace
 pub fn walthamstow_ops::workspace::FileWorkspace::documents(&self, entity: &str) -> anyhow::Result<alloc::vec::Vec<(alloc::string::String, alloc::vec::Vec<u8>)>>
+pub fn walthamstow_ops::workspace::FileWorkspace::pending(&self) -> anyhow::Result<alloc::vec::Vec<alloc::string::String>>
 pub fn walthamstow_ops::workspace::FileWorkspace::publish(&self, operation_id: &str, sources: &alloc::collections::btree::map::BTreeMap<alloc::string::String, alloc::vec::Vec<u8>>, changes: &alloc::collections::btree::map::BTreeMap<alloc::string::String, alloc::vec::Vec<u8>>) -> anyhow::Result<()>
 pub fn walthamstow_ops::workspace::FileWorkspace::recover(&self) -> anyhow::Result<walthamstow_upgrades::workspace::Recovery>
 pub fn walthamstow_ops::workspace::FileWorkspace::root(&self) -> alloc::string::String
 impl walthamstow_ops::workspace::Workspace for walthamstow_ops::workspace::MemoryWorkspace
 pub fn walthamstow_ops::workspace::MemoryWorkspace::documents(&self, entity: &str) -> anyhow::Result<alloc::vec::Vec<(alloc::string::String, alloc::vec::Vec<u8>)>>
+pub fn walthamstow_ops::workspace::MemoryWorkspace::pending(&self) -> anyhow::Result<alloc::vec::Vec<alloc::string::String>>
 pub fn walthamstow_ops::workspace::MemoryWorkspace::publish(&self, _operation_id: &str, sources: &alloc::collections::btree::map::BTreeMap<alloc::string::String, alloc::vec::Vec<u8>>, changes: &alloc::collections::btree::map::BTreeMap<alloc::string::String, alloc::vec::Vec<u8>>) -> anyhow::Result<()>
 pub fn walthamstow_ops::workspace::MemoryWorkspace::recover(&self) -> anyhow::Result<walthamstow_upgrades::workspace::Recovery>
 pub fn walthamstow_ops::workspace::MemoryWorkspace::root(&self) -> alloc::string::String

@@ -411,7 +411,22 @@ impl WalthamstowOps {
         })
     }
 
+    /// Runs, or previews, the upgrade `input` names. While an upgrade a journal authorises is
+    /// still to finish, every upgrade is refused until recovery finishes it, since a document
+    /// that upgrade published may not yet be durable.
     fn run_upgrade(&self, input: UpgradeRequest, preview: bool) -> Result<UpgradeResult, Refusal> {
+        let pending = self
+            .workspace
+            .pending()
+            .map_err(|error| codes::from_error(error, Evidence::Completed))?;
+        if !pending.is_empty() {
+            let mut refusal = codes::refusal(
+                codes::UPGRADE_PENDING,
+                "Upgrades are journalled and not finished. Recover the workspace first.",
+            );
+            refusal.details = Some(serde_json::json!({ "operation_ids": pending }));
+            return Err(refusal);
+        }
         let plan = self.plan(&input.upgrade)?;
         if input
             .expected_revision

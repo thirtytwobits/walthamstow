@@ -11,7 +11,9 @@ use std::path::{Path, PathBuf};
 use std::sync::{Mutex, PoisonError};
 use walthamstow_kernel::durability::{write_synced, WriteDurability};
 use walthamstow_kernel::KernelError;
-use walthamstow_upgrades::publication::{check_relative_path, read_regular};
+use walthamstow_upgrades::publication::{
+    check_publication_paths, check_relative_path, read_regular,
+};
 use walthamstow_upgrades::workspace::{self as upgrades, Recovery};
 use walthamstow_workspace::documents::{list_documents, supported_document};
 
@@ -27,14 +29,19 @@ pub trait Workspace: Send + Sync {
     /// Replaces each document `changes` names with its bytes there, as the upgrade
     /// `operation_id`. Every document must still hold what `sources` says it held when the
     /// upgrade read it, or nothing is replaced and the upgrade is refused with
-    /// [`codes::UPGRADE_STALE`]. An unfinished upgrade journalled under `operation_id` refuses
-    /// it with [`codes::UPGRADE_PENDING`].
+    /// [`codes::UPGRADE_STALE`]. A workspace of files refuses two documents that differ only in
+    /// case with [`codes::UPGRADE_PATHS_COLLIDE`]. An unfinished upgrade journalled under
+    /// `operation_id` refuses it with [`codes::UPGRADE_PENDING`].
     fn publish(
         &self,
         operation_id: &str,
         sources: &BTreeMap<String, Vec<u8>>,
         changes: &BTreeMap<String, Vec<u8>>,
     ) -> anyhow::Result<()>;
+
+    /// The operation id of each upgrade a journal authorises that is still to finish, in id
+    /// order. [`Workspace::recover`] finishes them.
+    fn pending(&self) -> anyhow::Result<Vec<String>>;
 
     /// Finishes each upgrade a journal authorised and discards staging no journal authorises.
     fn recover(&self) -> anyhow::Result<Recovery>;
@@ -153,6 +160,7 @@ impl Workspace for FileWorkspace {
     ) -> anyhow::Result<()> {
         let sources = by_path(sources)?;
         let changes = by_path(changes)?;
+        check_publication_paths(changes.keys().map(PathBuf::as_path))?;
         let work = self.work(operation_id)?;
         let prepared = upgrades::prepared_dir(&work);
         for (path, bytes) in &changes {
@@ -172,6 +180,10 @@ impl Workspace for FileWorkspace {
             }
         }
         finished
+    }
+
+    fn pending(&self) -> anyhow::Result<Vec<String>> {
+        upgrades::pending(&self.data_dir)
     }
 
     fn recover(&self) -> anyhow::Result<Recovery> {
@@ -256,6 +268,10 @@ impl Workspace for MemoryWorkspace {
             documents.insert(path.clone(), bytes.clone());
         }
         Ok(())
+    }
+
+    fn pending(&self) -> anyhow::Result<Vec<String>> {
+        Ok(Vec::new())
     }
 
     fn recover(&self) -> anyhow::Result<Recovery> {

@@ -48,6 +48,27 @@ pub fn check_relative_path(path: &Path) -> Result<()> {
     Ok(())
 }
 
+/// Refuses `paths` unless [`check_relative_path`] accepts each and no two differ only in case.
+/// Two that do are refused as a conflict with the reason
+/// [`UPGRADE_PATHS_COLLIDE`](crate::reason_codes::UPGRADE_PATHS_COLLIDE), naming the second as
+/// `path`, since a file system that folds case holds them as one file.
+pub fn check_publication_paths<'a>(paths: impl IntoIterator<Item = &'a Path>) -> Result<()> {
+    let mut named = std::collections::BTreeSet::new();
+    for path in paths {
+        check_relative_path(path)?;
+        if !named.insert(path.to_string_lossy().to_lowercase()) {
+            return Err(KernelError::conflict(format!(
+                "{} is named twice, compared case-folded, in one publication.",
+                path.display()
+            ))
+            .with_data(serde_json::json!({ "path": path }))
+            .with_reason(crate::reason_codes::UPGRADE_PATHS_COLLIDE)
+            .into());
+        }
+    }
+    Ok(())
+}
+
 /// The bytes of the regular file at `path`. Anything else there is refused unopened.
 pub fn read_regular(path: &Path) -> Result<Vec<u8>> {
     if !std::fs::symlink_metadata(path)?.file_type().is_file() {
@@ -129,17 +150,11 @@ fn publish_as(
             staged.display()
         );
     }
-    let mut named = std::collections::BTreeSet::new();
-    for replacement in replacements {
-        check_relative_path(&replacement.path)?;
-        // A file system that folds case gives paths differing only in case one file.
-        if !named.insert(replacement.path.to_string_lossy().to_lowercase()) {
-            bail!(
-                "{} is replaced more than once in one publication.",
-                replacement.path.display()
-            );
-        }
-    }
+    check_publication_paths(
+        replacements
+            .iter()
+            .map(|replacement| replacement.path.as_path()),
+    )?;
     let mut publications = Vec::new();
     for replacement in replacements {
         refuse_links(live, &replacement.path)?;

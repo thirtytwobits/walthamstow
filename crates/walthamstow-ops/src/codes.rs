@@ -28,8 +28,11 @@ codes! {
     UPGRADE_UNKNOWN = "upgrade_unknown", NotFound;
     /// A document no longer holds what the upgrade read, or what a preview reported.
     UPGRADE_STALE = walthamstow_upgrades::reason_codes::UPGRADE_STALE, Conflict;
-    /// An upgrade journalled under the same operation id is still to finish.
+    /// An upgrade a journal authorises is still to finish.
     UPGRADE_PENDING = "upgrade_pending", Conflict;
+    /// Two documents an upgrade changes differ only in case, so a file system that folds case
+    /// holds them as one.
+    UPGRADE_PATHS_COLLIDE = walthamstow_upgrades::reason_codes::UPGRADE_PATHS_COLLIDE, Conflict;
     /// A product's upgrade could not upgrade a document.
     UPGRADE_FAILED = "upgrade_failed", Internal;
     /// A document is in a format newer than this engine knows.

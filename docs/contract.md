@@ -155,7 +155,9 @@ written.
 A file that holds neither its source nor its target refuses the publication with the reason
 `upgrade_stale`. An upgrade's first publication also refuses a file already at its target;
 recovery accepts it, since an interrupted publication may have written it. A completed upgrade's directory may be removed, and so may that of an upgrade
-whose first publication was refused before writing a file.
+whose first publication was refused before writing a file. Removing the latter removes its journal
+durably before the files it names, so a removal that stops midway leaves staging that recovery
+discards.
 
 Recovery publishes each upgrade its journal authorises and discards staging no journal
 authorises. It reports both by operation id, and refuses an upgrade's directory whose name is not
@@ -188,6 +190,9 @@ tells it, that upgrade upgrades:
   refused with `upgrade_stale` unless its documents still hold what the preview read.
 - Over files, the upgrade is journalled as an upgrade's operation: `<upgrade>-<revision>`, the
   revision cut to 16 digits.
+
+Over files, a document is named by its path relative to the root, its components joined by `/`.
+A document whose name holds a backslash is refused, since that path would name another file.
 
 `journals.list` lists the records of the publication journal and of each journal the product
 names.

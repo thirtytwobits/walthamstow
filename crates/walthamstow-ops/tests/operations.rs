@@ -630,6 +630,33 @@ fn a_publication_is_refused_when_a_document_already_holds_its_target() {
     );
 }
 
+// Windows separates components with a backslash, so no name holds one.
+#[cfg(unix)]
+#[tokio::test]
+async fn a_document_named_with_a_backslash_is_refused_rather_than_named_as_another() {
+    let rig = files();
+    rig.seed();
+    (rig.write)("notes/a\\b.json", &note(1, "backslash"));
+    for name in [
+        "walthamstow.workspace.status",
+        "walthamstow.workspace.documents",
+    ] {
+        let refused = rig.call(name, json!({})).await.unwrap_err();
+        assert_eq!(refused.code, codes::WORKSPACE_FAILURE, "{name}");
+        assert!(refused.message.contains("backslash"), "{}", refused.message);
+    }
+    let refused = rig
+        .call(
+            "walthamstow.workspace.upgrade",
+            json!({ "upgrade": UPGRADE }),
+        )
+        .await
+        .unwrap_err();
+    assert_eq!(refused.code, codes::WORKSPACE_FAILURE);
+    assert_eq!((rig.read)("notes/a\\b.json").unwrap(), note(1, "backslash"));
+    assert!((rig.read)("notes/a/b.json").is_none());
+}
+
 #[test]
 fn an_upgrade_id_outside_the_alphabet_or_registered_twice_is_refused() {
     let ops = || {

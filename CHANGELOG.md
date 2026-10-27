@@ -12,7 +12,7 @@
   `publication::publish_first` and `workspace::finish_first` publish an upgrade for the first
   time, refusing a file already at its target too.
   `workspace::retire` removes a completed upgrade's directory, and `workspace::abandon` an
-  upgrade whose first publication was refused.
+  upgrade whose first publication was refused, its journal first.
 - Breaking: `workspace::recover` returns a `Recovery`: the upgrades it published, and those whose
   staging it discarded, by operation id. It refuses an upgrade's directory whose name is not
   UTF-8.

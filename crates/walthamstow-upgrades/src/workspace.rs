@@ -246,9 +246,22 @@ pub fn retire(work: &Path) -> Result<bool> {
 
 /// Removes the directory `work` of an authorised upgrade whose [`finish_first`] refused, which
 /// wrote no file, so recovery does not try it again. An upgrade a publication has begun to
-/// write is finished by [`recover`], never abandoned.
-pub fn abandon(work: &Path) -> Result<()> {
+/// write is finished by [`recover`], never abandoned. The journal is removed, durably, before
+/// the files it names, so an abandonment that stops midway leaves staging no journal
+/// authorises, which recovery discards.
+pub fn abandon(durability: WriteDurability, work: &Path) -> Result<()> {
+    disarm(durability, work)?;
     std::fs::remove_dir_all(work)?;
+    Ok(())
+}
+
+/// Removes the journal that authorises the upgrade in `work`, durably.
+fn disarm(durability: WriteDurability, work: &Path) -> Result<()> {
+    match std::fs::remove_file(work.join(JOURNAL_FILE)) {
+        Err(error) if error.kind() != std::io::ErrorKind::NotFound => return Err(error.into()),
+        _ => {}
+    }
+    durability.sync_directory(work)?;
     Ok(())
 }
 
@@ -403,6 +416,33 @@ mod tests {
         .unwrap();
         assert!(!retire(&unjournalled).unwrap());
         assert!(unjournalled.exists());
+    }
+
+    #[test]
+    fn an_abandonment_that_stops_after_disarming_its_journal_is_discarded_by_recovery() {
+        let workspace = tempfile::tempdir().unwrap();
+        let data = tempfile::tempdir().unwrap();
+        let path = PathBuf::from("data/first.json");
+        write_synced(DURABILITY, &workspace.path().join(&path), b"edited").unwrap();
+        let work = work_dir(data.path(), "abandoned").unwrap();
+        write_synced(DURABILITY, &prepared_dir(&work).join(&path), b"upgraded").unwrap();
+        authorise(
+            DURABILITY,
+            &work,
+            "abandoned",
+            &BTreeMap::from([(path.clone(), b"original".to_vec())]),
+            &BTreeMap::from([(path.clone(), b"upgraded".to_vec())]),
+        )
+        .unwrap();
+        disarm(DURABILITY, &work).unwrap();
+        std::fs::remove_dir_all(work.join("original")).unwrap();
+        let recovery = recover(workspace.path(), data.path(), DURABILITY).unwrap();
+        assert_eq!(recovery.discarded, ["abandoned"]);
+        assert!(!work.exists());
+        assert_eq!(
+            std::fs::read(workspace.path().join(&path)).unwrap(),
+            b"edited"
+        );
     }
 
     // APFS and NTFS refuse names that are not UTF-8.

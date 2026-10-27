@@ -13,7 +13,7 @@ use walthamstow_kernel::durability::{write_synced, WriteDurability};
 use walthamstow_kernel::KernelError;
 use walthamstow_upgrades::publication::{check_relative_path, read_regular};
 use walthamstow_upgrades::workspace::{self as upgrades, Recovery};
-use walthamstow_workspace::documents::{list_documents, relative_path, supported_document};
+use walthamstow_workspace::documents::{list_documents, supported_document};
 
 /// The documents a workspace keeps, and the upgrades that replace them.
 pub trait Workspace: Send + Sync {
@@ -94,6 +94,29 @@ impl FileWorkspace {
     }
 }
 
+/// The path of `file` relative to `root`, its components joined by `/`. A component holding a
+/// backslash is refused, since joined it would name another file.
+fn document_path(root: &Path, file: &Path) -> anyhow::Result<String> {
+    let relative = file.strip_prefix(root)?;
+    let mut components = Vec::new();
+    for component in relative.components() {
+        let std::path::Component::Normal(name) = component else {
+            anyhow::bail!("{} does not lie within {}.", file.display(), root.display());
+        };
+        let Some(name) = name.to_str() else {
+            anyhow::bail!("{} is not named in UTF-8.", file.display());
+        };
+        if name.contains('\\') {
+            anyhow::bail!(
+                "{} is named with a backslash, which names another file on Windows.",
+                file.display()
+            );
+        }
+        components.push(name);
+    }
+    Ok(components.join("/"))
+}
+
 /// `documents` keyed by path.
 fn by_path(documents: &BTreeMap<String, Vec<u8>>) -> anyhow::Result<BTreeMap<PathBuf, Vec<u8>>> {
     documents
@@ -118,7 +141,7 @@ impl Workspace for FileWorkspace {
             .ok_or_else(|| anyhow::anyhow!("The workspace keeps no directory for {entity}."))?;
         list_documents(directory)?
             .into_iter()
-            .map(|file| Ok((relative_path(&self.root, &file)?, read_regular(&file)?)))
+            .map(|file| Ok((document_path(&self.root, &file)?, read_regular(&file)?)))
             .collect()
     }
 
@@ -145,7 +168,7 @@ impl Workspace for FileWorkspace {
                 .and_then(KernelError::reason_code)
                 == Some(codes::UPGRADE_STALE)
             {
-                upgrades::abandon(&work)?;
+                upgrades::abandon(self.durability, &work)?;
             }
         }
         finished

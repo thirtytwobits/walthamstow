@@ -362,7 +362,7 @@ impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusi
 impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_upgrades::workspace::Recovery where V: ppv_lite86::types::MultiLane<T>
 pub fn walthamstow_upgrades::workspace::Recovery::vzip(self) -> V
 pub const walthamstow_upgrades::workspace::JOURNAL: walthamstow_kernel::journals::Journal
-pub fn walthamstow_upgrades::workspace::abandon(work: &std::path::Path) -> anyhow::Result<()>
+pub fn walthamstow_upgrades::workspace::abandon(durability: walthamstow_kernel::durability::WriteDurability, work: &std::path::Path) -> anyhow::Result<()>
 pub fn walthamstow_upgrades::workspace::authorise(durability: walthamstow_kernel::durability::WriteDurability, work: &std::path::Path, operation_id: &str, sources: &alloc::collections::btree::map::BTreeMap<std::path::PathBuf, alloc::vec::Vec<u8>>, changes: &alloc::collections::btree::map::BTreeMap<std::path::PathBuf, alloc::vec::Vec<u8>>) -> anyhow::Result<walthamstow_upgrades::workspace::Operation>
 pub fn walthamstow_upgrades::workspace::finish(durability: walthamstow_kernel::durability::WriteDurability, root: &std::path::Path, work: &std::path::Path, operation: &mut walthamstow_upgrades::workspace::Operation) -> anyhow::Result<()>
 pub fn walthamstow_upgrades::workspace::finish_first(durability: walthamstow_kernel::durability::WriteDurability, root: &std::path::Path, work: &std::path::Path, operation: &mut walthamstow_upgrades::workspace::Operation) -> anyhow::Result<()>

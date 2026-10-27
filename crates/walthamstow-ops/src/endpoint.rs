@@ -43,6 +43,16 @@ fn key() -> JournalKey {
     JournalKey::new(JOURNAL, [RECORD]).expect("the record's name is not empty")
 }
 
+/// The record as the store keeps it: with the id of the publication that wrote it, so no two
+/// publications store the same bytes, and no publication retires another's record.
+#[derive(Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct Stored {
+    endpoint: String,
+    token: String,
+    publication: String,
+}
+
 /// The endpoint record a daemon published, until it retires it.
 #[derive(Debug)]
 #[must_use = "a published record stays until it is retired"]
@@ -53,8 +63,15 @@ pub struct Published {
 impl EndpointRecord {
     /// Publishes the record in `store`, over any a daemon that stopped without retiring its
     /// own left there. The daemon holds the workspace, so no other daemon's record is live.
+    /// Each publication is stored under an id of its own, so retiring it never removes a
+    /// record a later publication wrote, the same record included.
     pub fn publish(&self, store: &dyn LocalStore) -> KernelResult<Published> {
-        let bytes = serde_json::to_vec(self).expect("an endpoint record encodes");
+        let stored = Stored {
+            endpoint: self.endpoint.clone(),
+            token: self.token.clone(),
+            publication: uuid::Uuid::new_v4().to_string(),
+        };
+        let bytes = serde_json::to_vec(&stored).expect("an endpoint record encodes");
         let left = store.get(&key())?.map(|(_, tag)| tag);
         let tag = store
             .compare_and_swap(&key(), left.as_ref(), &bytes)?
@@ -69,8 +86,12 @@ impl EndpointRecord {
         store
             .get(&key())?
             .map(|(bytes, _)| {
-                serde_json::from_slice(&bytes).map_err(|error| {
+                let stored: Stored = serde_json::from_slice(&bytes).map_err(|error| {
                     KernelError::internal(format!("The endpoint record cannot be read: {error}"))
+                })?;
+                Ok(Self {
+                    endpoint: stored.endpoint,
+                    token: stored.token,
                 })
             })
             .transpose()

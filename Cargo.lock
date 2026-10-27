@@ -3263,6 +3263,7 @@ dependencies = [
  "serde_json",
  "tempfile",
  "tokio",
+ "uuid",
  "walthamstow-kernel",
  "walthamstow-upgrades",
  "walthamstow-workspace",

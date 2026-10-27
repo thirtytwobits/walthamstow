@@ -63,6 +63,21 @@ fn a_daemon_publishes_over_a_record_a_stopped_daemon_left_and_retires_only_its_o
 }
 
 #[test]
+fn retiring_a_publication_leaves_a_later_one_of_the_same_record() {
+    for (store, _data) in stores() {
+        let left = record(4000).publish(store.as_ref()).unwrap();
+        let published = record(4000).publish(store.as_ref()).unwrap();
+        assert!(!left.retire(store.as_ref()).unwrap());
+        assert_eq!(
+            EndpointRecord::discover(store.as_ref()).unwrap(),
+            Some(record(4000))
+        );
+        assert!(published.retire(store.as_ref()).unwrap());
+        assert_eq!(EndpointRecord::discover(store.as_ref()).unwrap(), None);
+    }
+}
+
+#[test]
 fn a_record_that_cannot_be_read_is_refused() {
     for (store, _data) in stores() {
         let key = JournalKey::new(JOURNAL, ["endpoint"]).unwrap();

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0
+
+- Breaking: `workspace::recover` returns a `Recovery`: the upgrades it published, and those whose
+  staging it discarded, by operation id. It refuses an upgrade's directory whose name is not
+  UTF-8.
+- On Unix, `FileLocalStore` writes each record, and creates each directory, for its owner alone.
+  A record an earlier release left readable by others becomes its owner's alone when next
+  written.
+
 ## 0.2.0
 
 - Breaking: Walthamstow builds on Clerkenwell 0.10.0.

@@ -239,9 +239,128 @@ pub fn walthamstow_upgrades::workspace::Operation::yellow(&self) -> yansi::paint
 impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_upgrades::workspace::Operation where T: ?core::marker::Sized
 impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_upgrades::workspace::Operation where V: ppv_lite86::types::MultiLane<T>
 pub fn walthamstow_upgrades::workspace::Operation::vzip(self) -> V
+pub struct walthamstow_upgrades::workspace::Recovery
+pub walthamstow_upgrades::workspace::Recovery::discarded: alloc::vec::Vec<alloc::string::String>
+pub walthamstow_upgrades::workspace::Recovery::finished: alloc::vec::Vec<alloc::string::String>
+impl core::clone::Clone for walthamstow_upgrades::workspace::Recovery
+pub fn walthamstow_upgrades::workspace::Recovery::clone(&self) -> walthamstow_upgrades::workspace::Recovery
+impl core::cmp::Eq for walthamstow_upgrades::workspace::Recovery
+impl core::cmp::PartialEq for walthamstow_upgrades::workspace::Recovery
+pub fn walthamstow_upgrades::workspace::Recovery::eq(&self, other: &walthamstow_upgrades::workspace::Recovery) -> bool
+impl core::default::Default for walthamstow_upgrades::workspace::Recovery
+pub fn walthamstow_upgrades::workspace::Recovery::default() -> walthamstow_upgrades::workspace::Recovery
+impl core::fmt::Debug for walthamstow_upgrades::workspace::Recovery
+pub fn walthamstow_upgrades::workspace::Recovery::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for walthamstow_upgrades::workspace::Recovery
+impl core::marker::Freeze for walthamstow_upgrades::workspace::Recovery
+impl core::marker::Send for walthamstow_upgrades::workspace::Recovery
+impl core::marker::Sync for walthamstow_upgrades::workspace::Recovery
+impl core::marker::Unpin for walthamstow_upgrades::workspace::Recovery
+impl core::panic::unwind_safe::RefUnwindSafe for walthamstow_upgrades::workspace::Recovery
+impl core::panic::unwind_safe::UnwindSafe for walthamstow_upgrades::workspace::Recovery
+impl<Q, K> equivalent::Equivalent<K> for walthamstow_upgrades::workspace::Recovery where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn walthamstow_upgrades::workspace::Recovery::equivalent(&self, key: &K) -> bool
+impl<Q, K> hashbrown::Equivalent<K> for walthamstow_upgrades::workspace::Recovery where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn walthamstow_upgrades::workspace::Recovery::equivalent(&self, key: &K) -> bool
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for walthamstow_upgrades::workspace::Recovery where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for walthamstow_upgrades::workspace::Recovery where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<T, U> core::convert::Into<U> for walthamstow_upgrades::workspace::Recovery where U: core::convert::From<T>
+pub fn walthamstow_upgrades::workspace::Recovery::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for walthamstow_upgrades::workspace::Recovery where U: core::convert::Into<T>
+pub type walthamstow_upgrades::workspace::Recovery::Error = core::convert::Infallible
+pub fn walthamstow_upgrades::workspace::Recovery::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for walthamstow_upgrades::workspace::Recovery where U: core::convert::TryFrom<T>
+pub type walthamstow_upgrades::workspace::Recovery::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn walthamstow_upgrades::workspace::Recovery::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for walthamstow_upgrades::workspace::Recovery where T: core::clone::Clone
+pub type walthamstow_upgrades::workspace::Recovery::Owned = T
+pub fn walthamstow_upgrades::workspace::Recovery::clone_into(&self, target: &mut T)
+pub fn walthamstow_upgrades::workspace::Recovery::to_owned(&self) -> T
+impl<T> core::any::Any for walthamstow_upgrades::workspace::Recovery where T: 'static + ?core::marker::Sized
+pub fn walthamstow_upgrades::workspace::Recovery::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for walthamstow_upgrades::workspace::Recovery where T: ?core::marker::Sized
+pub fn walthamstow_upgrades::workspace::Recovery::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for walthamstow_upgrades::workspace::Recovery where T: ?core::marker::Sized
+pub fn walthamstow_upgrades::workspace::Recovery::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for walthamstow_upgrades::workspace::Recovery where T: core::clone::Clone
+pub unsafe fn walthamstow_upgrades::workspace::Recovery::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for walthamstow_upgrades::workspace::Recovery
+pub fn walthamstow_upgrades::workspace::Recovery::from(t: T) -> T
+impl<T> dyn_clone::DynClone for walthamstow_upgrades::workspace::Recovery where T: core::clone::Clone
+pub fn walthamstow_upgrades::workspace::Recovery::__clone_box(&self, _: dyn_clone::sealed::Private) -> *mut ()
+impl<T> either::into_either::IntoEither for walthamstow_upgrades::workspace::Recovery
+impl<T> loro_rle::rle_trait::ZeroElement for walthamstow_upgrades::workspace::Recovery where T: core::default::Default
+pub fn walthamstow_upgrades::workspace::Recovery::zero_element() -> T
+impl<T> tracing::instrument::Instrument for walthamstow_upgrades::workspace::Recovery
+impl<T> tracing::instrument::WithSubscriber for walthamstow_upgrades::workspace::Recovery
+impl<T> typenum::type_operators::Same for walthamstow_upgrades::workspace::Recovery
+pub type walthamstow_upgrades::workspace::Recovery::Output = T
+impl<T> yansi::paint::Paint for walthamstow_upgrades::workspace::Recovery where T: ?core::marker::Sized
+pub fn walthamstow_upgrades::workspace::Recovery::attr(&self, value: yansi::attr_quirk::Attribute) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::bg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::bold(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::clear(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::conceal(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::dim(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::fg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::invert(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::italic(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::linger(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::mask(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::on_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::on_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::on_bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::on_bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::on_bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::on_bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::on_bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::on_bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::on_bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::on_bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::on_bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::on_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::on_fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::on_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::on_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::on_primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::on_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::on_rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::on_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::on_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::quirk(&self, value: yansi::attr_quirk::Quirk) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::rapid_blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::resetting(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::strike(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::underline(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::whenever(&self, value: yansi::condition::Condition) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::wrap(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_upgrades::workspace::Recovery::yellow(&self) -> yansi::paint::Painted<&T>
+impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_upgrades::workspace::Recovery where T: ?core::marker::Sized
+impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_upgrades::workspace::Recovery where V: ppv_lite86::types::MultiLane<T>
+pub fn walthamstow_upgrades::workspace::Recovery::vzip(self) -> V
 pub const walthamstow_upgrades::workspace::JOURNAL: walthamstow_kernel::journals::Journal
 pub fn walthamstow_upgrades::workspace::authorise(durability: walthamstow_kernel::durability::WriteDurability, work: &std::path::Path, operation_id: &str, sources: &alloc::collections::btree::map::BTreeMap<std::path::PathBuf, alloc::vec::Vec<u8>>, changes: &alloc::collections::btree::map::BTreeMap<std::path::PathBuf, alloc::vec::Vec<u8>>) -> anyhow::Result<walthamstow_upgrades::workspace::Operation>
 pub fn walthamstow_upgrades::workspace::finish(durability: walthamstow_kernel::durability::WriteDurability, root: &std::path::Path, work: &std::path::Path, operation: &mut walthamstow_upgrades::workspace::Operation) -> anyhow::Result<()>
 pub fn walthamstow_upgrades::workspace::prepared_dir(work: &std::path::Path) -> std::path::PathBuf
-pub fn walthamstow_upgrades::workspace::recover(root: &std::path::Path, data_dir: &std::path::Path, durability: walthamstow_kernel::durability::WriteDurability) -> anyhow::Result<()>
+pub fn walthamstow_upgrades::workspace::recover(root: &std::path::Path, data_dir: &std::path::Path, durability: walthamstow_kernel::durability::WriteDurability) -> anyhow::Result<walthamstow_upgrades::workspace::Recovery>
 pub fn walthamstow_upgrades::workspace::work_dir(data_dir: &std::path::Path, operation_id: &str) -> anyhow::Result<std::path::PathBuf>

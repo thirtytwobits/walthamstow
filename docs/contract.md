@@ -105,7 +105,8 @@ one engine process, every operation on a record holds that record's lock, and a 
 every write, so it sees the records as they were at one moment. A write stages a file beside the
 record and renames it into place, and a read settles what it finds, a record or none. Any other
 entry in a journal's directory is refused, including what an earlier release left there: that
-release finishes it. Every open of one data directory shares one store, whatever path reaches
+release finishes it. On Unix, each record a write leaves, and each directory a write creates, is
+readable and writable by its owner alone. Every open of one data directory shares one store, whatever path reaches
 the directory: a link, or a name in another case on a file system that folds case.
 
 ## Collaboration storage
@@ -150,6 +151,10 @@ upgrade works in `journals/workspace-upgrades/<operation id>/`:
 A publication names each file once, compared case-folded, by normal components only. Every
 replacement is checked against the hash its live file held when staged before any file is
 written.
+
+Recovery publishes each upgrade its journal authorises and discards staging no journal
+authorises. It reports both by operation id, and refuses an upgrade's directory whose name is not
+UTF-8.
 
 ## Schema guidance
 

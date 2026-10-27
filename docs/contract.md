@@ -198,8 +198,16 @@ tells it, that upgrade upgrades:
 Over files, a document is named by its path relative to the root, its components joined by `/`.
 A document whose name holds a backslash is refused, since that path would name another file.
 
-`journals.list` lists the records of the publication journal and of each journal the product
-names.
+`journals.list` lists the records of the publication journal, the daemon's journal and each
+journal the product names.
+
+The daemon publishes its endpoint record, its MCP endpoint and a local credential, in the `daemon`
+journal of its local store when it starts, over any record a stopped daemon left there. It
+retires the record when it stops, removing only the record it published: each publication is
+stored with an id of its own, so a later publication of the same endpoint is never retired. A CLI calls the
+endpoint a flag or the environment names, and otherwise the one the record names.
+`FileLocalStore` keeps the record under `journals/daemon/`. An engine with no disk is configured
+with its endpoint.
 
 ## Schema guidance
 

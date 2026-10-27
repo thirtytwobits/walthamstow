@@ -4,6 +4,7 @@ members = [
   "crates/walthamstow-workspace",
   "crates/walthamstow-upgrades",
   "crates/walthamstow-ops",
+  "examples/ops",
   "tools/xtask",
 ]
 resolver = "2"
@@ -16,9 +17,13 @@ repository = "https://github.com/thirtytwobits/walthamstow"
 
 [workspace.dependencies]
 anyhow = "1.0.100"
+axum = "0.8.6"
 chrono = { version = "0.4.42", features = ["serde"] }
 # The tag Battersea takes, so one application composes both pieces' operations.
 clapham = { git = "https://github.com/thirtytwobits/clapham", tag = "v0.3.0", version = "0.3.0" }
+clapham-cli = { git = "https://github.com/thirtytwobits/clapham", tag = "v0.3.0", version = "0.3.0" }
+clapham-conformance = { git = "https://github.com/thirtytwobits/clapham", tag = "v0.3.0", version = "0.3.0" }
+clapham-mcp-server = { git = "https://github.com/thirtytwobits/clapham", tag = "v0.3.0", version = "0.3.0" }
 clerkenwell-doc = { git = "https://github.com/thirtytwobits/clerkenwell", tag = "v0.10.0" }
 clerkenwell-events = { git = "https://github.com/thirtytwobits/clerkenwell", tag = "v0.10.0" }
 clerkenwell-schema = { git = "https://github.com/thirtytwobits/clerkenwell", tag = "v0.10.0" }

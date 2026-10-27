@@ -191,8 +191,8 @@ fn is_upgrade_id(id: &str) -> bool {
 
 impl WalthamstowOps {
     /// Operations over `workspace`, run under `lease`, and the local records `store` keeps.
-    /// `journals.list` lists the publication journal, and each journal [`Self::journal`]
-    /// adds.
+    /// `journals.list` lists the publication journal, the daemon's endpoint journal, and each
+    /// journal [`Self::journal`] adds.
     pub fn new(lease: Lease, workspace: Arc<dyn Workspace>, store: Arc<dyn LocalStore>) -> Self {
         Self {
             lease,
@@ -200,7 +200,10 @@ impl WalthamstowOps {
             store,
             entities: Vec::new(),
             upgrades: BTreeMap::new(),
-            journals: BTreeSet::from([walthamstow_workspace::publications::JOURNAL]),
+            journals: BTreeSet::from([
+                walthamstow_workspace::publications::JOURNAL,
+                crate::endpoint::JOURNAL,
+            ]),
         }
     }
 

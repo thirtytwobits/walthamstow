@@ -8,6 +8,9 @@
   `workspace_held` while another engine holds it. The operations run over a `Workspace`, a
   `FileWorkspace` or a `MemoryWorkspace`. The product supplies each entity's `DocumentFormat` and
   the `Upgrade`s it registers.
+- `EndpointRecord` is the daemon's MCP endpoint and local credential. The daemon publishes it in
+  its local store's `daemon` journal and retires it at stop; a CLI that names no endpoint
+  resolves the daemon through it. `journals.list` lists the `daemon` journal.
 - `publication::publish` refuses a file changed after staging with the reason `upgrade_stale`.
   `publication::publish_first` and `workspace::finish_first` publish an upgrade for the first
   time, refusing a file already at its target too. `publication::check_publication_paths`

@@ -2,17 +2,20 @@
 //!
 //! Walthamstow's operations, contributed to Clapham under the `walthamstow` namespace: the
 //! workspace's status and documents, its upgrades and recovery, and the engine's journals.
-//! Each operation runs against the workspace under its lease, in the daemon or in-process.
+//! Each operation runs against the workspace under its lease, in the daemon or in-process. The
+//! daemon publishes its endpoint record, through which a CLI finds it.
 //!
 //! Operations reach Walthamstow through the product's gate, which has decided whether the
 //! principal may run them. Walthamstow does not judge principals.
 
 pub mod codes;
+pub mod endpoint;
 pub mod formats;
 pub mod lease;
 pub mod operations;
 pub mod workspace;
 
+pub use endpoint::{EndpointRecord, Published};
 pub use formats::{DocumentFormat, FormatStatus, Upgrade};
 pub use lease::{Holder, Lease, MemoryHold, MemoryLock};
 pub use operations::{Entity, WalthamstowOps, NAMESPACE};

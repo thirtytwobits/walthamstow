@@ -11,11 +11,21 @@ use std::{env, fs};
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
-/// The crates Walthamstow releases, and the Walthamstow crates each may build on.
-const CRATES: &[(&str, &[&str])] = &[
-    ("walthamstow-kernel", &[]),
-    ("walthamstow-workspace", &["walthamstow-kernel"]),
-    ("walthamstow-upgrades", &["walthamstow-kernel"]),
+/// The crates Walthamstow releases, the Walthamstow crates each may build on, and the
+/// Clapham crates each may build on.
+const CRATES: &[(&str, &[&str], &[&str])] = &[
+    ("walthamstow-kernel", &[], &[]),
+    ("walthamstow-workspace", &["walthamstow-kernel"], &[]),
+    ("walthamstow-upgrades", &["walthamstow-kernel"], &[]),
+    (
+        "walthamstow-ops",
+        &[
+            "walthamstow-kernel",
+            "walthamstow-workspace",
+            "walthamstow-upgrades",
+        ],
+        &["clapham"],
+    ),
 ];
 
 /// Crate families a Walthamstow crate never builds on: the products and frameworks above it.
@@ -75,7 +85,7 @@ fn boundaries(root: &Path) -> Result<()> {
     let metadata = metadata(root)?;
     let packages = metadata["packages"].as_array().ok_or("No packages")?;
     let mut errors = Vec::new();
-    for (name, allowed) in CRATES {
+    for (name, allowed, clapham) in CRATES {
         let package = packages
             .iter()
             .find(|package| package["name"] == *name)
@@ -87,14 +97,16 @@ fn boundaries(root: &Path) -> Result<()> {
                 .any(|prefix| dependency.starts_with(prefix))
             {
                 errors.push(format!("{name} must not build on {dependency}"));
-            } else if dependency.starts_with("walthamstow-") && !allowed.contains(&dependency) {
+            } else if (dependency.starts_with("walthamstow-") && !allowed.contains(&dependency))
+                || (dependency.starts_with("clapham") && !clapham.contains(&dependency))
+            {
                 errors.push(format!("{name} may not build on {dependency}"));
             }
         }
     }
     for package in packages {
         let name = package["name"].as_str().unwrap_or_default();
-        if name.starts_with("walthamstow-") && !CRATES.iter().any(|(known, _)| *known == name) {
+        if name.starts_with("walthamstow-") && !CRATES.iter().any(|(known, ..)| *known == name) {
             errors.push(format!("{name} has no dependency policy in tools/xtask"));
         }
     }
@@ -148,7 +160,7 @@ fn api(root: &Path, update: bool) -> Result<()> {
         return Err(format!("Install cargo-public-api {version} with --locked").into());
     }
     let toolchain = format!("+{}", string(&settings, "rustdoc")?);
-    for (name, _) in CRATES {
+    for (name, ..) in CRATES {
         let value = output(
             root,
             "cargo",

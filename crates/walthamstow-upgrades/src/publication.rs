@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 use std::path::{Component, Path, PathBuf};
 use walthamstow_kernel::durability::{write_synced, WriteDurability};
 use walthamstow_kernel::hashing::sha256_hex;
+use walthamstow_kernel::KernelError;
 
 /// One file a publication replaces.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -87,7 +88,9 @@ pub(crate) fn refuse_links(root: &Path, path: &Path) -> Result<()> {
 /// Publishes each replacement from `staged` into `live`. Every replacement is checked before
 /// any is written: a live file already at its target is left alone, one still at its source is
 /// replaced, and one that is neither, or that lies through a link, refuses the whole
-/// publication. Publishing again after an interruption finishes it.
+/// publication. A file that is neither is refused as a conflict with the reason
+/// [`UPGRADE_STALE`](crate::reason_codes::UPGRADE_STALE), naming its `path`. Publishing again
+/// after an interruption finishes it.
 pub fn publish(
     durability: WriteDurability,
     live: &Path,
@@ -126,10 +129,13 @@ pub fn publish(
             continue;
         }
         if current != replacement.source_hash {
-            bail!(
+            return Err(KernelError::conflict(format!(
                 "{} changed after it was staged.",
                 replacement.path.display()
-            );
+            ))
+            .with_data(serde_json::json!({ "path": replacement.path }))
+            .with_reason(crate::reason_codes::UPGRADE_STALE)
+            .into());
         }
         refuse_links(staged, &replacement.path)?;
         let bytes = read_regular(&staged.join(&replacement.path))?;
@@ -221,7 +227,13 @@ mod tests {
         ]);
         write_synced(DURABILITY, &live.path().join("b.json"), b"edited b").unwrap();
         let before = contents(live.path());
-        assert!(publish(DURABILITY, live.path(), staged.path(), &replacements).is_err());
+        let refused = publish(DURABILITY, live.path(), staged.path(), &replacements).unwrap_err();
+        let refused = refused.downcast_ref::<KernelError>().unwrap();
+        assert_eq!(
+            refused.reason_code(),
+            Some(crate::reason_codes::UPGRADE_STALE)
+        );
+        assert_eq!(refused.data.as_ref().unwrap()["path"], "b.json");
         assert_eq!(contents(live.path()), before);
     }
 
@@ -230,7 +242,11 @@ mod tests {
         let (live, staged, replacements) = stage(&[("a.json", Some(b"old a"), b"new a")]);
         write_synced(DURABILITY, &staged.path().join("a.json"), b"tampered").unwrap();
         let before = contents(live.path());
-        assert!(publish(DURABILITY, live.path(), staged.path(), &replacements).is_err());
+        let refused = publish(DURABILITY, live.path(), staged.path(), &replacements).unwrap_err();
+        assert!(refused
+            .downcast_ref::<KernelError>()
+            .and_then(KernelError::reason_code)
+            .is_none());
         assert_eq!(contents(live.path()), before);
     }
 

@@ -197,6 +197,32 @@ pub fn recover(root: &Path, data_dir: &Path, durability: WriteDurability) -> Res
     Ok(recovery)
 }
 
+/// Removes the directory `work` of a completed upgrade, with the originals it replaced, and
+/// returns whether it did. An upgrade with no journal, or one still to finish, is left for
+/// [`recover`].
+pub fn retire(work: &Path) -> Result<bool> {
+    let path = work.join(JOURNAL_FILE);
+    let journal = match std::fs::symlink_metadata(&path) {
+        Ok(_) => read_regular(&path)?,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(false),
+        Err(error) => return Err(error.into()),
+    };
+    let operation: Operation = serde_json::from_slice(&journal)?;
+    if operation.status != COMPLETE {
+        return Ok(false);
+    }
+    std::fs::remove_dir_all(work)?;
+    Ok(true)
+}
+
+/// Removes the directory `work` of an authorised upgrade whose first publication refused
+/// before writing any file, so recovery does not try it again. An upgrade a publication has
+/// begun to write is finished by [`recover`], never abandoned.
+pub fn abandon(work: &Path) -> Result<()> {
+    std::fs::remove_dir_all(work)?;
+    Ok(())
+}
+
 fn write_journal(durability: WriteDurability, work: &Path, operation: &Operation) -> Result<()> {
     write_synced(
         durability,
@@ -318,6 +344,36 @@ mod tests {
         for id in ["uncommitted", "finished"] {
             assert!(!prepared_dir(&work_dir(data.path(), id).unwrap()).exists());
         }
+    }
+
+    #[test]
+    fn only_a_completed_upgrade_is_retired() {
+        let data = tempfile::tempdir().unwrap();
+        for (id, status, retired) in [
+            ("finished", COMPLETE, true),
+            ("authorised", COMMITTING, false),
+        ] {
+            let work = work_dir(data.path(), id).unwrap();
+            let operation = Operation {
+                operation_id: id.into(),
+                status: status.into(),
+                paths: vec![],
+                source_hashes: BTreeMap::new(),
+                target_hashes: BTreeMap::new(),
+            };
+            write_journal(DURABILITY, &work, &operation).unwrap();
+            assert_eq!(retire(&work).unwrap(), retired, "{id}");
+            assert_eq!(work.exists(), !retired, "{id}");
+        }
+        let unjournalled = work_dir(data.path(), "unjournalled").unwrap();
+        write_synced(
+            DURABILITY,
+            &prepared_dir(&unjournalled).join("a.json"),
+            b"a",
+        )
+        .unwrap();
+        assert!(!retire(&unjournalled).unwrap());
+        assert!(unjournalled.exists());
     }
 
     // APFS and NTFS refuse names that are not UTF-8.

@@ -126,6 +126,8 @@ pub fn walthamstow_upgrades::publication::check_relative_path(path: &std::path::
 pub fn walthamstow_upgrades::publication::file_hash(path: &std::path::Path) -> anyhow::Result<core::option::Option<alloc::string::String>>
 pub fn walthamstow_upgrades::publication::publish(durability: walthamstow_kernel::durability::WriteDurability, live: &std::path::Path, staged: &std::path::Path, replacements: &[walthamstow_upgrades::publication::Replacement]) -> anyhow::Result<()>
 pub fn walthamstow_upgrades::publication::read_regular(path: &std::path::Path) -> anyhow::Result<alloc::vec::Vec<u8>>
+pub mod walthamstow_upgrades::reason_codes
+pub const walthamstow_upgrades::reason_codes::UPGRADE_STALE: &str
 pub mod walthamstow_upgrades::workspace
 pub struct walthamstow_upgrades::workspace::Operation
 pub walthamstow_upgrades::workspace::Operation::operation_id: alloc::string::String
@@ -359,8 +361,10 @@ impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusi
 impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_upgrades::workspace::Recovery where V: ppv_lite86::types::MultiLane<T>
 pub fn walthamstow_upgrades::workspace::Recovery::vzip(self) -> V
 pub const walthamstow_upgrades::workspace::JOURNAL: walthamstow_kernel::journals::Journal
+pub fn walthamstow_upgrades::workspace::abandon(work: &std::path::Path) -> anyhow::Result<()>
 pub fn walthamstow_upgrades::workspace::authorise(durability: walthamstow_kernel::durability::WriteDurability, work: &std::path::Path, operation_id: &str, sources: &alloc::collections::btree::map::BTreeMap<std::path::PathBuf, alloc::vec::Vec<u8>>, changes: &alloc::collections::btree::map::BTreeMap<std::path::PathBuf, alloc::vec::Vec<u8>>) -> anyhow::Result<walthamstow_upgrades::workspace::Operation>
 pub fn walthamstow_upgrades::workspace::finish(durability: walthamstow_kernel::durability::WriteDurability, root: &std::path::Path, work: &std::path::Path, operation: &mut walthamstow_upgrades::workspace::Operation) -> anyhow::Result<()>
 pub fn walthamstow_upgrades::workspace::prepared_dir(work: &std::path::Path) -> std::path::PathBuf
 pub fn walthamstow_upgrades::workspace::recover(root: &std::path::Path, data_dir: &std::path::Path, durability: walthamstow_kernel::durability::WriteDurability) -> anyhow::Result<walthamstow_upgrades::workspace::Recovery>
+pub fn walthamstow_upgrades::workspace::retire(work: &std::path::Path) -> anyhow::Result<bool>
 pub fn walthamstow_upgrades::workspace::work_dir(data_dir: &std::path::Path, operation_id: &str) -> anyhow::Result<std::path::PathBuf>

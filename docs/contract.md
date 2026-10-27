@@ -152,9 +152,44 @@ A publication names each file once, compared case-folded, by normal components o
 replacement is checked against the hash its live file held when staged before any file is
 written.
 
+A file that holds neither its source nor its target refuses the publication with the reason
+`upgrade_stale`. A completed upgrade's directory may be removed, and so may that of an upgrade
+whose first publication was refused before writing a file.
+
 Recovery publishes each upgrade its journal authorises and discards staging no journal
 authorises. It reports both by operation id, and refuses an upgrade's directory whose name is not
 UTF-8.
+
+## Operations
+
+`walthamstow-ops` contributes Walthamstow's operations to Clapham under the `walthamstow`
+namespace. Operations reach Walthamstow through the product's gate, which has decided whether the
+principal may run them. Walthamstow does not judge principals.
+
+Every operation runs against the workspace under its lease:
+
+- A daemon holds the workspace lock for as long as it runs.
+- An in-process front end takes the lock for each operation, and is refused with
+  `workspace_held` while another engine holds it.
+- Within one engine, operations on the workspace run one at a time.
+
+A refusal's code is the reason code Walthamstow names it with, under the category every
+operation declares for it.
+
+`workspace.upgrade` runs one registered upgrade over each document whose format, as the product
+tells it, that upgrade upgrades:
+
+- A document in a format newer than the product knows refuses every upgrade with
+  `document_newer`.
+- The upgrade replaces documents only while each holds what the upgrade read. Otherwise nothing is
+  replaced, and the upgrade is refused with `upgrade_stale`.
+- A preview reports a revision naming what the upgrade read. An upgrade given that revision is
+  refused with `upgrade_stale` unless its documents still hold what the preview read.
+- Over files, the upgrade is journalled as an upgrade's operation: `<upgrade>-<revision>`, the
+  revision cut to 16 digits.
+
+`journals.list` lists the records of the publication journal and of each journal the product
+names.
 
 ## Schema guidance
 

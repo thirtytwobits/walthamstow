@@ -3,6 +3,7 @@ members = [
   "crates/walthamstow-kernel",
   "crates/walthamstow-workspace",
   "crates/walthamstow-upgrades",
+  "crates/walthamstow-ops",
   "tools/xtask",
 ]
 resolver = "2"
@@ -16,6 +17,8 @@ repository = "https://github.com/thirtytwobits/walthamstow"
 [workspace.dependencies]
 anyhow = "1.0.100"
 chrono = { version = "0.4.42", features = ["serde"] }
+# The tag Battersea takes, so one application composes both pieces' operations.
+clapham = { git = "https://github.com/thirtytwobits/clapham", tag = "v0.3.0", version = "0.3.0" }
 clerkenwell-doc = { git = "https://github.com/thirtytwobits/clerkenwell", tag = "v0.10.0" }
 clerkenwell-events = { git = "https://github.com/thirtytwobits/clerkenwell", tag = "v0.10.0" }
 clerkenwell-schema = { git = "https://github.com/thirtytwobits/clerkenwell", tag = "v0.10.0" }
@@ -23,6 +26,7 @@ clerkenwell-store = { git = "https://github.com/thirtytwobits/clerkenwell", tag 
 jsonschema = "0.30.0"
 rand = { version = "0.9.2", features = ["small_rng"] }
 rustix = { version = "1.1.4", features = ["fs"] }
+schemars = "1.2.3"
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.145"
 serde_yaml = "0.9.34"

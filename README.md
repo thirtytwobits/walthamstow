@@ -12,6 +12,9 @@ the parts of an engine daemon that do not depend on what the product is.
   waiting for their files.
 - `walthamstow-upgrades`: explicit document upgrades. A fenced, staged publication replaces a
   workspace's files, and its journal recovers an interrupted one.
+- `walthamstow-ops`: the workspace's status, documents, upgrades and recovery, and the engine's
+  journals, as operations contributed to [Clapham](https://github.com/thirtytwobits/clapham). The
+  other crates take no Clapham.
 
 A product registers into the kernel. It supplies its entities, validators and events, and returns
 its own error, which converts from `KernelError`. Walthamstow builds on Clerkenwell and on no

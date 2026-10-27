@@ -14,7 +14,7 @@ clerkenwell-events.workspace = true
 clerkenwell-schema.workspace = true
 clerkenwell-store.workspace = true
 jsonschema.workspace = true
-walthamstow-kernel = { path = "../walthamstow-kernel", version = "0.1.0" }
+walthamstow-kernel = { path = "../walthamstow-kernel", version = "0.3.0" }
 serde.workspace = true
 serde_json.workspace = true
 serde_yaml.workspace = true

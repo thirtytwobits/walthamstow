@@ -24,3 +24,9 @@ serde_json.workspace = true
 tokio = { workspace = true, features = ["io-std", "io-util", "process"] }
 walthamstow-kernel = { path = "../../crates/walthamstow-kernel" }
 walthamstow-ops = { path = "../../crates/walthamstow-ops" }
+
+[dev-dependencies]
+clerkenwell-events.workspace = true
+clerkenwell-ops.workspace = true
+clerkenwell-session.workspace = true
+clerkenwell-store.workspace = true

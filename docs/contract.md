@@ -130,7 +130,8 @@ stored version equals the expected one.
 
 ## Publication marks
 
-A product marks a document before it commits to it. The mark stays until one of these is true:
+`CollaborativeDocuments` marks a document before it commits to it. A commit made to the store by
+another path, such as `clerkenwell-ops`, is not marked. The mark stays until one of these is true:
 
 - no commit to the document is under way, and its files render the version accepted now
 - its removal is published

@@ -578,6 +578,58 @@ fn a_file_publication_refused_by_its_fence_leaves_no_journal_to_recover() {
     assert_eq!(workspace.recover().unwrap(), Default::default());
 }
 
+/// Publishes an upgrade of two documents after one of them was written with its target bytes,
+/// and checks that neither is replaced.
+fn refuses_a_document_already_at_its_target(
+    workspace: &dyn Workspace,
+    write: &dyn Fn(&str, &[u8]),
+    read: &dyn Fn(&str) -> Option<Vec<u8>>,
+) {
+    let (first, second) = (
+        "notes/first.json".to_string(),
+        "notes/second.json".to_string(),
+    );
+    write(&first, &note(1, "first"));
+    write(&second, &note(2, "second"));
+    let refused = workspace
+        .publish(
+            "format-2-0123456789abcdef",
+            &BTreeMap::from([
+                (first.clone(), note(1, "first")),
+                (second.clone(), note(1, "second")),
+            ]),
+            &BTreeMap::from([
+                (first.clone(), note(2, "first")),
+                (second.clone(), note(2, "second")),
+            ]),
+        )
+        .unwrap_err();
+    let refused = refused
+        .downcast_ref::<walthamstow_kernel::KernelError>()
+        .unwrap();
+    assert_eq!(refused.reason_code(), Some(codes::UPGRADE_STALE));
+    assert_eq!(refused.data.as_ref().unwrap()["path"], second);
+    assert_eq!(read(&first).unwrap(), note(1, "first"));
+    assert_eq!(workspace.recover().unwrap(), Default::default());
+}
+
+#[test]
+fn a_publication_is_refused_when_a_document_already_holds_its_target() {
+    let memory = MemoryWorkspace::new("memory");
+    refuses_a_document_already_at_its_target(
+        &memory,
+        &|path, bytes| memory.write(path, bytes),
+        &|path| memory.read(path),
+    );
+    let root = tempfile::tempdir().unwrap();
+    let data = tempfile::tempdir().unwrap();
+    refuses_a_document_already_at_its_target(
+        &FileWorkspace::new(root.path(), data.path(), DURABILITY),
+        &|path, bytes| write_synced(DURABILITY, &root.path().join(path), bytes).unwrap(),
+        &|path| std::fs::read(root.path().join(path)).ok(),
+    );
+}
+
 #[test]
 fn an_upgrade_id_outside_the_alphabet_or_registered_twice_is_refused() {
     let ops = || {

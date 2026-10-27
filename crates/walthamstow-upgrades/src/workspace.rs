@@ -5,7 +5,9 @@
 //! publishes, `original/` the files they replace, and `operation.json` the journal that
 //! authorises publication.
 
-use crate::publication::{check_relative_path, publish, read_regular, refuse_links, Replacement};
+use crate::publication::{
+    check_relative_path, publish, publish_first, read_regular, refuse_links, Replacement,
+};
 use anyhow::{bail, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
@@ -103,12 +105,35 @@ pub fn authorise(
 }
 
 /// Publishes an authorised upgrade into the workspace at `root`, marks it complete and
-/// removes its staging.
+/// removes its staging. A file already at its target is left alone, so finishing an
+/// interrupted publication completes it.
 pub fn finish(
     durability: WriteDurability,
     root: &Path,
     work: &Path,
     operation: &mut Operation,
+) -> Result<()> {
+    finish_as(durability, root, work, operation, true)
+}
+
+/// Publishes an upgrade just authorised, as [`finish`] does, but only while every file it
+/// replaces still holds its source. A file at its target refuses it too, with the reason
+/// [`UPGRADE_STALE`](crate::reason_codes::UPGRADE_STALE), before any file is written.
+pub fn finish_first(
+    durability: WriteDurability,
+    root: &Path,
+    work: &Path,
+    operation: &mut Operation,
+) -> Result<()> {
+    finish_as(durability, root, work, operation, false)
+}
+
+fn finish_as(
+    durability: WriteDurability,
+    root: &Path,
+    work: &Path,
+    operation: &mut Operation,
+    resuming: bool,
 ) -> Result<()> {
     for path in &operation.paths {
         check_relative_path(path)?;
@@ -135,7 +160,11 @@ pub fn finish(
             target_hash: target_hash.clone(),
         });
     }
-    publish(durability, root, &prepared_dir(work), &replacements)?;
+    if resuming {
+        publish(durability, root, &prepared_dir(work), &replacements)?;
+    } else {
+        publish_first(durability, root, &prepared_dir(work), &replacements)?;
+    }
     operation.status = COMPLETE.into();
     write_journal(durability, work, operation)?;
     remove_staging(work).map(drop)
@@ -215,9 +244,9 @@ pub fn retire(work: &Path) -> Result<bool> {
     Ok(true)
 }
 
-/// Removes the directory `work` of an authorised upgrade whose first publication refused
-/// before writing any file, so recovery does not try it again. An upgrade a publication has
-/// begun to write is finished by [`recover`], never abandoned.
+/// Removes the directory `work` of an authorised upgrade whose [`finish_first`] refused, which
+/// wrote no file, so recovery does not try it again. An upgrade a publication has begun to
+/// write is finished by [`recover`], never abandoned.
 pub fn abandon(work: &Path) -> Result<()> {
     std::fs::remove_dir_all(work)?;
     Ok(())

@@ -97,6 +97,29 @@ pub fn publish(
     staged: &Path,
     replacements: &[Replacement],
 ) -> Result<()> {
+    publish_as(durability, live, staged, replacements, true)
+}
+
+/// Publishes each replacement from `staged` into `live` for the first time, as [`publish`]
+/// does, except that every live file must still be at its source: one already at its target
+/// refuses the whole publication too, since nothing has published it yet.
+pub fn publish_first(
+    durability: WriteDurability,
+    live: &Path,
+    staged: &Path,
+    replacements: &[Replacement],
+) -> Result<()> {
+    publish_as(durability, live, staged, replacements, false)
+}
+
+/// Publishes each replacement, accepting a live file already at its target when `resuming`.
+fn publish_as(
+    durability: WriteDurability,
+    live: &Path,
+    staged: &Path,
+    replacements: &[Replacement],
+    resuming: bool,
+) -> Result<()> {
     let _publishing = PUBLISHING
         .lock()
         .unwrap_or_else(std::sync::PoisonError::into_inner);
@@ -122,7 +145,7 @@ pub fn publish(
         refuse_links(live, &replacement.path)?;
         let live_path = live.join(&replacement.path);
         let current = file_hash(&live_path)?;
-        if current.as_ref() == Some(&replacement.target_hash) {
+        if resuming && current.as_ref() == Some(&replacement.target_hash) {
             // An interrupted publication may have written it without syncing its entry.
             durability
                 .sync_directory(live_path.parent().expect("a published file has a parent"))?;
@@ -235,6 +258,27 @@ mod tests {
         );
         assert_eq!(refused.data.as_ref().unwrap()["path"], "b.json");
         assert_eq!(contents(live.path()), before);
+    }
+
+    #[test]
+    fn a_first_publication_refuses_a_file_already_at_its_target() {
+        let (live, staged, replacements) = stage(&[
+            ("a.json", Some(b"old a"), b"new a"),
+            ("b.json", Some(b"old b"), b"new b"),
+        ]);
+        write_synced(DURABILITY, &live.path().join("b.json"), b"new b").unwrap();
+        let before = contents(live.path());
+        let refused =
+            publish_first(DURABILITY, live.path(), staged.path(), &replacements).unwrap_err();
+        let refused = refused.downcast_ref::<KernelError>().unwrap();
+        assert_eq!(
+            refused.reason_code(),
+            Some(crate::reason_codes::UPGRADE_STALE)
+        );
+        assert_eq!(refused.data.as_ref().unwrap()["path"], "b.json");
+        assert_eq!(contents(live.path()), before);
+        publish(DURABILITY, live.path(), staged.path(), &replacements).unwrap();
+        assert_eq!(std::fs::read(live.path().join("a.json")).unwrap(), b"new a");
     }
 
     #[test]

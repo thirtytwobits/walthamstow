@@ -153,7 +153,8 @@ replacement is checked against the hash its live file held when staged before an
 written.
 
 A file that holds neither its source nor its target refuses the publication with the reason
-`upgrade_stale`. A completed upgrade's directory may be removed, and so may that of an upgrade
+`upgrade_stale`. An upgrade's first publication also refuses a file already at its target;
+recovery accepts it, since an interrupted publication may have written it. A completed upgrade's directory may be removed, and so may that of an upgrade
 whose first publication was refused before writing a file.
 
 Recovery publishes each upgrade its journal authorises and discards staging no journal

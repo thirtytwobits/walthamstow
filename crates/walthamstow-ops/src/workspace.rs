@@ -137,9 +137,9 @@ impl Workspace for FileWorkspace {
         }
         let mut operation =
             upgrades::authorise(self.durability, &work, operation_id, &sources, &changes)?;
-        let finished = upgrades::finish(self.durability, &self.root, &work, &mut operation);
+        let finished = upgrades::finish_first(self.durability, &self.root, &work, &mut operation);
         if let Err(error) = &finished {
-            // The first publication checks every file before it writes one.
+            // The first publication checks every file holds its source before it writes one.
             if error
                 .downcast_ref::<KernelError>()
                 .and_then(KernelError::reason_code)

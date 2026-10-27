@@ -466,6 +466,7 @@ async fn journals_list_names_each_record_of_each_listed_journal() {
             journals,
             json!({ "journals": [
                 { "journal": "collaboration-publications", "records": [] },
+                { "journal": "daemon", "records": [] },
                 { "journal": "product-records", "records": [["session", "head"]] },
             ]})
         );

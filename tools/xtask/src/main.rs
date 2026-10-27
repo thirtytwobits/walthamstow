@@ -11,9 +11,15 @@ use std::{env, fs};
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
-/// The crates Walthamstow releases, the Walthamstow crates each may build on, and the
-/// Clapham crates each may build on.
-const CRATES: &[(&str, &[&str], &[&str])] = &[
+/// A crate, the Walthamstow crates it may build on, and the Clapham crates it may build on.
+type Policy = (
+    &'static str,
+    &'static [&'static str],
+    &'static [&'static str],
+);
+
+/// The crates Walthamstow releases, each with its policy.
+const CRATES: &[Policy] = &[
     ("walthamstow-kernel", &[], &[]),
     ("walthamstow-workspace", &["walthamstow-kernel"], &[]),
     ("walthamstow-upgrades", &["walthamstow-kernel"], &[]),
@@ -27,6 +33,18 @@ const CRATES: &[(&str, &[&str], &[&str])] = &[
         &["clapham"],
     ),
 ];
+
+/// The examples, which Walthamstow does not release, each with its policy.
+const EXAMPLES: &[Policy] = &[(
+    "walthamstow-ops-example",
+    &["walthamstow-kernel", "walthamstow-ops"],
+    &[
+        "clapham",
+        "clapham-cli",
+        "clapham-conformance",
+        "clapham-mcp-server",
+    ],
+)];
 
 /// Crate families a Walthamstow crate never builds on: the products and frameworks above it.
 const FORBIDDEN_PREFIXES: &[&str] = &["primrose-", "battersea-"];
@@ -85,7 +103,8 @@ fn boundaries(root: &Path) -> Result<()> {
     let metadata = metadata(root)?;
     let packages = metadata["packages"].as_array().ok_or("No packages")?;
     let mut errors = Vec::new();
-    for (name, allowed, clapham) in CRATES {
+    let policies = CRATES.iter().chain(EXAMPLES);
+    for (name, allowed, clapham) in policies.clone() {
         let package = packages
             .iter()
             .find(|package| package["name"] == *name)
@@ -106,7 +125,7 @@ fn boundaries(root: &Path) -> Result<()> {
     }
     for package in packages {
         let name = package["name"].as_str().unwrap_or_default();
-        if name.starts_with("walthamstow-") && !CRATES.iter().any(|(known, ..)| *known == name) {
+        if name.starts_with("walthamstow-") && !policies.clone().any(|(known, ..)| *known == name) {
             errors.push(format!("{name} has no dependency policy in tools/xtask"));
         }
     }

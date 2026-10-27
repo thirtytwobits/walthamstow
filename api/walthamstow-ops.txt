@@ -10,6 +10,236 @@ pub const walthamstow_ops::codes::UPGRADE_UNKNOWN: &str
 pub const walthamstow_ops::codes::WORKSPACE_FAILURE: &str
 pub const walthamstow_ops::codes::WORKSPACE_HELD: &str
 pub fn walthamstow_ops::codes::category(code: &str) -> core::option::Option<clapham::refusal::Category>
+pub mod walthamstow_ops::endpoint
+pub struct walthamstow_ops::endpoint::EndpointRecord
+pub walthamstow_ops::endpoint::EndpointRecord::endpoint: alloc::string::String
+pub walthamstow_ops::endpoint::EndpointRecord::token: alloc::string::String
+impl walthamstow_ops::endpoint::EndpointRecord
+pub fn walthamstow_ops::endpoint::EndpointRecord::discover(store: &dyn walthamstow_kernel::local_store::LocalStore) -> walthamstow_kernel::error::KernelResult<core::option::Option<Self>>
+pub fn walthamstow_ops::endpoint::EndpointRecord::publish(&self, store: &dyn walthamstow_kernel::local_store::LocalStore) -> walthamstow_kernel::error::KernelResult<walthamstow_ops::endpoint::Published>
+pub fn walthamstow_ops::endpoint::EndpointRecord::resolve(explicit: core::option::Option<Self>, store: &dyn walthamstow_kernel::local_store::LocalStore) -> walthamstow_kernel::error::KernelResult<core::option::Option<Self>>
+impl core::clone::Clone for walthamstow_ops::endpoint::EndpointRecord
+pub fn walthamstow_ops::endpoint::EndpointRecord::clone(&self) -> walthamstow_ops::endpoint::EndpointRecord
+impl core::cmp::Eq for walthamstow_ops::endpoint::EndpointRecord
+impl core::cmp::PartialEq for walthamstow_ops::endpoint::EndpointRecord
+pub fn walthamstow_ops::endpoint::EndpointRecord::eq(&self, other: &walthamstow_ops::endpoint::EndpointRecord) -> bool
+impl core::fmt::Debug for walthamstow_ops::endpoint::EndpointRecord
+pub fn walthamstow_ops::endpoint::EndpointRecord::fmt(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for walthamstow_ops::endpoint::EndpointRecord
+impl serde_core::ser::Serialize for walthamstow_ops::endpoint::EndpointRecord
+pub fn walthamstow_ops::endpoint::EndpointRecord::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for walthamstow_ops::endpoint::EndpointRecord
+pub fn walthamstow_ops::endpoint::EndpointRecord::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for walthamstow_ops::endpoint::EndpointRecord
+impl core::marker::Send for walthamstow_ops::endpoint::EndpointRecord
+impl core::marker::Sync for walthamstow_ops::endpoint::EndpointRecord
+impl core::marker::Unpin for walthamstow_ops::endpoint::EndpointRecord
+impl core::panic::unwind_safe::RefUnwindSafe for walthamstow_ops::endpoint::EndpointRecord
+impl core::panic::unwind_safe::UnwindSafe for walthamstow_ops::endpoint::EndpointRecord
+impl<Q, K> equivalent::Equivalent<K> for walthamstow_ops::endpoint::EndpointRecord where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn walthamstow_ops::endpoint::EndpointRecord::equivalent(&self, key: &K) -> bool
+impl<Q, K> hashbrown::Equivalent<K> for walthamstow_ops::endpoint::EndpointRecord where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn walthamstow_ops::endpoint::EndpointRecord::equivalent(&self, key: &K) -> bool
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for walthamstow_ops::endpoint::EndpointRecord where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for walthamstow_ops::endpoint::EndpointRecord where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<T, U> core::convert::Into<U> for walthamstow_ops::endpoint::EndpointRecord where U: core::convert::From<T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for walthamstow_ops::endpoint::EndpointRecord where U: core::convert::Into<T>
+pub type walthamstow_ops::endpoint::EndpointRecord::Error = core::convert::Infallible
+pub fn walthamstow_ops::endpoint::EndpointRecord::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for walthamstow_ops::endpoint::EndpointRecord where U: core::convert::TryFrom<T>
+pub type walthamstow_ops::endpoint::EndpointRecord::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn walthamstow_ops::endpoint::EndpointRecord::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for walthamstow_ops::endpoint::EndpointRecord where T: core::clone::Clone
+pub type walthamstow_ops::endpoint::EndpointRecord::Owned = T
+pub fn walthamstow_ops::endpoint::EndpointRecord::clone_into(&self, target: &mut T)
+pub fn walthamstow_ops::endpoint::EndpointRecord::to_owned(&self) -> T
+impl<T> core::any::Any for walthamstow_ops::endpoint::EndpointRecord where T: 'static + ?core::marker::Sized
+pub fn walthamstow_ops::endpoint::EndpointRecord::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for walthamstow_ops::endpoint::EndpointRecord where T: ?core::marker::Sized
+pub fn walthamstow_ops::endpoint::EndpointRecord::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for walthamstow_ops::endpoint::EndpointRecord where T: ?core::marker::Sized
+pub fn walthamstow_ops::endpoint::EndpointRecord::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for walthamstow_ops::endpoint::EndpointRecord where T: core::clone::Clone
+pub unsafe fn walthamstow_ops::endpoint::EndpointRecord::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for walthamstow_ops::endpoint::EndpointRecord
+pub fn walthamstow_ops::endpoint::EndpointRecord::from(t: T) -> T
+impl<T> dyn_clone::DynClone for walthamstow_ops::endpoint::EndpointRecord where T: core::clone::Clone
+pub fn walthamstow_ops::endpoint::EndpointRecord::__clone_box(&self, _: dyn_clone::sealed::Private) -> *mut ()
+impl<T> either::into_either::IntoEither for walthamstow_ops::endpoint::EndpointRecord
+impl<T> serde_columnar::column::rle::Rleable for walthamstow_ops::endpoint::EndpointRecord where T: core::clone::Clone + core::cmp::PartialEq + serde_core::ser::Serialize + for<'de> serde_core::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for walthamstow_ops::endpoint::EndpointRecord where T: for<'de> serde_core::de::Deserialize<'de>
+impl<T> tower_http::follow_redirect::policy::PolicyExt for walthamstow_ops::endpoint::EndpointRecord where T: ?core::marker::Sized
+pub fn walthamstow_ops::endpoint::EndpointRecord::and<P, B, E>(self, other: P) -> tower_http::follow_redirect::policy::and::And<T, P> where T: tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+pub fn walthamstow_ops::endpoint::EndpointRecord::or<P, B, E>(self, other: P) -> tower_http::follow_redirect::policy::or::Or<T, P> where T: tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+impl<T> tracing::instrument::Instrument for walthamstow_ops::endpoint::EndpointRecord
+impl<T> tracing::instrument::WithSubscriber for walthamstow_ops::endpoint::EndpointRecord
+impl<T> typenum::type_operators::Same for walthamstow_ops::endpoint::EndpointRecord
+pub type walthamstow_ops::endpoint::EndpointRecord::Output = T
+impl<T> yansi::paint::Paint for walthamstow_ops::endpoint::EndpointRecord where T: ?core::marker::Sized
+pub fn walthamstow_ops::endpoint::EndpointRecord::attr(&self, value: yansi::attr_quirk::Attribute) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::bg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::bold(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::clear(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::conceal(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::dim(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::fg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::invert(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::italic(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::linger(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::mask(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::on_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::on_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::on_bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::on_bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::on_bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::on_bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::on_bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::on_bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::on_bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::on_bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::on_bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::on_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::on_fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::on_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::on_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::on_primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::on_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::on_rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::on_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::on_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::quirk(&self, value: yansi::attr_quirk::Quirk) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::rapid_blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::resetting(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::strike(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::underline(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::whenever(&self, value: yansi::condition::Condition) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::wrap(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::yellow(&self) -> yansi::paint::Painted<&T>
+impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_ops::endpoint::EndpointRecord where T: ?core::marker::Sized
+impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_ops::endpoint::EndpointRecord where V: ppv_lite86::types::MultiLane<T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::vzip(self) -> V
+pub struct walthamstow_ops::endpoint::Published
+impl walthamstow_ops::endpoint::Published
+pub fn walthamstow_ops::endpoint::Published::retire(self, store: &dyn walthamstow_kernel::local_store::LocalStore) -> walthamstow_kernel::error::KernelResult<bool>
+impl core::fmt::Debug for walthamstow_ops::endpoint::Published
+pub fn walthamstow_ops::endpoint::Published::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for walthamstow_ops::endpoint::Published
+impl core::marker::Send for walthamstow_ops::endpoint::Published
+impl core::marker::Sync for walthamstow_ops::endpoint::Published
+impl core::marker::Unpin for walthamstow_ops::endpoint::Published
+impl core::panic::unwind_safe::RefUnwindSafe for walthamstow_ops::endpoint::Published
+impl core::panic::unwind_safe::UnwindSafe for walthamstow_ops::endpoint::Published
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for walthamstow_ops::endpoint::Published where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for walthamstow_ops::endpoint::Published where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<T, U> core::convert::Into<U> for walthamstow_ops::endpoint::Published where U: core::convert::From<T>
+pub fn walthamstow_ops::endpoint::Published::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for walthamstow_ops::endpoint::Published where U: core::convert::Into<T>
+pub type walthamstow_ops::endpoint::Published::Error = core::convert::Infallible
+pub fn walthamstow_ops::endpoint::Published::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for walthamstow_ops::endpoint::Published where U: core::convert::TryFrom<T>
+pub type walthamstow_ops::endpoint::Published::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn walthamstow_ops::endpoint::Published::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for walthamstow_ops::endpoint::Published where T: 'static + ?core::marker::Sized
+pub fn walthamstow_ops::endpoint::Published::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for walthamstow_ops::endpoint::Published where T: ?core::marker::Sized
+pub fn walthamstow_ops::endpoint::Published::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for walthamstow_ops::endpoint::Published where T: ?core::marker::Sized
+pub fn walthamstow_ops::endpoint::Published::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for walthamstow_ops::endpoint::Published
+pub fn walthamstow_ops::endpoint::Published::from(t: T) -> T
+impl<T> either::into_either::IntoEither for walthamstow_ops::endpoint::Published
+impl<T> tower_http::follow_redirect::policy::PolicyExt for walthamstow_ops::endpoint::Published where T: ?core::marker::Sized
+pub fn walthamstow_ops::endpoint::Published::and<P, B, E>(self, other: P) -> tower_http::follow_redirect::policy::and::And<T, P> where T: tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+pub fn walthamstow_ops::endpoint::Published::or<P, B, E>(self, other: P) -> tower_http::follow_redirect::policy::or::Or<T, P> where T: tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+impl<T> tracing::instrument::Instrument for walthamstow_ops::endpoint::Published
+impl<T> tracing::instrument::WithSubscriber for walthamstow_ops::endpoint::Published
+impl<T> typenum::type_operators::Same for walthamstow_ops::endpoint::Published
+pub type walthamstow_ops::endpoint::Published::Output = T
+impl<T> yansi::paint::Paint for walthamstow_ops::endpoint::Published where T: ?core::marker::Sized
+pub fn walthamstow_ops::endpoint::Published::attr(&self, value: yansi::attr_quirk::Attribute) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::bg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::bold(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::clear(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::conceal(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::dim(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::fg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::invert(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::italic(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::linger(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::mask(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::on_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::on_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::on_bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::on_bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::on_bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::on_bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::on_bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::on_bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::on_bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::on_bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::on_bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::on_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::on_fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::on_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::on_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::on_primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::on_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::on_rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::on_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::on_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::quirk(&self, value: yansi::attr_quirk::Quirk) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::rapid_blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::resetting(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::strike(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::underline(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::whenever(&self, value: yansi::condition::Condition) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::wrap(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::yellow(&self) -> yansi::paint::Painted<&T>
+impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_ops::endpoint::Published where T: ?core::marker::Sized
+impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_ops::endpoint::Published where V: ppv_lite86::types::MultiLane<T>
+pub fn walthamstow_ops::endpoint::Published::vzip(self) -> V
+pub const walthamstow_ops::endpoint::JOURNAL: walthamstow_kernel::journals::Journal
 pub mod walthamstow_ops::formats
 pub enum walthamstow_ops::formats::FormatStatus
 pub walthamstow_ops::formats::FormatStatus::Current
@@ -2591,6 +2821,134 @@ pub fn walthamstow_ops::lease::Holder::yellow(&self) -> yansi::paint::Painted<&T
 impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_ops::lease::Holder where T: ?core::marker::Sized
 impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_ops::lease::Holder where V: ppv_lite86::types::MultiLane<T>
 pub fn walthamstow_ops::lease::Holder::vzip(self) -> V
+pub struct walthamstow_ops::EndpointRecord
+pub walthamstow_ops::EndpointRecord::endpoint: alloc::string::String
+pub walthamstow_ops::EndpointRecord::token: alloc::string::String
+impl walthamstow_ops::endpoint::EndpointRecord
+pub fn walthamstow_ops::endpoint::EndpointRecord::discover(store: &dyn walthamstow_kernel::local_store::LocalStore) -> walthamstow_kernel::error::KernelResult<core::option::Option<Self>>
+pub fn walthamstow_ops::endpoint::EndpointRecord::publish(&self, store: &dyn walthamstow_kernel::local_store::LocalStore) -> walthamstow_kernel::error::KernelResult<walthamstow_ops::endpoint::Published>
+pub fn walthamstow_ops::endpoint::EndpointRecord::resolve(explicit: core::option::Option<Self>, store: &dyn walthamstow_kernel::local_store::LocalStore) -> walthamstow_kernel::error::KernelResult<core::option::Option<Self>>
+impl core::clone::Clone for walthamstow_ops::endpoint::EndpointRecord
+pub fn walthamstow_ops::endpoint::EndpointRecord::clone(&self) -> walthamstow_ops::endpoint::EndpointRecord
+impl core::cmp::Eq for walthamstow_ops::endpoint::EndpointRecord
+impl core::cmp::PartialEq for walthamstow_ops::endpoint::EndpointRecord
+pub fn walthamstow_ops::endpoint::EndpointRecord::eq(&self, other: &walthamstow_ops::endpoint::EndpointRecord) -> bool
+impl core::fmt::Debug for walthamstow_ops::endpoint::EndpointRecord
+pub fn walthamstow_ops::endpoint::EndpointRecord::fmt(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for walthamstow_ops::endpoint::EndpointRecord
+impl serde_core::ser::Serialize for walthamstow_ops::endpoint::EndpointRecord
+pub fn walthamstow_ops::endpoint::EndpointRecord::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for walthamstow_ops::endpoint::EndpointRecord
+pub fn walthamstow_ops::endpoint::EndpointRecord::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for walthamstow_ops::endpoint::EndpointRecord
+impl core::marker::Send for walthamstow_ops::endpoint::EndpointRecord
+impl core::marker::Sync for walthamstow_ops::endpoint::EndpointRecord
+impl core::marker::Unpin for walthamstow_ops::endpoint::EndpointRecord
+impl core::panic::unwind_safe::RefUnwindSafe for walthamstow_ops::endpoint::EndpointRecord
+impl core::panic::unwind_safe::UnwindSafe for walthamstow_ops::endpoint::EndpointRecord
+impl<Q, K> equivalent::Equivalent<K> for walthamstow_ops::endpoint::EndpointRecord where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn walthamstow_ops::endpoint::EndpointRecord::equivalent(&self, key: &K) -> bool
+impl<Q, K> hashbrown::Equivalent<K> for walthamstow_ops::endpoint::EndpointRecord where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn walthamstow_ops::endpoint::EndpointRecord::equivalent(&self, key: &K) -> bool
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for walthamstow_ops::endpoint::EndpointRecord where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for walthamstow_ops::endpoint::EndpointRecord where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<T, U> core::convert::Into<U> for walthamstow_ops::endpoint::EndpointRecord where U: core::convert::From<T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for walthamstow_ops::endpoint::EndpointRecord where U: core::convert::Into<T>
+pub type walthamstow_ops::endpoint::EndpointRecord::Error = core::convert::Infallible
+pub fn walthamstow_ops::endpoint::EndpointRecord::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for walthamstow_ops::endpoint::EndpointRecord where U: core::convert::TryFrom<T>
+pub type walthamstow_ops::endpoint::EndpointRecord::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn walthamstow_ops::endpoint::EndpointRecord::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for walthamstow_ops::endpoint::EndpointRecord where T: core::clone::Clone
+pub type walthamstow_ops::endpoint::EndpointRecord::Owned = T
+pub fn walthamstow_ops::endpoint::EndpointRecord::clone_into(&self, target: &mut T)
+pub fn walthamstow_ops::endpoint::EndpointRecord::to_owned(&self) -> T
+impl<T> core::any::Any for walthamstow_ops::endpoint::EndpointRecord where T: 'static + ?core::marker::Sized
+pub fn walthamstow_ops::endpoint::EndpointRecord::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for walthamstow_ops::endpoint::EndpointRecord where T: ?core::marker::Sized
+pub fn walthamstow_ops::endpoint::EndpointRecord::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for walthamstow_ops::endpoint::EndpointRecord where T: ?core::marker::Sized
+pub fn walthamstow_ops::endpoint::EndpointRecord::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for walthamstow_ops::endpoint::EndpointRecord where T: core::clone::Clone
+pub unsafe fn walthamstow_ops::endpoint::EndpointRecord::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for walthamstow_ops::endpoint::EndpointRecord
+pub fn walthamstow_ops::endpoint::EndpointRecord::from(t: T) -> T
+impl<T> dyn_clone::DynClone for walthamstow_ops::endpoint::EndpointRecord where T: core::clone::Clone
+pub fn walthamstow_ops::endpoint::EndpointRecord::__clone_box(&self, _: dyn_clone::sealed::Private) -> *mut ()
+impl<T> either::into_either::IntoEither for walthamstow_ops::endpoint::EndpointRecord
+impl<T> serde_columnar::column::rle::Rleable for walthamstow_ops::endpoint::EndpointRecord where T: core::clone::Clone + core::cmp::PartialEq + serde_core::ser::Serialize + for<'de> serde_core::de::Deserialize<'de>
+impl<T> serde_core::de::DeserializeOwned for walthamstow_ops::endpoint::EndpointRecord where T: for<'de> serde_core::de::Deserialize<'de>
+impl<T> tower_http::follow_redirect::policy::PolicyExt for walthamstow_ops::endpoint::EndpointRecord where T: ?core::marker::Sized
+pub fn walthamstow_ops::endpoint::EndpointRecord::and<P, B, E>(self, other: P) -> tower_http::follow_redirect::policy::and::And<T, P> where T: tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+pub fn walthamstow_ops::endpoint::EndpointRecord::or<P, B, E>(self, other: P) -> tower_http::follow_redirect::policy::or::Or<T, P> where T: tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+impl<T> tracing::instrument::Instrument for walthamstow_ops::endpoint::EndpointRecord
+impl<T> tracing::instrument::WithSubscriber for walthamstow_ops::endpoint::EndpointRecord
+impl<T> typenum::type_operators::Same for walthamstow_ops::endpoint::EndpointRecord
+pub type walthamstow_ops::endpoint::EndpointRecord::Output = T
+impl<T> yansi::paint::Paint for walthamstow_ops::endpoint::EndpointRecord where T: ?core::marker::Sized
+pub fn walthamstow_ops::endpoint::EndpointRecord::attr(&self, value: yansi::attr_quirk::Attribute) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::bg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::bold(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::clear(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::conceal(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::dim(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::fg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::invert(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::italic(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::linger(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::mask(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::on_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::on_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::on_bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::on_bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::on_bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::on_bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::on_bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::on_bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::on_bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::on_bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::on_bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::on_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::on_fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::on_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::on_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::on_primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::on_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::on_rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::on_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::on_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::quirk(&self, value: yansi::attr_quirk::Quirk) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::rapid_blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::resetting(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::strike(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::underline(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::whenever(&self, value: yansi::condition::Condition) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::wrap(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::yellow(&self) -> yansi::paint::Painted<&T>
+impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_ops::endpoint::EndpointRecord where T: ?core::marker::Sized
+impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_ops::endpoint::EndpointRecord where V: ppv_lite86::types::MultiLane<T>
+pub fn walthamstow_ops::endpoint::EndpointRecord::vzip(self) -> V
 pub struct walthamstow_ops::Entity
 impl walthamstow_ops::operations::Entity
 pub fn walthamstow_ops::operations::Entity::new(name: impl core::convert::Into<alloc::string::String>, directory: impl core::convert::Into<alloc::string::String>, format: impl walthamstow_ops::formats::DocumentFormat + 'static) -> Self
@@ -3225,6 +3583,106 @@ pub fn walthamstow_ops::workspace::MemoryWorkspace::yellow(&self) -> yansi::pain
 impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_ops::workspace::MemoryWorkspace where T: ?core::marker::Sized
 impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_ops::workspace::MemoryWorkspace where V: ppv_lite86::types::MultiLane<T>
 pub fn walthamstow_ops::workspace::MemoryWorkspace::vzip(self) -> V
+pub struct walthamstow_ops::Published
+impl walthamstow_ops::endpoint::Published
+pub fn walthamstow_ops::endpoint::Published::retire(self, store: &dyn walthamstow_kernel::local_store::LocalStore) -> walthamstow_kernel::error::KernelResult<bool>
+impl core::fmt::Debug for walthamstow_ops::endpoint::Published
+pub fn walthamstow_ops::endpoint::Published::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for walthamstow_ops::endpoint::Published
+impl core::marker::Send for walthamstow_ops::endpoint::Published
+impl core::marker::Sync for walthamstow_ops::endpoint::Published
+impl core::marker::Unpin for walthamstow_ops::endpoint::Published
+impl core::panic::unwind_safe::RefUnwindSafe for walthamstow_ops::endpoint::Published
+impl core::panic::unwind_safe::UnwindSafe for walthamstow_ops::endpoint::Published
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for walthamstow_ops::endpoint::Published where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for walthamstow_ops::endpoint::Published where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<T, U> core::convert::Into<U> for walthamstow_ops::endpoint::Published where U: core::convert::From<T>
+pub fn walthamstow_ops::endpoint::Published::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for walthamstow_ops::endpoint::Published where U: core::convert::Into<T>
+pub type walthamstow_ops::endpoint::Published::Error = core::convert::Infallible
+pub fn walthamstow_ops::endpoint::Published::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for walthamstow_ops::endpoint::Published where U: core::convert::TryFrom<T>
+pub type walthamstow_ops::endpoint::Published::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn walthamstow_ops::endpoint::Published::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for walthamstow_ops::endpoint::Published where T: 'static + ?core::marker::Sized
+pub fn walthamstow_ops::endpoint::Published::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for walthamstow_ops::endpoint::Published where T: ?core::marker::Sized
+pub fn walthamstow_ops::endpoint::Published::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for walthamstow_ops::endpoint::Published where T: ?core::marker::Sized
+pub fn walthamstow_ops::endpoint::Published::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for walthamstow_ops::endpoint::Published
+pub fn walthamstow_ops::endpoint::Published::from(t: T) -> T
+impl<T> either::into_either::IntoEither for walthamstow_ops::endpoint::Published
+impl<T> tower_http::follow_redirect::policy::PolicyExt for walthamstow_ops::endpoint::Published where T: ?core::marker::Sized
+pub fn walthamstow_ops::endpoint::Published::and<P, B, E>(self, other: P) -> tower_http::follow_redirect::policy::and::And<T, P> where T: tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+pub fn walthamstow_ops::endpoint::Published::or<P, B, E>(self, other: P) -> tower_http::follow_redirect::policy::or::Or<T, P> where T: tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+impl<T> tracing::instrument::Instrument for walthamstow_ops::endpoint::Published
+impl<T> tracing::instrument::WithSubscriber for walthamstow_ops::endpoint::Published
+impl<T> typenum::type_operators::Same for walthamstow_ops::endpoint::Published
+pub type walthamstow_ops::endpoint::Published::Output = T
+impl<T> yansi::paint::Paint for walthamstow_ops::endpoint::Published where T: ?core::marker::Sized
+pub fn walthamstow_ops::endpoint::Published::attr(&self, value: yansi::attr_quirk::Attribute) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::bg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::bold(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::clear(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::conceal(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::dim(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::fg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::invert(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::italic(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::linger(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::mask(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::on_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::on_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::on_bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::on_bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::on_bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::on_bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::on_bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::on_bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::on_bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::on_bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::on_bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::on_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::on_fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::on_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::on_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::on_primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::on_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::on_rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::on_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::on_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::quirk(&self, value: yansi::attr_quirk::Quirk) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::rapid_blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::resetting(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::strike(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::underline(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::whenever(&self, value: yansi::condition::Condition) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::wrap(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_ops::endpoint::Published::yellow(&self) -> yansi::paint::Painted<&T>
+impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_ops::endpoint::Published where T: ?core::marker::Sized
+impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_ops::endpoint::Published where V: ppv_lite86::types::MultiLane<T>
+pub fn walthamstow_ops::endpoint::Published::vzip(self) -> V
 pub struct walthamstow_ops::WalthamstowOps
 impl walthamstow_ops::operations::WalthamstowOps
 pub fn walthamstow_ops::operations::WalthamstowOps::contribution(self) -> clapham::composition::Contribution

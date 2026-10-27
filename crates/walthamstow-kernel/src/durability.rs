@@ -74,16 +74,20 @@ pub fn create_dir_all_synced(durability: WriteDurability, directory: &Path) -> i
 }
 
 /// Creates the directory `path`, reachable as `access` says.
+#[cfg(unix)]
 fn create_dir(path: &Path, access: Access) -> io::Result<()> {
+    use std::os::unix::fs::DirBuilderExt;
     let mut builder = std::fs::DirBuilder::new();
-    #[cfg(unix)]
     if access == Access::Owner {
-        use std::os::unix::fs::DirBuilderExt;
         builder.mode(0o700);
     }
-    #[cfg(not(unix))]
-    let _ = access;
     builder.create(path)
+}
+
+/// Creates the directory `path`, with what its parent grants.
+#[cfg(not(unix))]
+fn create_dir(path: &Path, _access: Access) -> io::Result<()> {
+    std::fs::create_dir(path)
 }
 
 /// Held by each directory creation; see [`create_dir_all_with`].

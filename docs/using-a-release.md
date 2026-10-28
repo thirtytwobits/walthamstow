@@ -1,3 +1,9 @@
+# Using a Walthamstow release
+
+Clerkenwell's crates build on a Loro fork, and workspace patches do not propagate to dependents.
+A workspace that builds Walthamstow carries the `generic-btree` override in Walthamstow's
+`Cargo.toml` at the release it takes.
+
 <!-- newsletter:begin consuming · maintained in thirtytwobits/london -->
 
 ## Taking a release

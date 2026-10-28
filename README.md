@@ -28,15 +28,7 @@ model it holds to.
 
 ## Using it
 
-Take the crates from a release tag:
-
-```toml
-walthamstow-kernel = { git = "https://github.com/thirtytwobits/walthamstow", tag = "v0.4.0" }
-```
-
-Clerkenwell's crates build on a Loro fork, and workspace patches do not propagate to dependents.
-A workspace that builds Walthamstow carries the `generic-btree` override in this repository's
-`Cargo.toml`.
+[docs/using-a-release.md](docs/using-a-release.md) says how to take a release.
 
 ## Developing
 

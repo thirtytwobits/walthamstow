@@ -3,6 +3,7 @@ name = "walthamstow-workspace"
 description = "A file-backed workspace of typed collaborative documents: directories, document loading, schemas, mounts and publications"
 version.workspace = true
 edition.workspace = true
+rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 publish = false

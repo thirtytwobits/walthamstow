@@ -1,3 +1,10 @@
+# Releasing Walthamstow
+
+Consumers take the crates from a release tag; nothing is published to crates.io, and a release
+attaches no files. `release.json` records the version and repository. Its `steps` add
+`cargo xtask check` and `cargo xtask api` to `gates`; `verify` checks a consumer of
+`walthamstow-ops`, which builds on every other released crate.
+
 <!-- newsletter:begin releasing · maintained in thirtytwobits/london -->
 
 ## Rules

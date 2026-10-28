@@ -10,6 +10,7 @@
   the same pull request, and a review finding is judged against it.
 - Run `cargo xtask check` before finishing. Run Cargo commands one at a time.
 - A public API change reviews its snapshot diff and runs `cargo xtask api --update`.
+- `RELEASING.md` holds the changelog and release rules.
 - Tests never sleep, set a timer or read the wall clock, and are never retried. Code under test
   that needs time takes its clock as a dependency.
 - A change to a file a workspace holds comes with an explicit upgrade. A journal's entries belong

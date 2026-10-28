@@ -56,7 +56,8 @@ Tasks:
   boundaries          Each crate builds only on the Walthamstow crates it may, and on no product.
   storage-layout      Production code creates no hidden entry but listed transient staging.
   api [--update]      Compare (or rewrite) the public API snapshots in api/.
-  release-check TAG   TAG names the workspace's version.";
+  release-check TAG   TAG names the workspace's version, and CHANGELOG.md has its entry.
+  release-notes TAG   Print the CHANGELOG.md entry for the version TAG names.";
 
 fn root() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("../..")
@@ -211,11 +212,32 @@ fn release_check(root: &Path, tag: &str) -> Result<()> {
     if tag != format!("v{version}") {
         return Err(format!("Tag {tag} does not name version {version}").into());
     }
-    let changelog = fs::read_to_string(root.join("CHANGELOG.md"))?;
-    if !changelog.contains(&format!("## {version} ")) {
-        return Err(format!("CHANGELOG.md has no entry for {version}").into());
-    }
+    release_notes(root, version)?;
     Ok(())
+}
+
+/// The CHANGELOG.md entry for `version`.
+fn release_notes(root: &Path, version: &str) -> Result<String> {
+    let changelog = fs::read_to_string(root.join("CHANGELOG.md"))?;
+    changelog_entry(&changelog, version)
+        .ok_or_else(|| format!("CHANGELOG.md has no entry for {version}").into())
+}
+
+/// The text under the `## VERSION` heading of `changelog`, up to the next `## ` heading, or
+/// `None` when the heading is absent or the entry is empty. Text after VERSION in the heading,
+/// such as a date, is free.
+fn changelog_entry(changelog: &str, version: &str) -> Option<String> {
+    let heading = format!("## {version}");
+    let mut lines = changelog
+        .lines()
+        .skip_while(|line| *line != heading && !line.starts_with(&format!("{heading} ")));
+    lines.next()?;
+    let entry = lines
+        .take_while(|line| !line.starts_with("## "))
+        .collect::<Vec<_>>()
+        .join("\n");
+    let entry = entry.trim();
+    (!entry.is_empty()).then(|| format!("{entry}\n"))
 }
 
 fn main() -> ExitCode {
@@ -229,6 +251,11 @@ fn main() -> ExitCode {
         ["api"] => api(&root, false),
         ["api", "--update"] => api(&root, true),
         ["release-check", tag] => release_check(&root, tag),
+        ["release-notes", tag] => tag
+            .strip_prefix('v')
+            .ok_or_else(|| format!("{tag} is not a vX.Y.Z tag").into())
+            .and_then(|version| release_notes(&root, version))
+            .map(|notes| print!("{notes}")),
         ["--help"] | ["help"] => {
             println!("{USAGE}");
             Ok(())
@@ -241,5 +268,52 @@ fn main() -> ExitCode {
             eprintln!("{error}");
             ExitCode::FAILURE
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const CHANGELOG: &str = "# Changelog
+
+## 0.4.1 — 2026-11-02
+
+- Fix the second thing.
+
+## 0.4.0 — 2026-10-27
+
+- Breaking: the first thing.
+  - In detail.
+
+## 0.3.0
+
+- The oldest thing.
+";
+
+    #[test]
+    fn an_entry_runs_from_its_heading_to_the_next() {
+        assert_eq!(
+            changelog_entry(CHANGELOG, "0.4.0").as_deref(),
+            Some("- Breaking: the first thing.\n  - In detail.\n")
+        );
+    }
+
+    #[test]
+    fn the_last_entry_runs_to_the_end_and_its_heading_needs_no_date() {
+        assert_eq!(
+            changelog_entry(CHANGELOG, "0.3.0").as_deref(),
+            Some("- The oldest thing.\n")
+        );
+    }
+
+    #[test]
+    fn a_version_without_a_heading_or_with_an_empty_entry_has_no_entry() {
+        assert_eq!(changelog_entry(CHANGELOG, "0.4"), None);
+        assert_eq!(changelog_entry(CHANGELOG, "0.2.0"), None);
+        assert_eq!(
+            changelog_entry("## 0.5.0\n\n## 0.4.0\n- A.\n", "0.5.0"),
+            None
+        );
     }
 }

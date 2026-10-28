@@ -89,9 +89,49 @@ This is click bait. Do _not_ use anything adjacent to "this one weird trick..." 
 
 > ✅ Use cyanoacrylate to tack the workpiece down first.
 
-Write the fact, not the teaser. In some cases, where something really should be emphasised for scanability, use an emoji sigil rather than smarmy text:
+Write the fact, not the teaser. In some cases, where something should be emphasised for scanability, use an emoji sigil rather than smarmy text:
 
 > 💡 Tip: Use cyanoacrylate to tack the workpiece down first.
+
+### Uniqueness reveals
+
+> ❌ `LLVM_ENABLE_RTTI=ON` is the one setting that adds rather than removes.
+> ❌ The C backend is the only place where a scope crosses a layer.
+
+"The one *X* that …" and "the only *X* that …" are the exemplar above in miniature: the noun
+phrase promises something singular and the relative clause delivers it. The reveal reads the same
+whether the payoff lands in the same sentence or the next. State the fact; where exclusivity
+matters, say it plainly.
+
+> ✅ `LLVM_ENABLE_RTTI=ON` switches a feature on; the other settings here switch features off.
+> ✅ Only in the C backend does a scope cross a layer.
+
+`the one` as a pronoun — "the generic name, then the one for this version" — is not this construction.
+
+## No Hyperbole
+
+> ❌ A statically linked binary genuinely has no libc dependency.
+> ❌ The runtime read path inherits battle-tested bounds-safety.
+
+An intensifier claims an emphasis the fact does not need, and a marketing adjective claims a quality
+the reader cannot check. Delete them; the sentence stands.
+
+> ✅ A statically linked binary has no libc dependency.
+> ✅ The runtime read path inherits its bounds-safety.
+
+Intensifiers: *genuinely*, *genuine* as emphasis, *truly*, *really*, *very*, *extremely*,
+*incredibly*, *perfectly*, *absolutely*, *utterly*, *hugely*, *vastly*, *remarkably*. Marketing
+adjectives: *battle-tested*, *seamless*, *powerful*, *robust*, *sophisticated*, *world-class*, and
+*first-class* outside a type system. Keep a word that is part of a term or carries a fact: *deeply
+immutable*, *totally ordered*, *this very build*.
+
+## No biting
+
+> ❌ This is where the practice bites.
+> ✅ This is where the practice becomes problematic.
+
+"Bites" is a flippant metaphor too often used where the developer should be careful. We should never be
+flippant when providing a caution.
 
 ## Anaphor rules
 
@@ -165,5 +205,15 @@ Do not add markdown or other copy-and-paste documentation for CLI flags when `--
 adequate and authoritative. There are times when an example of using the CLI to perform
 some action is relevant but this is only in service of documenting some other concern
 where the CLI can be used, _not_ in documenting the CLI itself.
+
+## Do not break encapsulation to give an example
+
+Do not enumerate actual options as an "example" for something that is meant to be a pass through to a lower domain.
+
+> ❌ // Provide one of the backend implementations -- for example, Rust, C, or C++
+
+This pollutes a higher-level API with knowledge of identifiers that may or may not be valid or remain valid.
+
+> ✅ // Provide one of the backend implementations. See [documentation link] for supported values.
 
 <!-- newsletter:end shared -->

@@ -1,32 +1,32 @@
+# Sent by the newsletter from thirtytwobits/london; change it there.
 name: Draft release
+
 on:
   push:
     tags: ['v*']
+
 permissions:
   contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
-  gate:
-    uses: ./.github/workflows/ci.yml
-  release:
-    needs: gate
-    runs-on: ubuntu-24.04
-    timeout-minutes: 15
+  draft:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
     permissions:
+      actions: read
       contents: write
     steps:
-      - uses: actions/checkout@v7
-      - run: rustup toolchain install 1.99.0 --profile minimal
-      - run: rustup default 1.99.0
-      - name: Check that the tag names the version
-        env:
-          RELEASE_TAG: ${{ github.ref_name }}
-        run: cargo xtask release-check "$RELEASE_TAG"
-      - name: Write the release notes
-        env:
-          RELEASE_TAG: ${{ github.ref_name }}
-        run: cargo xtask release-notes "$RELEASE_TAG" > "$RUNNER_TEMP/notes.md"
-      - name: Create a draft release
+      # v7.0.1; action.yml declares runs.using: node24.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Draft the release from the main build of the tagged commit
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.ref_name }}
-        run: gh release create "$RELEASE_TAG" --verify-tag --draft --title "$RELEASE_TAG" --notes-file "$RUNNER_TEMP/notes.md"
+        run: python3 tools/release.py draft "$RELEASE_TAG"

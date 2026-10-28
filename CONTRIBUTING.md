@@ -20,5 +20,5 @@ A pull request that changes a public API reviews the snapshot diff and runs
    the crates.
 2. Add the version's entry to `CHANGELOG.md`.
 3. Merge, then push the tag `vX.Y.Z`. The "Draft release" workflow runs the gate, checks that the
-   tag names the version, and creates a draft release with the changelog as its notes.
+   tag names the version, and creates a draft release with the version's changelog entry as its notes.
 4. Publish the draft.

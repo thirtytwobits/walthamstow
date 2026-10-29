@@ -173,6 +173,17 @@ def member_manifests(root: Path) -> list[Path]:
     return sorted(manifests - {root_manifest})
 
 
+def consumer_manifest(manifest: str) -> str:
+    """The manifest of a new consumer of the piece whose root manifest is `manifest`.
+
+    Its own `[workspace]` keeps Cargo from joining, or editing, a workspace above it.
+    """
+    return (
+        '[package]\nname = "release-consumer"\nversion = "0.0.0"\nedition = "2021"\npublish = false\n'
+        "\n[workspace]\n" + consumer_patches(manifest)
+    )
+
+
 def consumer_patches(manifest: str) -> str:
     """The `[patch]` tables of `manifest` that a consumer of the release carries, as TOML.
 
@@ -588,11 +599,11 @@ def verify(arguments: argparse.Namespace) -> None:
         run("git", "fetch", "--quiet", "origin", "tag", name, cwd=root)
         with tempfile.TemporaryDirectory() as work:
             consumer = Path(work) / "release-consumer"
-            run("cargo", "new", "--lib", "--vcs", "none", str(consumer), cwd=Path(work))
+            (consumer / "src").mkdir(parents=True)
+            (consumer / "src" / "lib.rs").write_text("", encoding="utf-8")
             # `cargo add` resolves the dependency, so the patches come first.
-            patches = consumer_patches(run("git", "show", f"{commit}:Cargo.toml", cwd=root, capture=True))
-            with (consumer / "Cargo.toml").open("a", encoding="utf-8") as manifest:
-                manifest.write(patches)
+            tagged = run("git", "show", f"{commit}:Cargo.toml", cwd=root, capture=True)
+            (consumer / "Cargo.toml").write_text(consumer_manifest(tagged), encoding="utf-8")
             run("cargo", "add", record.consumer, "--git", record.repository, "--tag", name, cwd=consumer)
             run("cargo", "check", cwd=consumer)
             lock = tomllib.loads((consumer / "Cargo.lock").read_text(encoding="utf-8"))

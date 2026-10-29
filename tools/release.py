@@ -418,7 +418,7 @@ def prepare(arguments: argparse.Namespace) -> None:
         run("cargo", "update", "--workspace", cwd=root)
     run_steps(record, "prepare", root, version=new, previous=previous, tag=f"v{new}")
     print(
-        f"\nPrepared {new} from {previous}. Review `git diff`, commit, open a pull request and run `tools/release.py gates`."
+        f"\nPrepared {new} from {previous}. Review `git diff`, commit, open a pull request and run `python3 tools/release.py gates`."
     )
 
 
@@ -437,7 +437,7 @@ def gates(arguments: argparse.Namespace) -> None:
     _, record = load(root)
     require(root, record, f"v{record.version}")
     run_steps(record, "gates", root, version=record.version, previous=record.version, tag=f"v{record.version}")
-    print("\nAll release gates passed. Merge once CI passes, then run `tools/release.py tag` on main.")
+    print("\nAll release gates passed. Merge once CI passes, then run `python3 tools/release.py tag` on main.")
 
 
 def notes_command(arguments: argparse.Namespace) -> None:
@@ -473,7 +473,7 @@ def tag(arguments: argparse.Namespace) -> None:
     print(
         f"\nPushed {name}. The Draft release workflow attaches the main build's files to a draft:"
         f" {record.repository}/actions/workflows/{RELEASE_WORKFLOW}\n"
-        "Review the draft, publish it in GitHub, then run `tools/release.py verify`."
+        "Review the draft, publish it in GitHub, then run `python3 tools/release.py verify`."
     )
 
 

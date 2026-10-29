@@ -3,6 +3,7 @@ name = "walthamstow-upgrades"
 description = "Explicit, journaled and recoverable upgrades of a workspace's documents"
 version.workspace = true
 edition.workspace = true
+rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 publish = false

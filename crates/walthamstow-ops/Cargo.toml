@@ -3,6 +3,7 @@ name = "walthamstow-ops"
 description = "Walthamstow's workspace, upgrade, recovery and journal operations, contributed to Clapham"
 version.workspace = true
 edition.workspace = true
+rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 publish = false

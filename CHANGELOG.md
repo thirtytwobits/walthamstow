@@ -1,6 +1,16 @@
 # Changelog
 
-## 0.4.0 — 2026-10-27
+## Unreleased
+
+### Added
+
+- The crates declare Rust 1.88 as their minimum supported version.
+
+### Documentation
+
+- `RELEASING.md` holds the release procedure the London Project shares among its pieces.
+
+## 0.4.0
 
 - Breaking: Walthamstow builds on Clerkenwell 0.11.0 and Clapham 0.3.2, the Clapham that
   `clerkenwell-ops` takes, so a product composes both pieces' operations in one set.
@@ -9,7 +19,7 @@
 - `docs/contract.md` states that a commit made to the store other than through
   `CollaborativeDocuments`, such as through `clerkenwell-ops`, is not marked for publication.
 
-## 0.3.0 — 2026-10-27
+## 0.3.0
 
 - Breaking: Walthamstow builds on Clerkenwell 0.10.0.
   - `CollaborativeDocuments::published` and `AcceptedRead` carry a `CollaborationVersion` in
@@ -50,7 +60,7 @@
   its local store's `daemon` journal and retires it at stop; a CLI that names no endpoint
   resolves the daemon through it. `journals.list` lists the `daemon` journal.
 
-## 0.1.0 — 2026-10-20
+## 0.1.0
 
 - First release: `walthamstow-kernel`, `walthamstow-workspace` and `walthamstow-upgrades`,
   extracted from Primrose Hill's engine.

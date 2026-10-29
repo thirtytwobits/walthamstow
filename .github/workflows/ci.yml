@@ -37,3 +37,16 @@ jobs:
       - run: rustup default 1.99.0
       - run: cargo install cargo-public-api --version 0.50.2 --locked
       - run: cargo xtask api
+  msrv:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - run: rustup toolchain install 1.88.0 --profile minimal
+      - run: cargo +1.88.0 test --locked --workspace --exclude xtask
+  release-form:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - run: python3 tools/release.py check

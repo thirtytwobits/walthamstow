@@ -3,6 +3,7 @@ name = "walthamstow-ops-example"
 description = "Walthamstow's operations assembled into a daemon and a CLI, as Clapham's conformance harness drives them"
 version.workspace = true
 edition.workspace = true
+rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 publish = false

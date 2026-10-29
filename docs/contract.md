@@ -32,8 +32,8 @@ read or a write outside the directory it belongs in.
 
 ## Ownership
 
-One engine owns a workspace and a data directory. The workspace lock holds the root against a
-second engine. Within one engine, process-wide locks serialise publications, directory creation
+One engine owns a workspace and a data directory. `FileLeases` holds the workspace lock on the
+root against a second engine for as long as it is open. Within one engine, process-wide locks serialise publications, directory creation
 and each record of a data directory's local store. Two engines sharing a workspace or a data
 directory are outside this contract.
 
@@ -109,6 +109,20 @@ release finishes it. On Unix, each record a write leaves, and each directory a w
 readable and writable by its owner alone. Every open of one data directory shares one store, whatever path reaches
 the directory: a link, or a name in another case on a file system that folds case.
 
+## Leases
+
+A lease grants one holder a scope, a document named by its entity and resource, until it is
+released or lapses. While it stands, another holder is refused the scope. A holder that acquires a
+scope it holds is given its lease again, renewed. Each grant's epoch is later than every grant
+before it in the process.
+
+A fenced write runs while its lease stands, and holds the scope against every other grant until it
+returns. A write under a lease that was released, has lapsed or was granted by another set of
+leases is refused with `lease_lost`, unrun.
+
+`FileLeases` grant leases that never lapse. `MemoryLeases` grant leases that lapse a term after
+their grant or last renewal, on the clock they are given.
+
 ## Collaboration storage
 
 An envelope is kept at `<root>/<entity directory>/<sha-256 of the resource id>.json`:
@@ -174,7 +188,7 @@ principal may run them. Walthamstow does not judge principals.
 
 Every operation runs against the workspace under its lease:
 
-- A daemon holds the workspace lock for as long as it runs.
+- A daemon holds the workspace lock, through its `FileLeases`, for as long as it runs.
 - An in-process front end takes the lock for each operation, and is refused with
   `workspace_held` while another engine holds it.
 - Within one engine, operations on the workspace run one at a time.

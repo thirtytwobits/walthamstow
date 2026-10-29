@@ -1,5 +1,21 @@
 # Changelog
 
+## Unreleased
+
+### Breaking
+
+- `FileLeases::open` takes the workspace lock, and `workspace_lock` is no longer public.
+  `walthamstow-ops`' in-process lease opens `FileLeases`.
+
+### Added
+
+- `leases` grants a holder a document until it releases the lease or the lease lapses. `Leases`
+  acquires, renews and releases leases, and `fence` runs a write only while its lease stands,
+  holding the document against every other grant until the write returns, or refuses it with
+  `lease_lost`. `fenced` does the same for a write that returns a value or its own error. Each grant carries an epoch later than every grant before it in the process.
+  `FileLeases` hold the workspace lock and grant leases that never lapse. `MemoryLeases` grant
+  leases that lapse a term after their grant or last renewal, on the clock they are given.
+
 ## 0.5.0
 
 ### Breaking

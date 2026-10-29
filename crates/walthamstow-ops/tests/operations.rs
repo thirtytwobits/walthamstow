@@ -11,8 +11,8 @@ use std::path::Path;
 use std::sync::Arc;
 use walthamstow_kernel::durability::{write_synced, WriteDurability};
 use walthamstow_kernel::journals::Journal;
+use walthamstow_kernel::leases::FileLeases;
 use walthamstow_kernel::local_store::{FileLocalStore, JournalKey, LocalStore, MemoryLocalStore};
-use walthamstow_kernel::workspace_lock::WorkspaceLock;
 use walthamstow_ops::operations::{JOURNALS_READ, WORKSPACE_ADMIN, WORKSPACE_READ};
 use walthamstow_ops::{
     codes, Entity, FileWorkspace, FormatStatus, Lease, MemoryLock, MemoryWorkspace, WalthamstowOps,
@@ -119,7 +119,7 @@ fn files() -> Rig {
             write_synced(DURABILITY, &written.join(relative), bytes).unwrap()
         }),
         read: Box::new(move |relative| std::fs::read(read.join(relative)).ok()),
-        hold_elsewhere: Box::new(move || Box::new(WorkspaceLock::acquire(&held).unwrap())),
+        hold_elsewhere: Box::new(move || Box::new(FileLeases::open(&held).unwrap())),
         _directories: vec![root, data],
     }
 }

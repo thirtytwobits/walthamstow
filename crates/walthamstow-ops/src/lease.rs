@@ -11,7 +11,7 @@ use std::fmt;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
-use walthamstow_kernel::workspace_lock::WorkspaceLock;
+use walthamstow_kernel::leases::FileLeases;
 use walthamstow_kernel::KernelError;
 
 /// Which engine holds the workspace while an operation runs.
@@ -51,12 +51,13 @@ pub(crate) struct Hold {
 }
 
 impl Lease {
-    /// A lease for a process that runs operations in-process: each takes the workspace lock on
-    /// the root at `root`, or is refused while another engine holds it.
+    /// A lease for a process that runs operations in-process: each opens the leases over the
+    /// workspace rooted at `root`, taking its workspace lock, or is refused while another engine
+    /// holds it.
     pub fn in_process(root: impl Into<PathBuf>) -> Self {
         let root = root.into();
         Self::new(Holder::Process, move || {
-            Ok(Box::new(WorkspaceLock::acquire(&root)?) as Box<dyn Send>)
+            Ok(Box::new(FileLeases::open(&root)?) as Box<dyn Send>)
         })
     }
 
@@ -69,7 +70,7 @@ impl Lease {
     }
 
     /// A lease for the daemon, over `held`, the workspace lock it holds for as long as it
-    /// runs: a [`WorkspaceLock`] or a [`MemoryHold`].
+    /// runs: the [`FileLeases`] it opened or a [`MemoryHold`].
     pub fn daemon(held: impl Send + Sync + 'static) -> Self {
         let held = Arc::new(held);
         Self::new(Holder::Daemon, move || {

@@ -4,8 +4,8 @@ An engine kernel for products built on [Clerkenwell](https://github.com/thirtytw
 the parts of an engine daemon that do not depend on what the product is.
 
 - `walthamstow-kernel`: errors and reason codes, the event bus and daemon lifecycle, clocks,
-  durable writes, file helpers, hashes, journal layout, the engine's local records, collaboration
-  storage and the workspace lock.
+  durable writes, file helpers, hashes, journal layout, the engine's local records, leases and
+  collaboration storage.
 - `walthamstow-workspace`: a file-backed workspace of typed documents. It covers directories
   within the root, listing and parsing documents, schemas, mounts, the walk of a schema into field
   guidance, each collaborative entity's documents, and the journal of accepted documents still

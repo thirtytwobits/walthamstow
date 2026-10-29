@@ -1,6 +1,6 @@
 [package]
 name = "walthamstow-kernel"
-description = "The engine kernel: errors and reason codes, the event bus and daemon lifecycle, durable writes, journals, collaboration storage and the workspace lock"
+description = "The engine kernel: errors and reason codes, the event bus and daemon lifecycle, durable writes, journals, collaboration storage and leases"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

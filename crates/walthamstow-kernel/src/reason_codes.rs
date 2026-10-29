@@ -5,3 +5,6 @@
 
 /// Another engine holds the workspace.
 pub const WORKSPACE_HELD: &str = "workspace_held";
+
+/// A write was made under a lease that has been released or has lapsed.
+pub const LEASE_LOST: &str = "lease_lost";

@@ -157,7 +157,7 @@ pub fn a_put_repeated_changes_nothing(harness: &dyn BlobHarness) {
     let first = fixture.put(&document, "capture", b"one");
     let again = fixture.put(&document, "capture", b"one");
     assert_eq!(again, first);
-    assert_eq!(fixture.all(&document), [first.clone()]);
+    assert_eq!(fixture.all(&document), std::slice::from_ref(&first));
     assert_eq!(
         fixture.store.get(&document, &first).unwrap().as_deref(),
         Some(&b"one"[..])
@@ -187,14 +187,14 @@ pub fn a_put_or_removal_under_a_lost_lease_is_refused_and_changes_nothing(
     fixture.leases.release(&released).unwrap();
     let refused = fixture.store.put(&released, "capture", b"refused");
     assert_eq!(reason(&refused), Some(LEASE_LOST), "{refused:?}");
-    let removed = fixture.store.remove(&released, &[kept.clone()]);
+    let removed = fixture.store.remove(&released, std::slice::from_ref(&kept));
     assert_eq!(reason(&removed), Some(LEASE_LOST), "{removed:?}");
 
     let lapsed = fixture.lease(&document);
     fixture.lapse();
     let refused = fixture.store.put(&lapsed, "capture", b"refused");
     assert_eq!(reason(&refused), Some(LEASE_LOST), "{refused:?}");
-    let removed = fixture.store.remove(&lapsed, &[kept.clone()]);
+    let removed = fixture.store.remove(&lapsed, std::slice::from_ref(&kept));
     assert_eq!(reason(&removed), Some(LEASE_LOST), "{removed:?}");
 
     assert_eq!(fixture.all(&document), [kept]);
@@ -209,7 +209,7 @@ pub fn a_write_changes_only_the_leases_document(harness: &dyn BlobHarness) {
     assert_eq!(fixture.store.get(&b, &blob).unwrap(), None);
     fixture
         .store
-        .remove(&fixture.lease(&b), &[blob.clone()])
+        .remove(&fixture.lease(&b), std::slice::from_ref(&blob))
         .unwrap();
     assert_eq!(fixture.all(&a), [blob]);
 }
@@ -224,7 +224,7 @@ pub fn an_unregistered_kind_is_refused_on_every_operation(harness: &dyn BlobHarn
     assert!(is_invalid(&fixture.store.put(&lease, "other", b"one")));
     assert!(is_invalid(&fixture.store.get(&document, &other)));
     assert!(is_invalid(
-        &fixture.store.check(&document, &[other.clone()])
+        &fixture.store.check(&document, std::slice::from_ref(&other))
     ));
     assert!(is_invalid(&fixture.store.remove(&lease, &[other])));
     assert_eq!(fixture.all(&document), []);
@@ -309,7 +309,7 @@ pub fn a_removal_removes_the_blobs_it_names_and_nothing_else(harness: &dyn BlobH
             &[one.clone(), absent, three.clone(), one.clone()],
         )
         .unwrap();
-    assert_eq!(fixture.all(&document), [two.clone()]);
+    assert_eq!(fixture.all(&document), std::slice::from_ref(&two));
     assert_eq!(fixture.store.get(&document, &one).unwrap(), None);
     assert_eq!(
         fixture.store.get(&document, &two).unwrap().as_deref(),
@@ -353,10 +353,13 @@ pub fn a_corrupt_blob_is_refused_by_get_and_reported_by_check(breaker: &dyn Blob
         "{refused:?}"
     );
     assert_eq!(
-        fixture.store.check(&document, &[blob.clone()]).unwrap(),
+        fixture
+            .store
+            .check(&document, std::slice::from_ref(&blob))
+            .unwrap(),
         [BlobFault::Corrupt(blob.clone())]
     );
-    assert_eq!(fixture.all(&document), [blob.clone()]);
+    assert_eq!(fixture.all(&document), std::slice::from_ref(&blob));
     assert_eq!(fixture.put(&document, "capture", b"one"), blob);
     assert_eq!(
         fixture.store.get(&document, &blob).unwrap().as_deref(),
@@ -372,12 +375,18 @@ pub fn a_deleted_blob_is_reported_and_never_restored(breaker: &dyn BlobBreaker) 
     let blob = fixture.put(&document, "capture", b"one");
     breaker.delete(&document, &blob);
     assert_eq!(
-        fixture.store.check(&document, &[blob.clone()]).unwrap(),
+        fixture
+            .store
+            .check(&document, std::slice::from_ref(&blob))
+            .unwrap(),
         [BlobFault::Missing(blob.clone())]
     );
     assert_eq!(fixture.store.get(&document, &blob).unwrap(), None);
     assert_eq!(
-        fixture.store.check(&document, &[blob.clone()]).unwrap(),
+        fixture
+            .store
+            .check(&document, std::slice::from_ref(&blob))
+            .unwrap(),
         [BlobFault::Missing(blob.clone())]
     );
     assert_eq!(fixture.all(&document), []);

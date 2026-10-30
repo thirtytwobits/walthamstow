@@ -213,12 +213,15 @@ store:
 
 - The entity directory is the entity's name in lowercase, with every character except ASCII
   letters, digits, `-` and `_` written as `-`. A name that is empty or a device name is refused.
-- A resource that is not a safe file name is refused. So is one that matches an existing
-  document's directory compared case-folded, when the document's directory is created.
+- A resource that is not a safe file name is refused. So is one that matches another document's
+  directory compared case-folded, whenever a document is named, since a file system that folds
+  case would hold the two as one.
 - A kind whose name matches a file the log store names in a document, compared case-folded, is
   refused when the store is built.
-- A put is a durable write. A file present with the wrong bytes is replaced: the one place the
-  store writes over what it finds broken, since the writer supplies the bytes.
+- A put is a durable write. A file present with the right bytes is settled, so a put that
+  succeeds has left a durable blob whatever an earlier put left. A file present with the wrong
+  bytes is replaced: the one place the store writes over what it finds broken, since the writer
+  supplies the bytes.
 - A link, a special file or any other entry under a kind directory is refused unopened. A file a
   put staged and did not finish is passed over.
 

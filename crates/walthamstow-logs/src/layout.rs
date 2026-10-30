@@ -61,28 +61,26 @@ impl DocumentLayout {
         Ok(directory)
     }
 
-    /// The directory holding `document`, refused when its resource is not a safe directory
-    /// name or when it or the entity's directory is a link. It need not exist.
+    /// The directory holding `document`, which need not exist. Refused when the resource is not
+    /// a safe directory name, when it matches another document's directory compared case-folded,
+    /// since a file system that folds case would hold the two as one, or when it or the entity's
+    /// directory is a link.
     pub fn document_directory(&self, document: &DocumentId) -> KernelResult<PathBuf> {
         check_resource(document.resource())?;
-        let directory = self
-            .entity_directory(document.entity())?
-            .join(document.resource());
+        let entity = self.entity_directory(document.entity())?;
+        refuse_folded_collision(&entity, document.resource())?;
+        let directory = entity.join(document.resource());
         refuse_link(&directory)?;
         Ok(directory)
     }
 
     /// Creates the directory holding `document`, durable as `durability` asks, and returns it.
-    /// Refused when the resource matches an existing document's directory compared case-folded,
-    /// since a file system that folds case would hold the two as one.
     pub fn create_document_directory(
         &self,
         durability: WriteDurability,
         document: &DocumentId,
     ) -> KernelResult<PathBuf> {
         let directory = self.document_directory(document)?;
-        let entity = directory.parent().expect("a document lies in its entity");
-        refuse_folded_collision(entity, document.resource())?;
         create_dir_all_synced(durability, &directory)
             .map_err(|error| internal(&directory, error))?;
         Ok(directory)
@@ -209,6 +207,9 @@ mod tests {
             .unwrap();
         assert!(layout
             .create_document_directory(durability, &DocumentId::new("Session", "turn"))
+            .is_err());
+        assert!(layout
+            .document_directory(&DocumentId::new("Session", "turn"))
             .is_err());
         layout
             .create_document_directory(durability, &DocumentId::new("Session", "turn-2"))

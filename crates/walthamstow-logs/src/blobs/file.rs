@@ -179,7 +179,16 @@ impl BlobStore for FileBlobStore {
             create_dir_all_synced(self.durability, &directory)
                 .map_err(|error| internal(&directory, error))?;
             if Self::read(&path)?.is_some_and(|held| held == bytes) {
-                return Ok(());
+                // A put that renamed the file and failed before the directory was synced is
+                // settled here, so a put that succeeds has left a durable blob.
+                let file = std::fs::File::open(&path).map_err(|error| internal(&path, error))?;
+                self.durability
+                    .sync(&file)
+                    .map_err(|error| internal(&path, error))?;
+                return self
+                    .durability
+                    .sync_directory(&directory)
+                    .map_err(|error| internal(&directory, error));
             }
             write_synced(self.durability, &path, bytes).map_err(|error| internal(&path, error))
         })?;
@@ -229,13 +238,14 @@ impl BlobStore for FileBlobStore {
         }
         self.leases.as_ref().fenced(lease, || {
             let document = self.layout.document_directory(lease.document())?;
+            // Every named blob's directory is synced, present or not: a removal that unlinked
+            // the file and failed before the sync is settled when it is repeated.
             let mut directories = BTreeSet::new();
             for blob in blobs {
                 let (directory, path) = self.path(&document, blob)?;
                 match std::fs::symlink_metadata(&path) {
                     Ok(metadata) if metadata.file_type().is_file() => {
                         std::fs::remove_file(&path).map_err(|error| internal(&path, error))?;
-                        directories.insert(directory);
                     }
                     Ok(_) => {
                         return Err(internal(
@@ -246,11 +256,13 @@ impl BlobStore for FileBlobStore {
                     Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
                     Err(error) => return Err(internal(&path, error)),
                 }
+                directories.insert(directory);
             }
             for directory in directories {
-                self.durability
-                    .sync_directory(&directory)
-                    .map_err(|error| internal(&directory, error))?;
+                match self.durability.sync_directory(&directory) {
+                    Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+                    result => result.map_err(|error| internal(&directory, error))?,
+                }
             }
             Ok(())
         })
@@ -328,7 +340,7 @@ mod tests {
     fn open(harness: &FileHarness, document: &DocumentId) -> (Box<dyn BlobStore>, Lease) {
         let leases = Arc::new(MemoryLeases::new(
             std::time::Duration::from_secs(60),
-            walthamstow_kernel::clock::Moment::now,
+            || walthamstow_kernel::clock::Moment::ORIGIN,
         ));
         let lease = leases
             .acquire(
@@ -357,7 +369,7 @@ mod tests {
         let layout = Arc::new(DocumentLayout::new(root.path()).with_files("Log", ["Capture"]));
         let leases: Arc<dyn Leases> = Arc::new(MemoryLeases::new(
             std::time::Duration::from_secs(60),
-            walthamstow_kernel::clock::Moment::now,
+            || walthamstow_kernel::clock::Moment::ORIGIN,
         ));
         assert!(FileBlobStore::new(layout, WriteDurability::System, leases, kinds()).is_err());
     }
@@ -388,7 +400,7 @@ mod tests {
         std::fs::write(&staged, b"half").unwrap();
         assert_eq!(
             store.list(&document, None, usize::MAX).unwrap(),
-            [blob.clone()]
+            std::slice::from_ref(&blob)
         );
         std::fs::write(directory.join("notes.png"), b"stray").unwrap();
         assert!(store.list(&document, None, usize::MAX).is_err());
@@ -410,9 +422,11 @@ mod tests {
         std::fs::write(&elsewhere, b"elsewhere").unwrap();
         std::os::unix::fs::symlink(&elsewhere, harness.path(&document, &linked)).unwrap();
         assert!(store.get(&document, &linked).is_err());
-        assert!(store.check(&document, &[linked.clone()]).is_err());
+        assert!(store
+            .check(&document, std::slice::from_ref(&linked))
+            .is_err());
         assert!(store.list(&document, None, usize::MAX).is_err());
-        assert!(store.remove(&lease, &[linked.clone()]).is_err());
+        assert!(store.remove(&lease, std::slice::from_ref(&linked)).is_err());
         assert!(store.put(&lease, "capture", b"elsewhere").is_err());
         assert!(elsewhere.exists());
 

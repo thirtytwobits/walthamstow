@@ -9,18 +9,22 @@
 //! no disk and for tests. `conformance`, behind the `conformance` feature, is the test suite every
 //! adapter runs.
 
+pub mod blobs;
 #[cfg(any(test, feature = "conformance"))]
 pub mod conformance;
 pub mod fault;
+pub mod layout;
 pub mod memory;
 pub mod reason_codes;
 pub mod store;
 pub mod types;
 
-pub use fault::{FaultKind, LogFault};
+pub use blobs::{BlobKinds, BlobStore, FileBlobStore, MemoryBlobStore};
+pub use fault::{BlobFault, FaultKind, LogFault};
+pub use layout::DocumentLayout;
 pub use memory::MemoryLogStore;
 pub use store::LogStore;
 pub use types::{
-    BlobRef, Listed, LogCommit, LogImage, NewRecord, Position, Revision, StoredHead, StoredRecord,
-    WriteId,
+    BlobKind, BlobRef, Listed, LogCommit, LogImage, NewRecord, Position, Revision, StoredHead,
+    StoredRecord, WriteId,
 };

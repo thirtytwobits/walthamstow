@@ -185,6 +185,46 @@ Reads:
 `MemoryLogStore` keeps log documents in memory. Every adapter passes
 `walthamstow_logs::conformance`, behind the `conformance` feature.
 
+## Blobs
+
+A blob is bytes a record or a head names: kept once per document under a kind the product
+registers, and named by its kind and the SHA-256 of its bytes as `<kind>/<sha256>`. A kind is
+registered once per store, with a name of lowercase ASCII letters, digits, `-` and `_` that is no
+device name, and an extension of lowercase ASCII letters and digits. A blob of an unregistered kind
+is refused, on a read as on a write, so a product that retires a kind can no longer read its blobs.
+
+- A put and a removal run inside `Leases::fence` for the document the lease names, and are refused
+  with `lease_lost` otherwise. Putting bytes the store already holds changes nothing.
+- A put comes before the write that names its blob, and may precede the document's creation. A
+  document exists when its head does; blobs held for a document that does not exist are orphans.
+- Every read checks the bytes against the digest that names them. Bytes that do not match are
+  refused with `blob_corrupt` and never returned. `get` returns `None` for an absent blob. `check`
+  reports each blob it is given that is absent (`blob_missing`) or corrupt, as a `BlobFault`, in
+  the order given. A fault is never repaired: a blob stays absent or corrupt until its bytes are
+  put again.
+- `list` pages a document's blobs by kind, then digest. A page of none is refused as an invalid
+  request. The store does not know what names a blob: a caller removes, under the lease, the
+  blobs `list` returns that no head or record names.
+
+`FileBlobStore` keeps each blob as the file
+`<root>/<entity directory>/<resource>/<kind>/<sha256>.<extension>`, which people open like any
+other file of its type. The document directory is `DocumentLayout`'s, shared with the file log
+store:
+
+- The entity directory is the entity's name in lowercase, with every character except ASCII
+  letters, digits, `-` and `_` written as `-`. A name that is empty or a device name is refused.
+- A resource that is not a safe file name is refused. So is one that matches an existing
+  document's directory compared case-folded, when the document's directory is created.
+- A kind whose name matches a file the log store names in a document, compared case-folded, is
+  refused when the store is built.
+- A put is a durable write. A file present with the wrong bytes is replaced: the one place the
+  store writes over what it finds broken, since the writer supplies the bytes.
+- A link, a special file or any other entry under a kind directory is refused unopened. A file a
+  put staged and did not finish is passed over.
+
+`MemoryBlobStore` keeps blobs in memory. Every adapter passes the blob section of
+`walthamstow_logs::conformance`.
+
 ## Collaboration storage
 
 An envelope is kept at `<root>/<entity directory>/<sha-256 of the resource id>.json`:

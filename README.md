@@ -7,8 +7,9 @@ the parts of an engine daemon that do not depend on what the product is.
   durable writes, file helpers, hashes, journal layout, the engine's local records, document names,
   leases and collaboration storage.
 - `walthamstow-logs`: log documents, which do not merge: a head and an ordered log of records,
-  written by one lease holder at a time. It holds the `LogStore` port, its memory adapter and the
-  conformance suite every adapter runs.
+  written by one lease holder at a time, and the blobs they name. It holds the `LogStore` and
+  `BlobStore` ports, their memory adapters, the file blob store and the document layout it
+  shares with the file log store, and the conformance suite every adapter runs.
 - `walthamstow-workspace`: a file-backed workspace of typed documents. It covers directories
   within the root, listing and parsing documents, schemas, mounts, the walk of a schema into field
   guidance, each collaborative entity's documents, and the journal of accepted documents still

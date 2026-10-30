@@ -17,6 +17,12 @@
   incarnation and a tag the adapter chooses. `MemoryLogStore` keeps them in memory. The
   `conformance` feature adds the suite every adapter runs: each rule as a named test, and a
   property test against a reference model.
+- `walthamstow-logs` keeps blobs: bytes a record or a head names, kept once per document under a
+  `BlobKind` the product registers and named by a `BlobRef` of kind and SHA-256. `BlobStore` puts
+  and removes blobs under the document's lease, and reads them checked against their digest,
+  reporting an absent or corrupt blob by a `BlobFault`. `MemoryBlobStore` keeps them in memory.
+  `FileBlobStore` keeps each as a file under a `DocumentLayout`, the document directory the file
+  log store shares. The conformance suite has a blob section.
 
 ## 0.6.0
 

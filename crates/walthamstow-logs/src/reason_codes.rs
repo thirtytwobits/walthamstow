@@ -15,3 +15,9 @@ pub const LOG_INVALID: &str = "log_invalid";
 
 /// Storage refused a read of a log document.
 pub const LOG_INACCESSIBLE: &str = "log_inaccessible";
+
+/// A blob a read names is absent.
+pub const BLOB_MISSING: &str = "blob_missing";
+
+/// A blob's bytes do not match the digest that names it.
+pub const BLOB_CORRUPT: &str = "blob_corrupt";

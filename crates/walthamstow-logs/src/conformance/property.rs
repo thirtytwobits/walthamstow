@@ -110,6 +110,18 @@ impl Write {
             | Self::Remove { lease, .. } => lease,
         }
     }
+
+    /// This write under `lease` instead.
+    fn under(mut self, under: Lease) -> Self {
+        match &mut self {
+            Self::Create { lease, .. }
+            | Self::Commit { lease, .. }
+            | Self::Rewind { lease, .. }
+            | Self::Replace { lease, .. }
+            | Self::Remove { lease, .. } => *lease = under,
+        }
+        self
+    }
 }
 
 struct Run {
@@ -217,9 +229,20 @@ impl Run {
                 id: run.id(),
             }),
             12 => match self.last.clone() {
+                // A retry, mostly under the lease that wrote and sometimes under the one now
+                // standing over the document, which may be another.
                 Some(write) => {
-                    self.note("retry");
-                    self.write(write);
+                    let standing = self.standing.get(write.lease().document()).cloned();
+                    match standing {
+                        Some(standing) if self.rng.random_bool(0.3) => {
+                            self.note("retry under the standing lease");
+                            self.write(write.under(standing));
+                        }
+                        _ => {
+                            self.note("retry");
+                            self.write(write);
+                        }
+                    }
                 }
                 None => self.create(&document),
             },
@@ -425,7 +448,7 @@ impl Run {
         match &write {
             Write::Create { lease, image } => {
                 let got = store.create(lease, image);
-                let expected = stands.then(|| self.model.create(&document, image));
+                let expected = stands.then(|| self.model.create(&document, lease.epoch(), image));
                 self.judge_revision(got, expected);
             }
             Write::Commit {
@@ -434,7 +457,10 @@ impl Run {
                 commit,
             } => {
                 let got = store.commit(lease, &self.adapter(*base), commit);
-                let expected = stands.then(|| self.model.commit(&document, *base, commit, now));
+                let expected = stands.then(|| {
+                    self.model
+                        .commit(&document, lease.epoch(), *base, commit, now)
+                });
                 self.judge_revision(got, expected);
             }
             Write::Rewind {
@@ -444,18 +470,22 @@ impl Run {
                 commit,
             } => {
                 let got = store.rewind(lease, &self.adapter(*base), *from, commit);
-                let expected =
-                    stands.then(|| self.model.rewind(&document, *base, *from, commit, now));
+                let expected = stands.then(|| {
+                    self.model
+                        .rewind(&document, lease.epoch(), *base, *from, commit, now)
+                });
                 self.judge_revision(got, expected);
             }
             Write::Replace { lease, base, image } => {
                 let got = store.replace(lease, &self.adapter(*base), image);
-                let expected = stands.then(|| self.model.replace(&document, *base, image));
+                let expected =
+                    stands.then(|| self.model.replace(&document, lease.epoch(), *base, image));
                 self.judge_revision(got, expected);
             }
             Write::Remove { lease, base, id } => {
                 let got = store.remove(lease, &self.adapter(*base), id);
-                let expected = stands.then(|| self.model.remove(&document, *base, id));
+                let expected =
+                    stands.then(|| self.model.remove(&document, lease.epoch(), *base, id));
                 self.judge(got, expected, |_, (), ()| true);
             }
         }

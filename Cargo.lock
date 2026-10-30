@@ -3342,6 +3342,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "walthamstow-logs"
+version = "0.6.0"
+dependencies = [
+ "chrono",
+ "clerkenwell-events",
+ "rand 0.9.5",
+ "serde",
+ "serde_json",
+ "uuid",
+ "walthamstow-kernel",
+]
+
+[[package]]
 name = "walthamstow-ops"
 version = "0.6.0"
 dependencies = [

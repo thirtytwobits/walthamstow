@@ -1,6 +1,7 @@
 [workspace]
 members = [
   "crates/walthamstow-kernel",
+  "crates/walthamstow-logs",
   "crates/walthamstow-workspace",
   "crates/walthamstow-upgrades",
   "crates/walthamstow-ops",

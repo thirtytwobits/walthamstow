@@ -21,6 +21,7 @@ type Policy = (
 /// The crates Walthamstow releases, each with its policy.
 const CRATES: &[Policy] = &[
     ("walthamstow-kernel", &[], &[]),
+    ("walthamstow-logs", &["walthamstow-kernel"], &[]),
     ("walthamstow-workspace", &["walthamstow-kernel"], &[]),
     ("walthamstow-upgrades", &["walthamstow-kernel"], &[]),
     (
@@ -146,6 +147,7 @@ fn check(root: &Path) -> Result<()> {
             "clippy",
             "--workspace",
             "--all-targets",
+            "--all-features",
             "--locked",
             "--",
             "-D",
@@ -153,11 +155,22 @@ fn check(root: &Path) -> Result<()> {
         ],
         &[],
     )?;
-    run(root, "cargo", &["test", "--workspace", "--locked"], &[])?;
     run(
         root,
         "cargo",
-        &["doc", "--workspace", "--no-deps", "--locked"],
+        &["test", "--workspace", "--all-features", "--locked"],
+        &[],
+    )?;
+    run(
+        root,
+        "cargo",
+        &[
+            "doc",
+            "--workspace",
+            "--all-features",
+            "--no-deps",
+            "--locked",
+        ],
         &[("RUSTDOCFLAGS", "-D warnings")],
     )
 }

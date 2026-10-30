@@ -10,7 +10,6 @@
 //! resources never share a directory, whatever a file system folds. The product registers each
 //! entity, and two whose names map to one directory are refused.
 
-use cap_std::ambient_authority;
 use cap_std::fs::Dir;
 use percent_encoding::{percent_decode_str, percent_encode_byte, utf8_percent_encode, AsciiSet};
 use std::collections::{BTreeMap, BTreeSet};
@@ -51,8 +50,7 @@ impl DocumentLayout {
     /// Documents kept under `root`, which is used as given, of no entity yet. The root must
     /// exist.
     pub fn open(root: &Path) -> KernelResult<Self> {
-        let dir = Dir::open_ambient_dir(root, ambient_authority())
-            .map_err(|error| internal(root, error))?;
+        let dir = files::open_dir(root).map_err(|error| internal(root, error))?;
         Ok(Self {
             root: dir,
             path: root.to_path_buf(),

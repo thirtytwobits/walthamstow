@@ -96,7 +96,7 @@ fn as_upgrade(error: anyhow::Error) -> anyhow::Error {
 
 /// The directory at `path`, held as a `Dir`.
 fn open(path: &Path) -> std::io::Result<Dir> {
-    Dir::open_ambient_dir(path, cap_std::ambient_authority())
+    walthamstow_kernel::files::open_dir(path)
 }
 
 /// Authorises publishing `changes` over the workspace files they replace, which `sources`

@@ -1325,6 +1325,7 @@ impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_kernel::files::Identity wh
 pub fn walthamstow_kernel::files::Identity::vzip(self) -> V
 pub fn walthamstow_kernel::files::identity(path: &std::path::Path) -> std::io::error::Result<walthamstow_kernel::files::Identity>
 pub const fn walthamstow_kernel::files::is_windows_device_name(name: &str) -> bool
+pub fn walthamstow_kernel::files::open_dir(path: &std::path::Path) -> std::io::error::Result<cap_std::fs::dir::Dir>
 pub fn walthamstow_kernel::files::read_files(dir: &std::path::Path) -> anyhow::Result<alloc::collections::btree::map::BTreeMap<std::path::PathBuf, alloc::vec::Vec<u8>>>
 pub fn walthamstow_kernel::files::safe_id(id: &str) -> anyhow::Result<()>
 pub fn walthamstow_kernel::files::windows_allows(component: &str) -> bool

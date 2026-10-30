@@ -144,7 +144,7 @@ impl Workspace for FileWorkspace {
             .directories
             .get(entity)
             .ok_or_else(|| anyhow::anyhow!("The workspace keeps no directory for {entity}."))?;
-        let root = cap_std::fs::Dir::open_ambient_dir(&self.root, cap_std::ambient_authority())?;
+        let root = walthamstow_kernel::files::open_dir(&self.root)?;
         list_documents(directory)?
             .into_iter()
             .map(|file| {

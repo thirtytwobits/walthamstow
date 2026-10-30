@@ -57,14 +57,19 @@ fn open_dir(dir: &Dir) -> io::Result<File> {
     Ok(File::from(opened))
 }
 
-/// The directory `dir` holds, opened so its entries can be flushed: Windows flushes only
-/// through a handle with write access, which a `Dir` does not hold.
+/// The directory `dir` holds, opened again so its entries can be flushed: Windows flushes only
+/// through a handle with write access, which a `Dir` does not hold. The handle shares deletion,
+/// as every open of a held workspace root must.
 #[cfg(windows)]
 fn open_dir(dir: &Dir) -> io::Result<File> {
-    use cap_fs_ext::OpenOptionsMaybeDirExt;
-    let mut options = cap_std::fs::OpenOptions::new();
-    options.write(true).maybe_dir(true);
-    Ok(dir.open_with(".", &options)?.into_std())
+    use std::os::windows::io::AsHandle;
+    use winx::file::{reopen_file, AccessMode, Flags, ShareMode};
+    reopen_file(
+        dir.as_handle(),
+        AccessMode::GENERIC_WRITE,
+        ShareMode::FILE_SHARE_READ | ShareMode::FILE_SHARE_WRITE | ShareMode::FILE_SHARE_DELETE,
+        Flags::FILE_FLAG_BACKUP_SEMANTICS,
+    )
 }
 
 /// `directory`, opened so its entries can be synced.

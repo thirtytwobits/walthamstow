@@ -1,8 +1,10 @@
 //! Copyright (c) Scott A Dixon
 //!
-//! Reading a directory of the engine's files, and naming one safely.
+//! Reading a directory of the engine's files, opening one as a `cap-std` directory, and naming
+//! one safely.
 
 use anyhow::{bail, Result};
+use cap_std::fs::Dir;
 use std::collections::BTreeMap;
 use std::path::{Component, Path, PathBuf};
 
@@ -131,6 +133,36 @@ pub fn read_files(dir: &Path) -> Result<BTreeMap<PathBuf, Vec<u8>>> {
     Ok(files)
 }
 
+/// The directory at `path`, held as a `cap-std` directory, every link in `path` followed. On
+/// Windows the handle shares deletion, as every open of a workspace root must while an engine
+/// holds it, and holds write access, through which
+/// [`WriteDurability::sync_dir`](crate::durability::WriteDurability::sync_dir) flushes it.
+pub fn open_dir(path: &Path) -> std::io::Result<Dir> {
+    #[cfg(not(windows))]
+    {
+        Dir::open_ambient_dir(path, cap_std::ambient_authority())
+    }
+    #[cfg(windows)]
+    {
+        use std::os::windows::fs::OpenOptionsExt;
+        const FILE_SHARE_READ_WRITE_DELETE: u32 = 0x0000_0007;
+        const FILE_FLAG_BACKUP_SEMANTICS: u32 = 0x0200_0000;
+        let opened = std::fs::OpenOptions::new()
+            .read(true)
+            .write(true)
+            .share_mode(FILE_SHARE_READ_WRITE_DELETE)
+            .custom_flags(FILE_FLAG_BACKUP_SEMANTICS)
+            .open(path)?;
+        if !opened.metadata()?.is_dir() {
+            return Err(std::io::Error::other(format!(
+                "{} is not a directory.",
+                path.display()
+            )));
+        }
+        Ok(Dir::from_std_file(opened))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -231,5 +263,29 @@ mod tests {
         ] {
             assert!(!is_windows_device_name(ordinary), "{ordinary}");
         }
+    }
+
+    #[test]
+    fn a_held_workspace_root_opens_and_is_written_and_synced_through_its_dir() {
+        use crate::durability::{create_dir_all_in, write_synced_in, WriteDurability};
+        let root = tempfile::tempdir().unwrap();
+        let _held = crate::workspace_lock::WorkspaceLock::acquire(root.path()).unwrap();
+        let dir = open_dir(root.path()).unwrap();
+        for durability in [WriteDurability::Device, WriteDurability::System] {
+            write_synced_in(durability, &dir, Path::new("top.json"), b"top").unwrap();
+            create_dir_all_in(durability, &dir, Path::new("a/b")).unwrap();
+            write_synced_in(durability, &dir, Path::new("a/b/c.json"), b"c").unwrap();
+            durability.sync_dir(&dir).unwrap();
+        }
+        assert_eq!(std::fs::read(root.path().join("top.json")).unwrap(), b"top");
+        assert_eq!(std::fs::read(root.path().join("a/b/c.json")).unwrap(), b"c");
+    }
+
+    #[test]
+    fn a_file_is_not_opened_as_a_directory() {
+        let root = tempfile::tempdir().unwrap();
+        std::fs::write(root.path().join("plain"), b"x").unwrap();
+        assert!(open_dir(&root.path().join("plain")).is_err());
+        assert!(open_dir(&root.path().join("missing")).is_err());
     }
 }

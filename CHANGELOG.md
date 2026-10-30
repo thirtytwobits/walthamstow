@@ -6,9 +6,19 @@
 
 - `leases::LeaseScope` is `DocumentId`, in the kernel's `document` module, and converts to and from
   Clerkenwell's `CollaborationDocumentId`. `Lease::scope` is `Lease::document`.
+- `walthamstow_upgrades::publication` is the kernel's `publication` module, over `cap-std`, which
+  the kernel now depends on. `publish` and `publish_first` take the live and staged roots as
+  `cap_std::fs::Dir`, and resolve every file through them; `file_hash` and `read_regular` take a
+  `Dir`. `Replacement::target_hash` is an `Option`, and `None` removes the live file. The kernel refuses with `publication_stale` and `publication_paths_collide`;
+  `walthamstow-upgrades` names them `upgrade_stale` and `upgrade_paths_collide`, and
+  `workspace::check_paths` checks an upgrade's paths.
 
 ### Added
 
+- `durability::write_synced_in` writes a file durably within a `cap_std::fs::Dir`, and
+  `create_dir_all_in` creates directories durably within one. `WriteDurability::sync_dir` syncs the
+  directory a `Dir` holds. `files::open_dir` opens a directory as a `Dir`, sharing deletion on
+  Windows so that it opens a workspace root an engine holds.
 - `walthamstow-logs` keeps log documents: a head, a format and an ordered log of records, written
   by one lease holder at a time. `LogStore` creates, commits to, rewinds, replaces and removes a
   document under its lease and over the revision its writer read, retries a write by its id under

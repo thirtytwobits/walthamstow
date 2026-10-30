@@ -10,10 +10,8 @@ use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use std::sync::{Mutex, PoisonError};
 use walthamstow_kernel::durability::{write_synced, WriteDurability};
+use walthamstow_kernel::publication::{check_relative_path, read_regular};
 use walthamstow_kernel::KernelError;
-use walthamstow_upgrades::publication::{
-    check_publication_paths, check_relative_path, read_regular,
-};
 use walthamstow_upgrades::workspace::{self as upgrades, Recovery};
 use walthamstow_workspace::documents::{list_documents, supported_document};
 
@@ -146,9 +144,14 @@ impl Workspace for FileWorkspace {
             .directories
             .get(entity)
             .ok_or_else(|| anyhow::anyhow!("The workspace keeps no directory for {entity}."))?;
+        let root = walthamstow_kernel::files::open_dir(&self.root)?;
         list_documents(directory)?
             .into_iter()
-            .map(|file| Ok((document_path(&self.root, &file)?, read_regular(&file)?)))
+            .map(|file| {
+                let path = document_path(&self.root, &file)?;
+                let bytes = read_regular(&root, Path::new(&path))?;
+                Ok((path, bytes))
+            })
             .collect()
     }
 
@@ -160,7 +163,7 @@ impl Workspace for FileWorkspace {
     ) -> anyhow::Result<()> {
         let sources = by_path(sources)?;
         let changes = by_path(changes)?;
-        check_publication_paths(changes.keys().map(PathBuf::as_path))?;
+        upgrades::check_paths(changes.keys().map(PathBuf::as_path))?;
         let work = self.work(operation_id)?;
         let prepared = upgrades::prepared_dir(&work);
         for (path, bytes) in &changes {

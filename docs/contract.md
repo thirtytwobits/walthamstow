@@ -53,7 +53,7 @@ Walthamstow refuses a link wherever it names an entry itself:
 - `staging/` and each staging directory
 - the collaboration cache root that `prepare_cache_root` is given, and each entity directory
 - publication marks
-- each upgrade's operation directory, its originals and its staged files
+- each upgrade's operation directory
 
 A file Walthamstow reads as state must be a regular file. A link, FIFO, socket or device found
 there is refused unopened.
@@ -267,6 +267,28 @@ A version names the document's incarnation, so files rendering a document that w
 created again never clear its mark. Each mark is a record in the `collaboration-publications`
 journal, and every open over one local store shares one journal.
 
+## Publication
+
+A publication replaces live files with staged ones. It holds the live and staged roots as
+`cap-std` directories, and every file resolves through them. A path or a link that would leave
+either root fails. A live file reached through a linked directory is refused, since two paths
+through one can name one file.
+
+- Each replacement names its file once, compared case-folded, by normal components only. Two that
+  differ only in case are refused with the reason `publication_paths_collide` before anything is
+  written.
+- Each replacement carries the hash its live file held when staged, or none when there was no
+  file, and its target: the staged file's hash, or none when the publication removes the file.
+- Every replacement is checked before any file is written. A live file that holds neither its
+  source nor its target refuses the publication with the reason `publication_stale`. A first
+  publication also refuses a file already at its target; publishing again accepts it, since an
+  interrupted publication may have written it.
+- A live or staged file must be a regular file, and a staged file must match its target hash.
+- Each file is written durably, and each removal is made durable.
+
+Within one engine, a process-wide lock holds each publication from its first check to its last
+write, so two publications from one source cannot both pass their fences.
+
 ## Upgrades
 
 An operation id is lowercase ASCII letters, digits, `-` and `_`, and is not a device name. An
@@ -276,15 +298,13 @@ upgrade works in `journals/workspace-upgrades/<operation id>/`:
 - `original/` holds the files they replace
 - `operation.json` authorises publication
 
-A publication names each file once, compared case-folded, by normal components only. An upgrade
-naming two files that differ only in case is refused with the reason `upgrade_paths_collide`
-before anything is written. Every
-replacement is checked against the hash its live file held when staged before any file is
-written.
+An upgrade publishes its files from `prepared/` into the workspace root as a
+[publication](#publication), and reaches its originals and staged files through its operation
+directory. An upgrade names a publication's refusals as its own: two files that differ only in
+case are refused with the reason `upgrade_paths_collide`, and a stale file with `upgrade_stale`.
+Recovery publishes again, so it accepts a file already at its target.
 
-A file that holds neither its source nor its target refuses the publication with the reason
-`upgrade_stale`. An upgrade's first publication also refuses a file already at its target;
-recovery accepts it, since an interrupted publication may have written it. A completed upgrade's directory may be removed, and so may that of an upgrade
+A completed upgrade's directory may be removed, and so may that of an upgrade
 whose first publication was refused before writing a file. Removing the latter removes its journal
 durably before the files it names, so a removal that stops midway leaves staging that recovery
 discards.

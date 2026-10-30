@@ -111,13 +111,13 @@ the directory: a link, or a name in another case on a file system that folds cas
 
 ## Leases
 
-A lease grants one holder a scope, a document named by its entity and resource, until it is
-released or lapses. While it stands, another holder is refused the scope. A holder that acquires a
-scope it holds is given its lease again, renewed. Each grant's epoch is later than every grant
-before it in the process.
+A lease grants one holder a document, named by a `DocumentId` of its entity and resource, until it
+is released or lapses. While it stands, another holder is refused the document. A holder that
+acquires a document it holds is given its lease again, renewed. Each grant's epoch is later than
+every grant before it in the process.
 
-A fenced write runs while its lease stands, and holds the scope against every other grant until it
-returns. A write under a lease that was released, has lapsed or was granted by another set of
+A fenced write runs while its lease stands, and holds the document against every other grant until
+it returns. A write under a lease that was released, has lapsed or was granted by another set of
 leases is refused with `lease_lost`, unrun.
 
 `FileLeases` grant leases that never lapse. `MemoryLeases` grant leases that lapse a term after

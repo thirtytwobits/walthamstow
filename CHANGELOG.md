@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Breaking
+
+- `leases::LeaseScope` is `DocumentId`, in the kernel's `document` module, and converts to and from
+  Clerkenwell's `CollaborationDocumentId`. `Lease::scope` is `Lease::document`.
+
 ## 0.6.0
 
 ### Breaking

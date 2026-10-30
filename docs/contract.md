@@ -271,7 +271,8 @@ journal, and every open over one local store shares one journal.
 
 A publication replaces live files with staged ones. It holds the live and staged roots as
 `cap-std` directories, and every file resolves through them. A path or a link that would leave
-either root fails. Within a root, a directory reached through a link is used.
+either root fails. A live file reached through a linked directory is refused, since two paths
+through one can name one file.
 
 - Each replacement names its file once, compared case-folded, by normal components only. Two that
   differ only in case are refused with the reason `publication_paths_collide` before anything is

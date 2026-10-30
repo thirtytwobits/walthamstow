@@ -141,6 +141,7 @@ fn publish_as(
     let mut changes = Vec::new();
     for replacement in replacements {
         let path = replacement.path.as_path();
+        refuse_linked_directories(live, path)?;
         let current = file_hash(live, path)?;
         if resuming && current == replacement.target_hash {
             // An interrupted publication may have written or removed it without syncing its
@@ -179,6 +180,27 @@ fn publish_as(
                 }
                 sync_holder(durability, live, path)?;
             }
+        }
+    }
+    Ok(())
+}
+
+/// Refuses `path` within `dir` when a directory on its way is a link. Two paths through a linked
+/// directory can name one file, which one publication would then write twice.
+fn refuse_linked_directories(dir: &Dir, path: &Path) -> Result<()> {
+    let mut walked = PathBuf::new();
+    for part in path.parent().into_iter().flat_map(Path::components) {
+        walked.push(part);
+        match dir.symlink_metadata(&walked) {
+            Ok(metadata) if metadata.is_symlink() => {
+                bail!(
+                    "{} is a link, which a publication does not write through.",
+                    walked.display()
+                )
+            }
+            Ok(_) => {}
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(()),
+            Err(error) => return Err(error.into()),
         }
     }
     Ok(())
@@ -403,6 +425,29 @@ mod tests {
                 b"old a"
             );
         }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_publication_does_not_write_through_a_link_within_the_root() {
+        let (live, staged, replacements) = stage(&[
+            ("real/a.json", Some(b"old a"), Some(b"first")),
+            ("alias/a.json", None, Some(b"second")),
+        ]);
+        std::os::unix::fs::symlink("real", live.path().join("alias")).unwrap();
+        let replacements = replacements
+            .into_iter()
+            .map(|replacement| Replacement {
+                source_hash: Some(sha256_hex(b"old a")),
+                ..replacement
+            })
+            .collect::<Vec<_>>();
+        let error = publish_at(live.path(), staged.path(), &replacements).unwrap_err();
+        assert!(error.to_string().contains("is a link"), "{error}");
+        assert_eq!(
+            std::fs::read(live.path().join("real/a.json")).unwrap(),
+            b"old a"
+        );
     }
 
     #[cfg(unix)]

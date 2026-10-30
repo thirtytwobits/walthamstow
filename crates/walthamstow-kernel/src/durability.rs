@@ -43,10 +43,18 @@ impl WriteDurability {
     }
 }
 
-/// The directory `dir` holds, opened so its entries can be synced.
-#[cfg(not(windows))]
+/// The directory `dir` holds, opened so its entries can be synced. Linux holds a `Dir` as an
+/// `O_PATH` descriptor, which cannot be synced, so the directory is opened again through it.
+#[cfg(unix)]
 fn open_dir(dir: &Dir) -> io::Result<File> {
-    Ok(dir.try_clone()?.into_std_file())
+    use rustix::fs::{openat, Mode, OFlags};
+    let opened = openat(
+        dir,
+        ".",
+        OFlags::RDONLY | OFlags::DIRECTORY | OFlags::CLOEXEC,
+        Mode::empty(),
+    )?;
+    Ok(File::from(opened))
 }
 
 /// The directory `dir` holds, opened so its entries can be flushed: Windows flushes only

@@ -5,10 +5,10 @@
 //! Every write runs inside [`Leases::fence`](walthamstow_kernel::leases::Leases::fence) for the
 //! document its lease names, and is refused with `lease_lost` otherwise. A write names the
 //! revision it read, and a write over any other revision is refused with `log_stale` and changes
-//! nothing. A write carries an id its writer chooses: the store keeps the id and base of its last
-//! write to a document, and a write that repeats both is given what that write was given, and
-//! writes nothing again. A write is checked in this order: its lease, a retry, its base, then what
-//! it carries.
+//! nothing. A write carries an id its writer chooses: the store keeps the lease, id and base of
+//! its last write to a document, and a write under that lease that repeats the id and base is
+//! given what that write was given, and writes nothing again. A write is checked in this order:
+//! its lease, a retry, its base, then what it carries.
 //!
 //! Reads are consistent and pure. A read never creates, repairs, truncates or upgrades anything,
 //! and reports a broken document by a [`LogFault`](crate::LogFault).

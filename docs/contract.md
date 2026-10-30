@@ -114,7 +114,7 @@ the directory: a link, or a name in another case on a file system that folds cas
 A lease grants one holder a document, named by a `DocumentId` of its entity and resource, until it
 is released or lapses. While it stands, another holder is refused the document. A holder that
 acquires a document it holds is given its lease again, renewed. Each grant's epoch is later than
-every grant before it in the process.
+every grant before it in the process. A lease stands only in the process that granted it.
 
 A fenced write runs while its lease stands, and holds the document against every other grant until
 it returns. A write under a lease that was released, has lapsed or was granted by another set of
@@ -152,11 +152,13 @@ Writes:
 - A write names the revision it read. A write over any other revision is refused with `log_stale`.
   `create` names none, and is refused with `log_stale` while the document exists. A removed
   document is at no revision, so a write over it is refused with `log_stale`.
-- A write carries an id its writer chooses. The store keeps the id and base of its last write to a
-  document, through the document's removal. A write that repeats both is a retry: it is given what
-  that write gave, a revision or, to a removal, nothing more, and writes nothing again. A removal
-  that repeats another write's id and base, or a write that repeats a removal's, is refused with
-  `log_stale`.
+- A write carries an id its writer chooses. The store keeps the lease, id and base of its last
+  write to a document, through the document's removal. A write under that lease that repeats the
+  id and base is a retry: it is given what that write gave, a revision or, to a removal, nothing
+  more, and writes nothing again. A write under another lease is judged by its base, whatever its
+  id. A removal that repeats another write's id and base, or a write that repeats a removal's, is
+  refused with `log_stale`. A lease stands only in the process that granted it, so what a retry
+  needs is kept in memory.
 - A write is checked for its lease, then whether it is a retry, then its base, then what it
   carries. A write that is refused changes nothing.
 - The store never gives a revision twice, including across a document's removal and re-creation:

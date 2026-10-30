@@ -57,6 +57,7 @@ macro_rules! log_store_conformance {
             a_revision_is_never_given_twice_across_removal_and_creation,
             a_retried_write_is_given_what_it_was_given_and_writes_nothing_twice,
             only_the_last_write_is_retried,
+            a_retry_is_recognised_only_under_the_lease_that_wrote,
             a_removal_and_another_write_never_retry_each_other,
             a_write_with_a_new_id_over_a_spent_base_is_stale,
             a_write_is_checked_for_its_lease_then_a_retry_then_its_base_then_what_it_carries,

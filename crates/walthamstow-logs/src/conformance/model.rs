@@ -43,10 +43,11 @@ struct ModelDocument {
     revision: ModelRevision,
 }
 
-/// The last write to a document: its id, its base, and what it gave, which is no revision for
-/// a removal.
+/// The last write to a document: its lease's epoch, its id, its base, and what it gave, which is
+/// no revision for a removal.
 #[derive(Debug)]
 struct LastWrite {
+    epoch: u64,
     id: WriteId,
     base: Option<ModelRevision>,
     given: Option<ModelRevision>,
@@ -88,25 +89,28 @@ fn append(document: &mut ModelDocument, commit: &LogCommit, now: DateTime<Utc>) 
 }
 
 impl Model {
-    /// What the last write to `document` gave, when a write of `id` over `base` repeats it.
+    /// What the last write to `document` gave, when a write of `id` over `base` under the lease
+    /// of `epoch` repeats it.
     fn retried(
         &self,
         document: &DocumentId,
+        epoch: u64,
         id: &WriteId,
         base: Option<ModelRevision>,
     ) -> Option<Option<ModelRevision>> {
         self.last
             .get(document)
-            .filter(|last| &last.id == id && last.base == base)
+            .filter(|last| last.epoch == epoch && &last.id == id && last.base == base)
             .map(|last| last.given)
     }
 
     pub(super) fn create(
         &mut self,
         document: &DocumentId,
+        epoch: u64,
         image: &LogImage,
     ) -> Outcome<ModelRevision> {
-        if let Some(Some(given)) = self.retried(document, &image.id, None) {
+        if let Some(Some(given)) = self.retried(document, epoch, &image.id, None) {
             return Outcome::Done(given);
         }
         if self.documents.contains_key(document) {
@@ -133,6 +137,7 @@ impl Model {
         self.last.insert(
             document.clone(),
             LastWrite {
+                epoch,
                 id: image.id.clone(),
                 base: None,
                 given: Some(revision),
@@ -146,11 +151,12 @@ impl Model {
     fn change(
         &mut self,
         document: &DocumentId,
+        epoch: u64,
         base: ModelRevision,
         id: &WriteId,
         change: impl FnOnce(&mut ModelDocument) -> bool,
     ) -> Outcome<ModelRevision> {
-        if let Some(Some(given)) = self.retried(document, id, Some(base)) {
+        if let Some(Some(given)) = self.retried(document, epoch, id, Some(base)) {
             return Outcome::Done(given);
         }
         let Some(current) = self
@@ -170,6 +176,7 @@ impl Model {
         self.last.insert(
             document.clone(),
             LastWrite {
+                epoch,
                 id: id.clone(),
                 base: Some(base),
                 given: Some(revision),
@@ -181,11 +188,12 @@ impl Model {
     pub(super) fn commit(
         &mut self,
         document: &DocumentId,
+        epoch: u64,
         base: ModelRevision,
         commit: &LogCommit,
         now: DateTime<Utc>,
     ) -> Outcome<ModelRevision> {
-        self.change(document, base, &commit.id, |stored| {
+        self.change(document, epoch, base, &commit.id, |stored| {
             if commit.records.is_empty() && commit.head.is_none() {
                 return false;
             }
@@ -197,12 +205,13 @@ impl Model {
     pub(super) fn rewind(
         &mut self,
         document: &DocumentId,
+        epoch: u64,
         base: ModelRevision,
         from: Position,
         commit: &LogCommit,
         now: DateTime<Utc>,
     ) -> Outcome<ModelRevision> {
-        self.change(document, base, &commit.id, |stored| {
+        self.change(document, epoch, base, &commit.id, |stored| {
             if from.get() >= stored.next {
                 return false;
             }
@@ -215,10 +224,11 @@ impl Model {
     pub(super) fn replace(
         &mut self,
         document: &DocumentId,
+        epoch: u64,
         base: ModelRevision,
         image: &LogImage,
     ) -> Outcome<ModelRevision> {
-        self.change(document, base, &image.id, |stored| {
+        self.change(document, epoch, base, &image.id, |stored| {
             let Some(next) = image_next(image) else {
                 return false;
             };
@@ -233,10 +243,11 @@ impl Model {
     pub(super) fn remove(
         &mut self,
         document: &DocumentId,
+        epoch: u64,
         base: ModelRevision,
         id: &WriteId,
     ) -> Outcome<()> {
-        if let Some(None) = self.retried(document, id, Some(base)) {
+        if let Some(None) = self.retried(document, epoch, id, Some(base)) {
             return Outcome::Done(());
         }
         if self.documents.get(document).map(|stored| stored.revision) != Some(base) {
@@ -246,6 +257,7 @@ impl Model {
         self.last.insert(
             document.clone(),
             LastWrite {
+                epoch,
                 id: id.clone(),
                 base: Some(base),
                 given: None,

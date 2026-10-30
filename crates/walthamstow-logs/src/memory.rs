@@ -34,7 +34,7 @@ impl fmt::Debug for MemoryLogStore {
 }
 
 /// One document's place in the store: the document, if it exists, and the last write to it,
-/// which outlives the document's removal.
+/// which outlives the document's removal but not the lease that made it.
 #[derive(Default)]
 struct Slot {
     document: Option<Document>,
@@ -49,20 +49,28 @@ struct Document {
     revision: Revision,
 }
 
-/// The last write to a document, which a retry repeats: its id, its base, and the revision it
-/// gave, or none for a removal.
+/// The last write to a document, which a retry under the same lease repeats: its lease's epoch,
+/// its id, its base, and the revision it gave, or none for a removal.
 struct LastWrite {
+    epoch: u64,
     id: WriteId,
     base: Option<Revision>,
     given: Option<Revision>,
 }
 
 impl Slot {
-    /// What the last write gave, when a write of `id` over `base` repeats it.
-    fn retried(&self, id: &WriteId, base: Option<&Revision>) -> Option<&Option<Revision>> {
+    /// What the last write gave, when a write of `id` over `base` under `lease` repeats it.
+    fn retried(
+        &self,
+        lease: &Lease,
+        id: &WriteId,
+        base: Option<&Revision>,
+    ) -> Option<&Option<Revision>> {
         self.last
             .as_ref()
-            .filter(|last| &last.id == id && last.base.as_ref() == base)
+            .filter(|last| {
+                last.epoch == lease.epoch() && &last.id == id && last.base.as_ref() == base
+            })
             .map(|last| &last.given)
     }
 
@@ -105,7 +113,8 @@ impl MemoryLogStore {
         }
     }
 
-    /// Runs `write` on the slot of the lease's document while the lease stands.
+    /// Runs `write` on the slot of the lease's document while the lease stands. A slot a refused
+    /// write leaves empty is dropped.
     fn fenced<T>(
         &self,
         lease: &Lease,
@@ -113,7 +122,15 @@ impl MemoryLogStore {
     ) -> KernelResult<T> {
         self.leases.as_ref().fenced(lease, || {
             let mut slots = locked(&self.slots);
-            write(slots.entry(lease.document().clone()).or_default())
+            let document = lease.document();
+            let result = write(slots.entry(document.clone()).or_default());
+            if slots
+                .get(document)
+                .is_some_and(|slot| slot.document.is_none() && slot.last.is_none())
+            {
+                slots.remove(document);
+            }
+            result
         })
     }
 
@@ -127,7 +144,7 @@ impl MemoryLogStore {
         change: impl FnOnce(&mut Document) -> KernelResult<()>,
     ) -> KernelResult<Revision> {
         self.fenced(lease, |slot| {
-            if let Some(Some(given)) = slot.retried(id, Some(base)) {
+            if let Some(Some(given)) = slot.retried(lease, id, Some(base)) {
                 return Ok(given.clone());
             }
             let document = slot.at(lease.document(), base)?;
@@ -135,6 +152,7 @@ impl MemoryLogStore {
             change(document)?;
             document.revision = revision.clone();
             slot.last = Some(LastWrite {
+                epoch: lease.epoch(),
                 id: id.clone(),
                 base: Some(base.clone()),
                 given: Some(revision.clone()),
@@ -181,7 +199,7 @@ fn append(
 impl LogStore for MemoryLogStore {
     fn create(&self, lease: &Lease, image: &LogImage) -> KernelResult<Revision> {
         self.fenced(lease, |slot| {
-            if let Some(Some(given)) = slot.retried(&image.id, None) {
+            if let Some(Some(given)) = slot.retried(lease, &image.id, None) {
                 return Ok(given.clone());
             }
             if slot.document.is_some() {
@@ -201,6 +219,7 @@ impl LogStore for MemoryLogStore {
                 revision: revision.clone(),
             });
             slot.last = Some(LastWrite {
+                epoch: lease.epoch(),
                 id: image.id.clone(),
                 base: None,
                 given: Some(revision.clone()),
@@ -253,12 +272,13 @@ impl LogStore for MemoryLogStore {
 
     fn remove(&self, lease: &Lease, base: &Revision, id: &WriteId) -> KernelResult<()> {
         self.fenced(lease, |slot| {
-            if let Some(None) = slot.retried(id, Some(base)) {
+            if let Some(None) = slot.retried(lease, id, Some(base)) {
                 return Ok(());
             }
             slot.at(lease.document(), base)?;
             slot.document = None;
             slot.last = Some(LastWrite {
+                epoch: lease.epoch(),
                 id: id.clone(),
                 base: Some(base.clone()),
                 given: None,

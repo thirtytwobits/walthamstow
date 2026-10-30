@@ -284,6 +284,36 @@ pub fn only_the_last_write_is_retried(harness: &dyn Harness) {
     assert_eq!(fixture.snapshot(&document), before);
 }
 
+/// A retry is recognised under the lease that made the write alone. A write under another lease
+/// that repeats the last write's id and base is judged by its base, and the same id over the
+/// revision it read is an ordinary write.
+pub fn a_retry_is_recognised_only_under_the_lease_that_wrote(harness: &dyn Harness) {
+    let fixture = Fixture::new(harness);
+    let document = document("a");
+    let first = fixture.lease(&document);
+    let created_image = image("create", vec![]);
+    let created = fixture.store.create(&first, &created_image).unwrap();
+    let appended = commit("append", &[1]);
+    let committed = fixture.store.commit(&first, &created, &appended).unwrap();
+    fixture.leases.release(&first).unwrap();
+    let second = fixture.lease(&document);
+    assert_ne!(second.epoch(), first.epoch());
+
+    let before = fixture.snapshot(&document);
+    let repeated = fixture.store.commit(&second, &created, &appended);
+    assert_eq!(reason(&repeated), Some(LOG_STALE), "{repeated:?}");
+    let recreated = fixture.store.create(&second, &created_image);
+    assert_eq!(reason(&recreated), Some(LOG_STALE), "{recreated:?}");
+    assert_eq!(fixture.snapshot(&document), before);
+
+    let written = fixture
+        .store
+        .commit(&second, &committed, &appended)
+        .unwrap();
+    assert_ne!(written, committed);
+    assert_eq!(positions(&fixture, &document, &written), [0, 1]);
+}
+
 /// A retry is given what the last write gave: a revision to a write that gives one, and nothing
 /// more to a removal. A removal that repeats the id and base of another write, or a write that
 /// repeats those of a removal, is refused with `log_stale`.
@@ -352,6 +382,12 @@ pub fn a_write_is_checked_for_its_lease_then_a_retry_then_its_base_then_what_it_
     let appended = commit("append", &[1]);
     let current = fixture.store.commit(&lease, &revision, &appended).unwrap();
 
+    // A retry over a base the document has left is given what it was given.
+    assert_eq!(
+        fixture.store.commit(&lease, &revision, &appended).unwrap(),
+        current
+    );
+
     // A retry under a lost lease is refused for its lease.
     fixture.leases.release(&lease).unwrap();
     let retried = fixture.store.commit(&lease, &revision, &appended);
@@ -359,14 +395,8 @@ pub fn a_write_is_checked_for_its_lease_then_a_retry_then_its_base_then_what_it_
     // A write under a lost lease over a stale base is refused for its lease.
     assert_every_write_refused(&fixture, &lease, &revision, LEASE_LOST, "lost and stale");
 
-    // A retry over a base the document has left is given what it was given.
-    let lease = fixture.lease(&document);
-    assert_eq!(
-        fixture.store.commit(&lease, &revision, &appended).unwrap(),
-        current
-    );
-
     // A stale write that carries what is invalid is refused as stale.
+    let lease = fixture.lease(&document);
     let empty = LogCommit {
         id: WriteId::new("empty"),
         head: None,

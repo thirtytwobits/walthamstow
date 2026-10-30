@@ -179,12 +179,9 @@ impl BlobStore for FileBlobStore {
             create_dir_all_synced(self.durability, &directory)
                 .map_err(|error| internal(&directory, error))?;
             if Self::read(&path)?.is_some_and(|held| held == bytes) {
-                // A put that renamed the file and failed before the directory was synced is
-                // settled here, so a put that succeeds has left a durable blob.
-                let file = std::fs::File::open(&path).map_err(|error| internal(&path, error))?;
-                self.durability
-                    .sync(&file)
-                    .map_err(|error| internal(&path, error))?;
+                // A put syncs its file before the rename, so a put that renamed the file and
+                // failed left only the directory unsynced. It is settled here, so a put that
+                // succeeds has left a durable blob.
                 return self
                     .durability
                     .sync_directory(&directory)

@@ -1,23 +1,33 @@
 //! Copyright (c) Scott A Dixon
 //!
 //! Where a product's log documents and their blobs are laid out on disk. Each document is the
-//! directory `<root>/<entity directory>/<resource>/`, which the file log store and the file blob
-//! store share. This module owns the directory and its rules, so each store takes it rather
-//! than restating them. The product registers each entity, and two whose names map to one
-//! directory are refused, so no two documents share a directory.
+//! directory `<root>/<entity directory>/<resource directory>/`, which the file log store and
+//! the file blob store share. This module owns the layout, so each store takes it rather than
+//! restating it.
+//!
+//! The root is held as a `cap-std` directory, and every operation goes through it: a path or a
+//! link that would leave the root fails. A resource is encoded into its directory name, so two
+//! resources never share a directory, whatever a file system folds. The product registers each
+//! entity, and two whose names map to one directory are refused.
 
+use cap_std::ambient_authority;
+use cap_std::fs::Dir;
+use percent_encoding::{percent_decode_str, percent_encode_byte, utf8_percent_encode, AsciiSet};
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
 use std::path::{Path, PathBuf};
 use std::sync::{Mutex, PoisonError};
-use walthamstow_kernel::durability::{create_dir_all_synced, WriteDurability};
+use walthamstow_kernel::durability::WriteDurability;
 use walthamstow_kernel::files;
 use walthamstow_kernel::{DocumentId, KernelError, KernelResult};
 
 /// The root a product's log documents are kept under, and the entities it registers.
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct DocumentLayout {
-    root: PathBuf,
+    /// The root, through which every operation goes.
+    root: Dir,
+    /// The path the root was opened at, for messages and for syncing directories.
+    path: PathBuf,
     /// By entity name.
     entities: BTreeMap<String, Entity>,
 }
@@ -30,13 +40,24 @@ struct Entity {
     files: BTreeSet<String>,
 }
 
+/// A document's directory, open, and where it lies under the root.
+pub struct DocumentDir {
+    pub dir: Dir,
+    /// The directory's path relative to the root.
+    pub relative: PathBuf,
+}
+
 impl DocumentLayout {
-    /// Documents kept under `root`, which is used as given, of no entity yet.
-    pub fn new(root: impl Into<PathBuf>) -> Self {
-        Self {
-            root: root.into(),
+    /// Documents kept under `root`, which is used as given, of no entity yet. The root must
+    /// exist.
+    pub fn open(root: &Path) -> KernelResult<Self> {
+        let dir = Dir::open_ambient_dir(root, ambient_authority())
+            .map_err(|error| internal(root, error))?;
+        Ok(Self {
+            root: dir,
+            path: root.to_path_buf(),
             entities: BTreeMap::new(),
-        }
+        })
     }
 
     /// This layout with `entity` registered, `files` being the files the log store keeps in each
@@ -69,8 +90,9 @@ impl DocumentLayout {
         Ok(self)
     }
 
+    /// The path the root was opened at.
     pub fn root(&self) -> &Path {
-        &self.root
+        &self.path
     }
 
     /// The name of every file the log store keeps in a document, of any entity.
@@ -89,45 +111,85 @@ impl DocumentLayout {
         })
     }
 
-    /// The directory holding `entity`'s documents, refused when the entity is not registered or
-    /// the directory is a link.
-    pub fn entity_directory(&self, entity: &str) -> KernelResult<PathBuf> {
-        let directory = self.root.join(&self.entity(entity)?.directory);
-        refuse_link(&directory)?;
-        Ok(directory)
+    /// Where `document`'s directory lies under the root, whether or not it exists.
+    pub fn document_path(&self, document: &DocumentId) -> KernelResult<PathBuf> {
+        Ok(Path::new(&self.entity(document.entity())?.directory)
+            .join(resource_directory_name(document.resource())?))
     }
 
-    /// The directory holding `document`, which need not exist. Refused when the resource is not
-    /// a safe directory name, when it matches another document's directory compared case-folded,
-    /// since a file system that folds case would hold the two as one, or when it or the entity's
-    /// directory is a link.
-    pub fn document_directory(&self, document: &DocumentId) -> KernelResult<PathBuf> {
-        check_resource(document.resource())?;
-        let entity = self.entity_directory(document.entity())?;
-        refuse_folded_collision(&entity, document.resource())?;
-        let directory = entity.join(document.resource());
-        refuse_link(&directory)?;
-        Ok(directory)
+    /// `document`'s directory, or `None` when it does not exist.
+    pub fn document_dir(&self, document: &DocumentId) -> KernelResult<Option<DocumentDir>> {
+        let relative = self.document_path(document)?;
+        match self.root.open_dir(&relative) {
+            Ok(dir) => Ok(Some(DocumentDir { dir, relative })),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(None),
+            Err(error) => Err(internal(&self.path.join(&relative), error)),
+        }
     }
 
-    /// Creates the directory holding `document`, durable as `durability` asks, and returns it.
-    /// The collision check and the creation run under one lock, so of two spellings of a
-    /// resource created at once only the first is accepted.
-    pub fn create_document_directory(
+    /// `document`'s directory, created durably as `durability` asks when it does not exist.
+    pub fn create_document_dir(
         &self,
         durability: WriteDurability,
         document: &DocumentId,
-    ) -> KernelResult<PathBuf> {
+    ) -> KernelResult<DocumentDir> {
+        if let Some(open) = self.document_dir(document)? {
+            return Ok(open);
+        }
+        let relative = self.document_path(document)?;
         let _creating = CREATING.lock().unwrap_or_else(PoisonError::into_inner);
-        let directory = self.document_directory(document)?;
-        create_dir_all_synced(durability, &directory)
-            .map_err(|error| internal(&directory, error))?;
-        Ok(directory)
+        self.root
+            .create_dir_all(&relative)
+            .map_err(|error| internal(&self.path.join(&relative), error))?;
+        // Each directory whose entries changed is synced: the root's entity, and the entity's
+        // document.
+        self.sync(durability, Path::new(""))?;
+        self.sync(
+            durability,
+            relative.parent().expect("a document lies in its entity"),
+        )?;
+        let dir = self
+            .root
+            .open_dir(&relative)
+            .map_err(|error| internal(&self.path.join(&relative), error))?;
+        Ok(DocumentDir { dir, relative })
+    }
+
+    /// Creates `relative`'s sub-directory `name` within the root if it does not exist, and
+    /// returns it open.
+    pub(crate) fn create_dir(
+        &self,
+        durability: WriteDurability,
+        relative: &Path,
+        name: &str,
+    ) -> KernelResult<Dir> {
+        let path = relative.join(name);
+        match self.root.open_dir(&path) {
+            Ok(dir) => return Ok(dir),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+            Err(error) => return Err(internal(&self.path.join(&path), error)),
+        }
+        self.root
+            .create_dir(&path)
+            .map_err(|error| internal(&self.path.join(&path), error))?;
+        self.sync(durability, relative)?;
+        self.root
+            .open_dir(&path)
+            .map_err(|error| internal(&self.path.join(&path), error))
+    }
+
+    /// Makes the entries of the directory at `relative` under the root durable. A directory
+    /// that does not exist has no entries to make durable.
+    pub(crate) fn sync(&self, durability: WriteDurability, relative: &Path) -> KernelResult<()> {
+        let path = self.path.join(relative);
+        match durability.sync_directory(&path) {
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
+            result => result.map_err(|error| internal(&path, error)),
+        }
     }
 }
 
-/// Held from a document directory's collision check to its creation. One engine owns a
-/// workspace, so a lock within the process is enough.
+/// Held from a document directory's absence being seen to its creation.
 static CREATING: Mutex<()> = Mutex::new(());
 
 /// The name of the directory holding `entity`'s documents: the entity's name in lowercase, with
@@ -152,55 +214,63 @@ pub fn entity_directory_name(entity: &str) -> KernelResult<String> {
     Ok(name)
 }
 
-/// Refuses `resource` unless it is a safe directory name on every supported platform: one
-/// visible component in ASCII, with no separator, that Windows allows. ASCII, because a file
-/// system may fold two spellings of one name into one entry, by case or by Unicode
-/// normalisation, and comparing names case-folded catches every such fold only in ASCII.
-pub fn check_resource(resource: &str) -> KernelResult<()> {
-    if !resource.is_ascii() || files::safe_id(resource).is_err() || !files::windows_allows(resource)
-    {
+/// Every byte a resource directory name encodes: everything but lowercase ASCII letters,
+/// digits, `-` and `_`. Uppercase letters are encoded too, so no two names differ only in case,
+/// and so is every non-ASCII byte, so no two names differ only in normalisation.
+const ENCODED: &AsciiSet = &percent_encoding::NON_ALPHANUMERIC
+    .remove(b'-')
+    .remove(b'_')
+    .add(b'A')
+    .add(b'B')
+    .add(b'C')
+    .add(b'D')
+    .add(b'E')
+    .add(b'F')
+    .add(b'G')
+    .add(b'H')
+    .add(b'I')
+    .add(b'J')
+    .add(b'K')
+    .add(b'L')
+    .add(b'M')
+    .add(b'N')
+    .add(b'O')
+    .add(b'P')
+    .add(b'Q')
+    .add(b'R')
+    .add(b'S')
+    .add(b'T')
+    .add(b'U')
+    .add(b'V')
+    .add(b'W')
+    .add(b'X')
+    .add(b'Y')
+    .add(b'Z');
+
+/// The name of the directory holding the document whose resource is `resource`: the resource
+/// percent-encoded, with every byte but lowercase ASCII letters, digits, `-` and `_` written as
+/// `%` and two uppercase hex digits, and the first byte written so when the result would be a
+/// device name Windows reserves. Every file system holds two such names as two entries. An
+/// empty resource, or one whose name is longer than Windows allows, is refused.
+pub fn resource_directory_name(resource: &str) -> KernelResult<String> {
+    let mut name = utf8_percent_encode(resource, ENCODED).to_string();
+    if files::is_windows_device_name(&name) {
+        let first = name.remove(0);
+        name.insert_str(0, percent_encode_byte(first as u8));
+    }
+    if name.is_empty() || name.len() > 255 {
         return Err(KernelError::invalid_request(format!(
-            "The resource {resource:?} is not a safe directory name in ASCII."
+            "The resource {resource:?} cannot name a directory: it is empty or too long."
         )));
     }
-    Ok(())
+    Ok(name)
 }
 
-/// Refuses `resource` when another entry of `entity` matches it compared case-folded.
-fn refuse_folded_collision(entity: &Path, resource: &str) -> KernelResult<()> {
-    let entries = match std::fs::read_dir(entity) {
-        Ok(entries) => entries,
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(()),
-        Err(error) => return Err(internal(entity, error)),
-    };
-    let folded = resource.to_lowercase();
-    for entry in entries {
-        let entry = entry.map_err(|error| internal(entity, error))?;
-        let name = entry.file_name();
-        let Some(name) = name.to_str() else {
-            continue;
-        };
-        if name != resource && name.to_lowercase() == folded {
-            return Err(KernelError::invalid_request(format!(
-                "The resource {resource:?} matches the document directory {name:?} compared \
-                 case-folded."
-            )));
-        }
-    }
-    Ok(())
-}
-
-/// Refuses `path` when it is a link, which the stores do not follow.
-pub(crate) fn refuse_link(path: &Path) -> KernelResult<()> {
-    match std::fs::symlink_metadata(path) {
-        Ok(metadata) if metadata.file_type().is_symlink() => Err(internal(
-            path,
-            "this is a link, which the store does not follow",
-        )),
-        Ok(_) => Ok(()),
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
-        Err(error) => Err(internal(path, error)),
-    }
+/// The resource whose directory [`resource_directory_name`] names `name`, or `None` when
+/// `name` is not one it writes.
+pub fn resource_of(name: &str) -> Option<String> {
+    let resource = percent_decode_str(name).decode_utf8().ok()?.into_owned();
+    (resource_directory_name(&resource).ok()? == name).then_some(resource)
 }
 
 /// An internal failure at `path`.
@@ -222,44 +292,68 @@ mod tests {
     }
 
     #[test]
-    fn a_resource_is_one_safe_visible_directory_name() {
-        check_resource("turn-1").unwrap();
-        for refused in [
-            "",
-            ".hidden",
-            "a/b",
-            "a\\b",
-            "..",
-            "con",
-            "note.",
-            "what?",
-            "caf\u{e9}",
-            "cafe\u{301}",
+    fn a_resource_directory_is_the_resource_encoded_and_reads_back() {
+        for (resource, name) in [
+            ("turn-1", "turn-1"),
+            ("Turn", "%54urn"),
+            ("caf\u{e9}", "caf%C3%A9"),
+            ("a/b", "a%2Fb"),
+            ("a\\b", "a%5Cb"),
+            (".hidden", "%2Ehidden"),
+            ("..", "%2E%2E"),
+            ("note.", "note%2E"),
+            ("with space", "with%20space"),
+            ("100%", "100%25"),
+            ("con", "%63on"),
+            ("COM1", "%43%4F%4D1"),
+            ("lpt1", "%6Cpt1"),
+            ("console", "console"),
         ] {
-            assert!(check_resource(refused).is_err(), "{refused:?}");
+            assert_eq!(
+                resource_directory_name(resource).unwrap(),
+                name,
+                "{resource:?}"
+            );
+            assert_eq!(resource_of(name).as_deref(), Some(resource), "{name:?}");
+        }
+        assert!(resource_directory_name("").is_err());
+        assert!(resource_directory_name(&"a".repeat(256)).is_err());
+        assert!(resource_directory_name(&"\u{e9}".repeat(43)).is_err());
+        for not_written in ["Turn", "%2ehidden", "%", "%zz", "con", "%74urn", "%C3", ""] {
+            assert_eq!(resource_of(not_written), None, "{not_written:?}");
         }
     }
 
-    /// A layout with `Session` registered.
-    fn layout(root: impl Into<PathBuf>) -> DocumentLayout {
-        DocumentLayout::new(root)
+    #[test]
+    fn two_resources_never_share_a_directory_under_any_folding() {
+        let names: Vec<String> = [
+            "Turn",
+            "turn",
+            "TURN",
+            "caf\u{e9}",
+            "cafe\u{301}",
+            "con",
+            "CON",
+        ]
+        .into_iter()
+        .map(|resource| resource_directory_name(resource).unwrap())
+        .collect();
+        let folded: BTreeSet<String> = names.iter().map(|name| name.to_lowercase()).collect();
+        assert_eq!(folded.len(), names.len(), "{names:?}");
+    }
+
+    /// A layout over `root` with `Session` registered.
+    fn layout(root: &Path) -> DocumentLayout {
+        DocumentLayout::open(root)
+            .unwrap()
             .with_entity("Session", ["head.json"])
             .unwrap()
     }
 
     #[test]
-    fn a_document_directory_is_root_entity_resource() {
-        assert_eq!(
-            layout("/data")
-                .document_directory(&DocumentId::new("Session", "turn-1"))
-                .unwrap(),
-            Path::new("/data/session/turn-1")
-        );
-    }
-
-    #[test]
     fn an_entity_is_registered_once_and_shares_its_directory_with_no_other() {
-        let layout = layout("/data")
+        let root = tempfile::tempdir().unwrap();
+        let layout = layout(root.path())
             .with_entity("Session", ["log.ndjson"])
             .unwrap();
         assert_eq!(
@@ -267,54 +361,55 @@ mod tests {
             ["head.json", "log.ndjson"]
         );
         assert!(layout
-            .document_directory(&DocumentId::new("Notes", "one"))
+            .document_path(&DocumentId::new("Notes", "one"))
             .is_err());
+        assert_eq!(
+            layout
+                .document_path(&DocumentId::new("Session", "Turn"))
+                .unwrap(),
+            Path::new("session/%54urn")
+        );
         assert!(layout
-            .clone()
             .with_entity("My Notes", ["head.json"])
             .unwrap()
             .with_entity("My-Notes", ["head.json"])
             .is_err());
-        assert!(layout.with_entity("", ["head.json"]).is_err());
+        assert!(DocumentLayout::open(root.path())
+            .unwrap()
+            .with_entity("", ["head.json"])
+            .is_err());
     }
 
     #[test]
-    fn a_resource_matching_another_document_case_folded_is_refused() {
+    fn a_document_directory_is_created_once_and_found_after() {
         let root = tempfile::tempdir().unwrap();
         let layout = layout(root.path());
-        let durability = WriteDurability::System;
-        layout
-            .create_document_directory(durability, &DocumentId::new("Session", "Turn"))
+        let document = DocumentId::new("Session", "Turn");
+        assert!(layout.document_dir(&document).unwrap().is_none());
+        let created = layout
+            .create_document_dir(WriteDurability::System, &document)
             .unwrap();
+        assert_eq!(created.relative, Path::new("session/%54urn"));
+        assert!(root.path().join("session/%54urn").is_dir());
         layout
-            .create_document_directory(durability, &DocumentId::new("Session", "Turn"))
+            .create_document_dir(WriteDurability::System, &document)
             .unwrap();
+        assert!(layout.document_dir(&document).unwrap().is_some());
         assert!(layout
-            .create_document_directory(durability, &DocumentId::new("Session", "turn"))
-            .is_err());
-        assert!(layout
-            .document_directory(&DocumentId::new("Session", "turn"))
-            .is_err());
-        layout
-            .create_document_directory(durability, &DocumentId::new("Session", "turn-2"))
-            .unwrap();
+            .document_dir(&DocumentId::new("Session", "turn"))
+            .unwrap()
+            .is_none());
     }
 
     #[cfg(unix)]
     #[test]
-    fn a_linked_entity_or_document_directory_is_refused() {
+    fn a_link_leaving_the_root_is_not_followed() {
         let root = tempfile::tempdir().unwrap();
         let elsewhere = tempfile::tempdir().unwrap();
         let layout = layout(root.path());
         std::os::unix::fs::symlink(elsewhere.path(), root.path().join("session")).unwrap();
         assert!(layout
-            .document_directory(&DocumentId::new("Session", "turn"))
-            .is_err());
-        std::fs::remove_file(root.path().join("session")).unwrap();
-        std::fs::create_dir(root.path().join("session")).unwrap();
-        std::os::unix::fs::symlink(elsewhere.path(), root.path().join("session/turn")).unwrap();
-        assert!(layout
-            .document_directory(&DocumentId::new("Session", "turn"))
+            .document_dir(&DocumentId::new("Session", "turn"))
             .is_err());
     }
 }

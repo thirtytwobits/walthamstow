@@ -207,28 +207,30 @@ is refused, on a read as on a write, so a product that retires a kind can no lon
   blobs `list` returns that no head or record names.
 
 `FileBlobStore` keeps each blob as the file
-`<root>/<entity directory>/<resource>/<kind>/<sha256>.<extension>`, which people open like any
-other file of its type. The document directory is `DocumentLayout`'s, shared with the file log
-store:
+`<root>/<entity directory>/<resource directory>/<kind>/<sha256>.<extension>`, which people open
+like any other file of its type. The document directory is `DocumentLayout`'s, shared with the
+file log store:
 
+- The layout holds its root as a `cap-std` directory, and every operation goes through it. A
+  path or a link that would leave the root fails. Within the root, a link is followed.
 - The product registers each entity with the layout, with the files the log store keeps in its
   documents. The entity directory is the entity's name in lowercase, with every character except
   ASCII letters, digits, `-` and `_` written as `-`. A name that is empty or a device name is
   refused, and so is a second entity whose directory is a registered entity's, since the two
   would share their documents. A document of an entity not registered is refused.
-- A resource that is not a safe file name in ASCII is refused, as a configured workspace
-  directory is. So is one that matches another document's directory compared case-folded,
-  whenever a document is named. A file system may fold two spellings of a name into one entry,
-  by case or by Unicode normalisation; in ASCII the case-folded comparison catches every such
-  fold.
+- The resource directory is the resource percent-encoded: every byte but lowercase ASCII
+  letters, digits, `-` and `_` is written as `%` and two uppercase hex digits, and the first byte
+  is written so when the result would be a device name Windows reserves. Two resources never
+  share a directory, whatever a file system folds, and the resource reads back from the name. A
+  resource that is empty, or whose name is longer than Windows allows, is refused.
 - A kind whose name matches a file the log store names in a document, compared case-folded, is
   refused when the store is built.
 - A put is a durable write. A file present with the right bytes is settled, so a put that
   succeeds has left a durable blob whatever an earlier put left. A file present with the wrong
   bytes is replaced: the one place the store writes over what it finds broken, since the writer
   supplies the bytes.
-- A link, a special file or any other entry under a kind directory is refused unopened. A file a
-  put staged and did not finish is passed over.
+- A blob is read only from a regular file. Any other entry under a kind directory is refused
+  unopened. A file a put staged and did not finish is passed over.
 
 `MemoryBlobStore` keeps blobs in memory. Every adapter passes the blob section of
 `walthamstow_logs::conformance`.

@@ -703,17 +703,110 @@ impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusi
 impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_logs::fault::LogFault where V: ppv_lite86::types::MultiLane<T>
 pub fn walthamstow_logs::fault::LogFault::vzip(self) -> V
 pub mod walthamstow_logs::layout
+pub struct walthamstow_logs::layout::DocumentDir
+pub walthamstow_logs::layout::DocumentDir::dir: cap_std::fs::dir::Dir
+pub walthamstow_logs::layout::DocumentDir::relative: std::path::PathBuf
+impl core::marker::Freeze for walthamstow_logs::layout::DocumentDir
+impl core::marker::Send for walthamstow_logs::layout::DocumentDir
+impl core::marker::Sync for walthamstow_logs::layout::DocumentDir
+impl core::marker::Unpin for walthamstow_logs::layout::DocumentDir
+impl core::panic::unwind_safe::RefUnwindSafe for walthamstow_logs::layout::DocumentDir
+impl core::panic::unwind_safe::UnwindSafe for walthamstow_logs::layout::DocumentDir
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for walthamstow_logs::layout::DocumentDir where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for walthamstow_logs::layout::DocumentDir where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<T, U> core::convert::Into<U> for walthamstow_logs::layout::DocumentDir where U: core::convert::From<T>
+pub fn walthamstow_logs::layout::DocumentDir::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for walthamstow_logs::layout::DocumentDir where U: core::convert::Into<T>
+pub type walthamstow_logs::layout::DocumentDir::Error = core::convert::Infallible
+pub fn walthamstow_logs::layout::DocumentDir::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for walthamstow_logs::layout::DocumentDir where U: core::convert::TryFrom<T>
+pub type walthamstow_logs::layout::DocumentDir::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn walthamstow_logs::layout::DocumentDir::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for walthamstow_logs::layout::DocumentDir where T: 'static + ?core::marker::Sized
+pub fn walthamstow_logs::layout::DocumentDir::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for walthamstow_logs::layout::DocumentDir where T: ?core::marker::Sized
+pub fn walthamstow_logs::layout::DocumentDir::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for walthamstow_logs::layout::DocumentDir where T: ?core::marker::Sized
+pub fn walthamstow_logs::layout::DocumentDir::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for walthamstow_logs::layout::DocumentDir
+pub fn walthamstow_logs::layout::DocumentDir::from(t: T) -> T
+impl<T> either::into_either::IntoEither for walthamstow_logs::layout::DocumentDir
+impl<T> tracing::instrument::Instrument for walthamstow_logs::layout::DocumentDir
+impl<T> tracing::instrument::WithSubscriber for walthamstow_logs::layout::DocumentDir
+impl<T> typenum::type_operators::Same for walthamstow_logs::layout::DocumentDir
+pub type walthamstow_logs::layout::DocumentDir::Output = T
+impl<T> yansi::paint::Paint for walthamstow_logs::layout::DocumentDir where T: ?core::marker::Sized
+pub fn walthamstow_logs::layout::DocumentDir::attr(&self, value: yansi::attr_quirk::Attribute) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::bg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::bold(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::clear(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::conceal(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::dim(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::fg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::invert(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::italic(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::linger(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::mask(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::on_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::on_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::on_bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::on_bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::on_bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::on_bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::on_bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::on_bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::on_bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::on_bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::on_bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::on_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::on_fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::on_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::on_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::on_primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::on_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::on_rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::on_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::on_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::quirk(&self, value: yansi::attr_quirk::Quirk) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::rapid_blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::resetting(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::strike(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::underline(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::whenever(&self, value: yansi::condition::Condition) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::wrap(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::layout::DocumentDir::yellow(&self) -> yansi::paint::Painted<&T>
+impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_logs::layout::DocumentDir where T: ?core::marker::Sized
+impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_logs::layout::DocumentDir where V: ppv_lite86::types::MultiLane<T>
+pub fn walthamstow_logs::layout::DocumentDir::vzip(self) -> V
 pub struct walthamstow_logs::layout::DocumentLayout
 impl walthamstow_logs::layout::DocumentLayout
-pub fn walthamstow_logs::layout::DocumentLayout::create_document_directory(&self, durability: walthamstow_kernel::durability::WriteDurability, document: &walthamstow_kernel::document::DocumentId) -> walthamstow_kernel::error::KernelResult<std::path::PathBuf>
-pub fn walthamstow_logs::layout::DocumentLayout::document_directory(&self, document: &walthamstow_kernel::document::DocumentId) -> walthamstow_kernel::error::KernelResult<std::path::PathBuf>
-pub fn walthamstow_logs::layout::DocumentLayout::entity_directory(&self, entity: &str) -> walthamstow_kernel::error::KernelResult<std::path::PathBuf>
+pub fn walthamstow_logs::layout::DocumentLayout::create_document_dir(&self, durability: walthamstow_kernel::durability::WriteDurability, document: &walthamstow_kernel::document::DocumentId) -> walthamstow_kernel::error::KernelResult<walthamstow_logs::layout::DocumentDir>
+pub fn walthamstow_logs::layout::DocumentLayout::document_dir(&self, document: &walthamstow_kernel::document::DocumentId) -> walthamstow_kernel::error::KernelResult<core::option::Option<walthamstow_logs::layout::DocumentDir>>
+pub fn walthamstow_logs::layout::DocumentLayout::document_path(&self, document: &walthamstow_kernel::document::DocumentId) -> walthamstow_kernel::error::KernelResult<std::path::PathBuf>
 pub fn walthamstow_logs::layout::DocumentLayout::files(&self) -> impl core::iter::traits::iterator::Iterator<Item = &str>
-pub fn walthamstow_logs::layout::DocumentLayout::new(root: impl core::convert::Into<std::path::PathBuf>) -> Self
+pub fn walthamstow_logs::layout::DocumentLayout::open(root: &std::path::Path) -> walthamstow_kernel::error::KernelResult<Self>
 pub fn walthamstow_logs::layout::DocumentLayout::root(&self) -> &std::path::Path
 pub fn walthamstow_logs::layout::DocumentLayout::with_entity<I>(self, entity: &str, files: I) -> walthamstow_kernel::error::KernelResult<Self> where I: core::iter::traits::collect::IntoIterator, <I as core::iter::traits::collect::IntoIterator>::Item: core::convert::Into<alloc::string::String>
-impl core::clone::Clone for walthamstow_logs::layout::DocumentLayout
-pub fn walthamstow_logs::layout::DocumentLayout::clone(&self) -> walthamstow_logs::layout::DocumentLayout
 impl core::fmt::Debug for walthamstow_logs::layout::DocumentLayout
 pub fn walthamstow_logs::layout::DocumentLayout::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Freeze for walthamstow_logs::layout::DocumentLayout
@@ -732,22 +825,14 @@ pub fn walthamstow_logs::layout::DocumentLayout::try_from(value: U) -> core::res
 impl<T, U> core::convert::TryInto<U> for walthamstow_logs::layout::DocumentLayout where U: core::convert::TryFrom<T>
 pub type walthamstow_logs::layout::DocumentLayout::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn walthamstow_logs::layout::DocumentLayout::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> alloc::borrow::ToOwned for walthamstow_logs::layout::DocumentLayout where T: core::clone::Clone
-pub type walthamstow_logs::layout::DocumentLayout::Owned = T
-pub fn walthamstow_logs::layout::DocumentLayout::clone_into(&self, target: &mut T)
-pub fn walthamstow_logs::layout::DocumentLayout::to_owned(&self) -> T
 impl<T> core::any::Any for walthamstow_logs::layout::DocumentLayout where T: 'static + ?core::marker::Sized
 pub fn walthamstow_logs::layout::DocumentLayout::type_id(&self) -> core::any::TypeId
 impl<T> core::borrow::Borrow<T> for walthamstow_logs::layout::DocumentLayout where T: ?core::marker::Sized
 pub fn walthamstow_logs::layout::DocumentLayout::borrow(&self) -> &T
 impl<T> core::borrow::BorrowMut<T> for walthamstow_logs::layout::DocumentLayout where T: ?core::marker::Sized
 pub fn walthamstow_logs::layout::DocumentLayout::borrow_mut(&mut self) -> &mut T
-impl<T> core::clone::CloneToUninit for walthamstow_logs::layout::DocumentLayout where T: core::clone::Clone
-pub unsafe fn walthamstow_logs::layout::DocumentLayout::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for walthamstow_logs::layout::DocumentLayout
 pub fn walthamstow_logs::layout::DocumentLayout::from(t: T) -> T
-impl<T> dyn_clone::DynClone for walthamstow_logs::layout::DocumentLayout where T: core::clone::Clone
-pub fn walthamstow_logs::layout::DocumentLayout::__clone_box(&self, _: dyn_clone::sealed::Private) -> *mut ()
 impl<T> either::into_either::IntoEither for walthamstow_logs::layout::DocumentLayout
 impl<T> tracing::instrument::Instrument for walthamstow_logs::layout::DocumentLayout
 impl<T> tracing::instrument::WithSubscriber for walthamstow_logs::layout::DocumentLayout
@@ -816,8 +901,9 @@ pub fn walthamstow_logs::layout::DocumentLayout::yellow(&self) -> yansi::paint::
 impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_logs::layout::DocumentLayout where T: ?core::marker::Sized
 impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_logs::layout::DocumentLayout where V: ppv_lite86::types::MultiLane<T>
 pub fn walthamstow_logs::layout::DocumentLayout::vzip(self) -> V
-pub fn walthamstow_logs::layout::check_resource(resource: &str) -> walthamstow_kernel::error::KernelResult<()>
 pub fn walthamstow_logs::layout::entity_directory_name(entity: &str) -> walthamstow_kernel::error::KernelResult<alloc::string::String>
+pub fn walthamstow_logs::layout::resource_directory_name(resource: &str) -> walthamstow_kernel::error::KernelResult<alloc::string::String>
+pub fn walthamstow_logs::layout::resource_of(name: &str) -> core::option::Option<alloc::string::String>
 pub mod walthamstow_logs::memory
 pub struct walthamstow_logs::memory::MemoryLogStore
 impl walthamstow_logs::memory::MemoryLogStore
@@ -3075,15 +3161,13 @@ impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_logs::types::BlobRef where
 pub fn walthamstow_logs::types::BlobRef::vzip(self) -> V
 pub struct walthamstow_logs::DocumentLayout
 impl walthamstow_logs::layout::DocumentLayout
-pub fn walthamstow_logs::layout::DocumentLayout::create_document_directory(&self, durability: walthamstow_kernel::durability::WriteDurability, document: &walthamstow_kernel::document::DocumentId) -> walthamstow_kernel::error::KernelResult<std::path::PathBuf>
-pub fn walthamstow_logs::layout::DocumentLayout::document_directory(&self, document: &walthamstow_kernel::document::DocumentId) -> walthamstow_kernel::error::KernelResult<std::path::PathBuf>
-pub fn walthamstow_logs::layout::DocumentLayout::entity_directory(&self, entity: &str) -> walthamstow_kernel::error::KernelResult<std::path::PathBuf>
+pub fn walthamstow_logs::layout::DocumentLayout::create_document_dir(&self, durability: walthamstow_kernel::durability::WriteDurability, document: &walthamstow_kernel::document::DocumentId) -> walthamstow_kernel::error::KernelResult<walthamstow_logs::layout::DocumentDir>
+pub fn walthamstow_logs::layout::DocumentLayout::document_dir(&self, document: &walthamstow_kernel::document::DocumentId) -> walthamstow_kernel::error::KernelResult<core::option::Option<walthamstow_logs::layout::DocumentDir>>
+pub fn walthamstow_logs::layout::DocumentLayout::document_path(&self, document: &walthamstow_kernel::document::DocumentId) -> walthamstow_kernel::error::KernelResult<std::path::PathBuf>
 pub fn walthamstow_logs::layout::DocumentLayout::files(&self) -> impl core::iter::traits::iterator::Iterator<Item = &str>
-pub fn walthamstow_logs::layout::DocumentLayout::new(root: impl core::convert::Into<std::path::PathBuf>) -> Self
+pub fn walthamstow_logs::layout::DocumentLayout::open(root: &std::path::Path) -> walthamstow_kernel::error::KernelResult<Self>
 pub fn walthamstow_logs::layout::DocumentLayout::root(&self) -> &std::path::Path
 pub fn walthamstow_logs::layout::DocumentLayout::with_entity<I>(self, entity: &str, files: I) -> walthamstow_kernel::error::KernelResult<Self> where I: core::iter::traits::collect::IntoIterator, <I as core::iter::traits::collect::IntoIterator>::Item: core::convert::Into<alloc::string::String>
-impl core::clone::Clone for walthamstow_logs::layout::DocumentLayout
-pub fn walthamstow_logs::layout::DocumentLayout::clone(&self) -> walthamstow_logs::layout::DocumentLayout
 impl core::fmt::Debug for walthamstow_logs::layout::DocumentLayout
 pub fn walthamstow_logs::layout::DocumentLayout::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
 impl core::marker::Freeze for walthamstow_logs::layout::DocumentLayout
@@ -3102,22 +3186,14 @@ pub fn walthamstow_logs::layout::DocumentLayout::try_from(value: U) -> core::res
 impl<T, U> core::convert::TryInto<U> for walthamstow_logs::layout::DocumentLayout where U: core::convert::TryFrom<T>
 pub type walthamstow_logs::layout::DocumentLayout::Error = <U as core::convert::TryFrom<T>>::Error
 pub fn walthamstow_logs::layout::DocumentLayout::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
-impl<T> alloc::borrow::ToOwned for walthamstow_logs::layout::DocumentLayout where T: core::clone::Clone
-pub type walthamstow_logs::layout::DocumentLayout::Owned = T
-pub fn walthamstow_logs::layout::DocumentLayout::clone_into(&self, target: &mut T)
-pub fn walthamstow_logs::layout::DocumentLayout::to_owned(&self) -> T
 impl<T> core::any::Any for walthamstow_logs::layout::DocumentLayout where T: 'static + ?core::marker::Sized
 pub fn walthamstow_logs::layout::DocumentLayout::type_id(&self) -> core::any::TypeId
 impl<T> core::borrow::Borrow<T> for walthamstow_logs::layout::DocumentLayout where T: ?core::marker::Sized
 pub fn walthamstow_logs::layout::DocumentLayout::borrow(&self) -> &T
 impl<T> core::borrow::BorrowMut<T> for walthamstow_logs::layout::DocumentLayout where T: ?core::marker::Sized
 pub fn walthamstow_logs::layout::DocumentLayout::borrow_mut(&mut self) -> &mut T
-impl<T> core::clone::CloneToUninit for walthamstow_logs::layout::DocumentLayout where T: core::clone::Clone
-pub unsafe fn walthamstow_logs::layout::DocumentLayout::clone_to_uninit(&self, dest: *mut u8)
 impl<T> core::convert::From<T> for walthamstow_logs::layout::DocumentLayout
 pub fn walthamstow_logs::layout::DocumentLayout::from(t: T) -> T
-impl<T> dyn_clone::DynClone for walthamstow_logs::layout::DocumentLayout where T: core::clone::Clone
-pub fn walthamstow_logs::layout::DocumentLayout::__clone_box(&self, _: dyn_clone::sealed::Private) -> *mut ()
 impl<T> either::into_either::IntoEither for walthamstow_logs::layout::DocumentLayout
 impl<T> tracing::instrument::Instrument for walthamstow_logs::layout::DocumentLayout
 impl<T> tracing::instrument::WithSubscriber for walthamstow_logs::layout::DocumentLayout

@@ -22,7 +22,9 @@
   and removes blobs under the document's lease, and reads them checked against their digest,
   reporting an absent or corrupt blob by a `BlobFault`. `MemoryBlobStore` keeps them in memory.
   `FileBlobStore` keeps each as a file under a `DocumentLayout`, the document directory the file
-  log store shares. The conformance suite has a blob section.
+  log store shares: a `cap-std` root no operation leaves, an entity directory per registered
+  entity, and a resource directory that is the resource percent-encoded. The conformance suite
+  has a blob section.
 
 ## 0.6.0
 

@@ -120,10 +120,18 @@ impl DocumentLayout {
     /// `document`'s directory, or `None` when it does not exist.
     pub fn document_dir(&self, document: &DocumentId) -> KernelResult<Option<DocumentDir>> {
         let relative = self.document_path(document)?;
-        match self.root.open_dir(&relative) {
-            Ok(dir) => Ok(Some(DocumentDir { dir, relative })),
+        Ok(self
+            .open_dir(&relative)?
+            .map(|dir| DocumentDir { dir, relative }))
+    }
+
+    /// The directory at `relative` under the root, resolved through the root, or `None` when it
+    /// does not exist.
+    pub(crate) fn open_dir(&self, relative: &Path) -> KernelResult<Option<Dir>> {
+        match self.root.open_dir(relative) {
+            Ok(dir) => Ok(Some(dir)),
             Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(None),
-            Err(error) => Err(internal(&self.path.join(&relative), error)),
+            Err(error) => Err(internal(&self.path.join(relative), error)),
         }
     }
 
@@ -138,16 +146,9 @@ impl DocumentLayout {
         }
         let relative = self.document_path(document)?;
         let _creating = CREATING.lock().unwrap_or_else(PoisonError::into_inner);
-        self.root
-            .create_dir_all(&relative)
-            .map_err(|error| internal(&self.path.join(&relative), error))?;
-        // Each directory whose entries changed is synced: the root's entity, and the entity's
-        // document.
-        self.sync(durability, Path::new(""))?;
-        self.sync(
-            durability,
-            relative.parent().expect("a document lies in its entity"),
-        )?;
+        let entity = relative.parent().expect("a document lies in its entity");
+        self.create_level(durability, entity)?;
+        self.create_level(durability, &relative)?;
         let dir = self
             .root
             .open_dir(&relative)
@@ -164,18 +165,28 @@ impl DocumentLayout {
         name: &str,
     ) -> KernelResult<Dir> {
         let path = relative.join(name);
-        match self.root.open_dir(&path) {
-            Ok(dir) => return Ok(dir),
-            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
-            Err(error) => return Err(internal(&self.path.join(&path), error)),
-        }
-        self.root
-            .create_dir(&path)
-            .map_err(|error| internal(&self.path.join(&path), error))?;
-        self.sync(durability, relative)?;
+        self.create_level(durability, &path)?;
         self.root
             .open_dir(&path)
             .map_err(|error| internal(&self.path.join(&path), error))
+    }
+
+    /// Creates the directory at `relative` under the root, whose parent exists, and makes its
+    /// entry durable. A directory that exists is left as it is: a creation whose sync fails is
+    /// undone, so that a directory found existing has a durable entry, and a repeated creation
+    /// syncs again.
+    fn create_level(&self, durability: WriteDurability, relative: &Path) -> KernelResult<()> {
+        match self.root.create_dir(relative) {
+            Ok(()) => {}
+            Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => return Ok(()),
+            Err(error) => return Err(internal(&self.path.join(relative), error)),
+        }
+        let parent = relative.parent().expect("a level lies under the root");
+        if let Err(error) = self.sync(durability, parent) {
+            let _ = self.root.remove_dir(relative);
+            return Err(error);
+        }
+        Ok(())
     }
 
     /// Makes the entries of the directory at `relative` under the root durable. A directory

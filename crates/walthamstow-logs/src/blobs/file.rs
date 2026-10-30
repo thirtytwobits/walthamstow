@@ -89,14 +89,14 @@ impl FileBlobStore {
         })
     }
 
-    /// The directory of `kind`'s blobs in `document`, or `None` when it does not exist.
+    /// The directory of `kind`'s blobs in `document`, resolved through the layout's root as every
+    /// directory is, or `None` when it does not exist.
     fn kind_dir(&self, document: &DocumentDir, kind: &BlobKind) -> KernelResult<Option<KindDir>> {
         let relative = document.relative.join(kind.name());
-        match document.dir.open_dir(kind.name()) {
-            Ok(dir) => Ok(Some(KindDir { dir, relative })),
-            Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(None),
-            Err(error) => Err(internal(&self.layout.root().join(relative), error)),
-        }
+        Ok(self
+            .layout
+            .open_dir(&relative)?
+            .map(|dir| KindDir { dir, relative }))
     }
 
     /// The bytes of the regular file `file` in `dir`, or `None` when there is none. Anything

@@ -212,7 +212,8 @@ like any other file of its type. The document directory is `DocumentLayout`'s, s
 file log store:
 
 - The layout holds its root as a `cap-std` directory, and every operation goes through it. A
-  path or a link that would leave the root fails. Within the root, a link is followed.
+  path or a link that would leave the root fails. Within the root, a directory reached through a
+  link is used.
 - The product registers each entity with the layout, with the files the log store keeps in its
   documents. The entity directory is the entity's name in lowercase, with every character except
   ASCII letters, digits, `-` and `_` written as `-`. A name that is empty or a device name is
@@ -225,12 +226,12 @@ file log store:
   resource that is empty, or whose name is longer than Windows allows, is refused.
 - A kind whose name matches a file the log store names in a document, compared case-folded, is
   refused when the store is built.
-- A put is a durable write. A file present with the right bytes is settled, so a put that
-  succeeds has left a durable blob whatever an earlier put left. A file present with the wrong
-  bytes is replaced: the one place the store writes over what it finds broken, since the writer
-  supplies the bytes.
-- A blob is read only from a regular file. Any other entry under a kind directory is refused
-  unopened. A file a put staged and did not finish is passed over.
+- A put is a durable write. A file present with the right bytes is settled, its contents and its
+  entry, so a put that succeeds has left a durable blob whatever an earlier put or the owner
+  left. A file present with the wrong bytes is replaced: the one place the store writes over what
+  it finds broken, since the writer supplies the bytes.
+- A blob is read only from a regular file. A link or any other entry under a kind directory is
+  refused unopened. A file a put staged and did not finish is passed over.
 
 `MemoryBlobStore` keeps blobs in memory. Every adapter passes the blob section of
 `walthamstow_logs::conformance`.

@@ -100,10 +100,10 @@ impl FileBlobStore {
     }
 
     /// The bytes of the regular file `file` in `dir`, or `None` when there is none. Anything
-    /// else there is refused unopened.
+    /// else there, a link included, is refused unopened.
     fn read(&self, dir: &KindDir, file: &str) -> KernelResult<Option<Vec<u8>>> {
         let path = || self.layout.root().join(&dir.relative).join(file);
-        match dir.dir.metadata(file) {
+        match dir.dir.symlink_metadata(file) {
             Ok(metadata) if metadata.is_file() => Ok(Some(
                 dir.dir
                     .read(file)
@@ -111,11 +111,30 @@ impl FileBlobStore {
             )),
             Ok(_) => Err(internal(
                 &path(),
-                "a blob is a regular file; this is not opened",
+                "a blob is a regular file; this is not followed or opened",
             )),
             Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(None),
             Err(error) => Err(internal(&path(), error)),
         }
+    }
+
+    /// Makes the contents of `file` in `dir` and the directory's entry for it durable, for a file
+    /// the store finds holding a blob's bytes already. The file is opened for writing, which a
+    /// flush needs on Windows, and nothing is written.
+    fn settle(&self, dir: &KindDir, file: &str) -> KernelResult<()> {
+        let path = self.layout.root().join(&dir.relative).join(file);
+        let mut options = OpenOptions::new();
+        options.read(true).write(true);
+        let opened = dir
+            .dir
+            .open_with(file, &options)
+            .map_err(|error| internal(&path, error))?
+            .into_std();
+        self.durability
+            .sync(&opened)
+            .map_err(|error| internal(&path, error))?;
+        drop(opened);
+        self.layout.sync(self.durability, &dir.relative)
     }
 
     /// The bytes `blob` names in `document`, or the fault that stands in their place.
@@ -220,10 +239,10 @@ impl BlobStore for FileBlobStore {
                 relative: document.relative.join(kind.name()),
             };
             if self.read(&dir, &file)?.is_some_and(|held| held == bytes) {
-                // A put syncs its file before the rename, so a put that renamed the file and
-                // failed left only the directory unsynced. It is settled here, so a put that
-                // succeeds has left a durable blob.
-                return self.layout.sync(self.durability, &dir.relative);
+                // The file may be one a put renamed into place and failed to sync the entry of,
+                // or one the owner put there by hand. Both are settled, so a put that succeeds
+                // has left a durable blob.
+                return self.settle(&dir, &file);
             }
             self.write(&dir, &file, bytes)
         })?;
@@ -460,6 +479,33 @@ mod tests {
         );
         std::fs::write(directory.join("notes.png"), b"stray").unwrap();
         assert!(store.list(&document, None, usize::MAX).is_err());
+        assert_eq!(
+            store.get(&document, &blob).unwrap().as_deref(),
+            Some(&b"one"[..])
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_link_where_a_blob_should_be_is_refused_unopened() {
+        let harness = FileHarness::new();
+        let document = document("turn-1");
+        let (store, lease) = open(&harness, &document);
+        let blob = store.put(&lease, "capture", b"one").unwrap();
+        let other = BlobRef::new("capture", sha256_hex(b"two")).unwrap();
+        // A link beside the blob, to the blob itself. Its target is a regular file within the
+        // root, and it is still refused, as `list` refuses it.
+        std::os::unix::fs::symlink(
+            harness.path(&document, &blob),
+            harness.path(&document, &other),
+        )
+        .unwrap();
+        assert!(store.get(&document, &other).is_err());
+        assert!(store
+            .check(&document, std::slice::from_ref(&other))
+            .is_err());
+        assert!(store.list(&document, None, usize::MAX).is_err());
+        assert!(store.put(&lease, "capture", b"two").is_err());
         assert_eq!(
             store.get(&document, &blob).unwrap().as_deref(),
             Some(&b"one"[..])

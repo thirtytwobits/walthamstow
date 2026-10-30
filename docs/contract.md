@@ -111,17 +111,76 @@ the directory: a link, or a name in another case on a file system that folds cas
 
 ## Leases
 
-A lease grants one holder a scope, a document named by its entity and resource, until it is
-released or lapses. While it stands, another holder is refused the scope. A holder that acquires a
-scope it holds is given its lease again, renewed. Each grant's epoch is later than every grant
-before it in the process.
+A lease grants one holder a document, named by a `DocumentId` of its entity and resource, until it
+is released or lapses. While it stands, another holder is refused the document. A holder that
+acquires a document it holds is given its lease again, renewed. Each grant's epoch is later than
+every grant before it in the process.
 
-A fenced write runs while its lease stands, and holds the scope against every other grant until it
-returns. A write under a lease that was released, has lapsed or was granted by another set of
+A fenced write runs while its lease stands, and holds the document against every other grant until
+it returns. A write under a lease that was released, has lapsed or was granted by another set of
 leases is refused with `lease_lost`, unrun.
 
 `FileLeases` grant leases that never lapse. `MemoryLeases` grant leases that lapse a term after
 their grant or last renewal, on the clock they are given.
+
+## Log documents
+
+A log document does not merge. It is written by one lease holder at a time, and the order of its
+records is the record. It is:
+
+- a head: one JSON value, replaced whole
+- a format: a number the product gives, which the store returns and never interprets
+- a log of records, appended in order
+
+The store gives each record its position. Positions increase along the log and need not be
+contiguous: a rewind leaves a gap. A position is never given twice in one document, even after a
+rewind removes it. A record carries its author, a Clerkenwell principal as the writer names it,
+the time the store recorded it on the `WallClock` it is given, the blobs it names and its payload.
+The store reads neither the head nor a payload, and never follows a blob reference.
+
+An image, given to `create` and `replace`, holds a format, a head and records with their
+positions, which increase along the log. Its next position is one past the highest of them, or the
+first position when there are none. `replace` keeps the document's next position unless the
+image's is beyond it. `rewind` removes the records from a position before the next one onwards,
+then applies a commit, which may be empty. A commit that is not a rewind carries records, a head or
+both.
+
+Writes:
+
+- Each write runs inside `Leases::fence` for the document its lease names, and is refused with
+  `lease_lost` otherwise.
+- A write names the revision it read. A write over any other revision is refused with `log_stale`.
+  `create` names none, and is refused with `log_stale` while the document exists. A removed
+  document is at no revision, so a write over it is refused with `log_stale`.
+- A write carries an id its writer chooses. The store keeps the id and base of its last write to a
+  document, through the document's removal. A write that repeats both is a retry: it is given what
+  that write gave, a revision or, to a removal, nothing more, and writes nothing again. A removal
+  that repeats another write's id and base, or a write that repeats a removal's, is refused with
+  `log_stale`.
+- A write is checked for its lease, then whether it is a retry, then its base, then what it
+  carries. A write that is refused changes nothing.
+- The store never gives a revision twice, including across a document's removal and re-creation:
+  a revision carries the document's incarnation, which `create` chooses. Content restored from
+  outside the store carries the revision it had.
+
+Reads:
+
+- `head` returns the format, head, next position and revision, or `None` for a document that does
+  not exist.
+- `records` returns a page of the records at or after a position, as the document stood at a
+  revision, and is refused with `log_stale` once the document is at another revision or at none.
+  `list` returns a page of an entity's documents, in resource order, after a resource. A page of
+  none is refused as an invalid request.
+- A read never creates, repairs, truncates or upgrades anything.
+- A read reports a broken document by a `LogFault`. `list` carries the fault, and `head` and
+  `records` refuse with it as their reason: `log_missing` when data the store needs is absent,
+  naming each part; `log_invalid` when what is stored breaks this contract; `log_inaccessible`
+  when storage refused the read. A broken document is listed with its fault, never left out, and
+  never rebuilt from another copy.
+- A record's blob references are returned as stored. A log read never consults a blob store.
+
+`MemoryLogStore` keeps log documents in memory. Every adapter passes
+`walthamstow_logs::conformance`, behind the `conformance` feature.
 
 ## Collaboration storage
 

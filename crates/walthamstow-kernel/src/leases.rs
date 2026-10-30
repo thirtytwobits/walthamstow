@@ -1,6 +1,6 @@
 //! Copyright (c) Scott A Dixon
 //!
-//! Who may change what does not merge. A lease grants one holder a scope, a document, until it
+//! Who may change what does not merge. A lease grants one holder a document until it
 //! is released or lapses. Each grant carries an epoch no earlier grant in the process shares, and
 //! a store writes under a lease only while that grant stands, so a holder whose lease was lost
 //! cannot write over the next holder's work.
@@ -10,6 +10,7 @@
 //! lapse on the engine's clock, for an engine with no disk and for tests.
 
 use crate::clock::Moment;
+use crate::document::DocumentId;
 use crate::workspace_lock::WorkspaceLock;
 use crate::{reason_codes, KernelError, KernelResult};
 use std::collections::HashMap;
@@ -18,36 +19,6 @@ use std::path::Path;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 use std::time::Duration;
-
-/// What a lease covers: one document, named by its entity and resource.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct LeaseScope {
-    entity: String,
-    resource: String,
-}
-
-impl LeaseScope {
-    pub fn new(entity: impl Into<String>, resource: impl Into<String>) -> Self {
-        Self {
-            entity: entity.into(),
-            resource: resource.into(),
-        }
-    }
-
-    pub fn entity(&self) -> &str {
-        &self.entity
-    }
-
-    pub fn resource(&self) -> &str {
-        &self.resource
-    }
-}
-
-impl fmt::Display for LeaseScope {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(formatter, "{} {:?}", self.entity, self.resource)
-    }
-}
 
 /// Who holds a lease: an engine, by the name it gives itself.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -69,18 +40,18 @@ impl fmt::Display for LeaseHolder {
     }
 }
 
-/// One grant of a scope to a holder.
+/// One grant of a document to a holder.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Lease {
-    scope: LeaseScope,
+    document: DocumentId,
     holder: LeaseHolder,
     epoch: u64,
     expires: Option<Moment>,
 }
 
 impl Lease {
-    pub fn scope(&self) -> &LeaseScope {
-        &self.scope
+    pub fn document(&self) -> &DocumentId {
+        &self.document
     }
 
     pub fn holder(&self) -> &LeaseHolder {
@@ -101,9 +72,9 @@ impl Lease {
 
 /// The leases over a set of documents.
 pub trait Leases: Send + Sync + fmt::Debug {
-    /// Grants `scope` to `holder`. `None` while another holder's lease on it stands. A holder that
-    /// already holds `scope` is given its lease again, renewed.
-    fn acquire(&self, scope: &LeaseScope, holder: &LeaseHolder) -> KernelResult<Option<Lease>>;
+    /// Grants `document` to `holder`. `None` while another holder's lease on it stands. A holder
+    /// that already holds `document` is given its lease again, renewed.
+    fn acquire(&self, document: &DocumentId, holder: &LeaseHolder) -> KernelResult<Option<Lease>>;
 
     /// `lease`, renewed from now. `None` once it has been released or has lapsed.
     fn renew(&self, lease: &Lease) -> KernelResult<Option<Lease>>;
@@ -111,7 +82,7 @@ pub trait Leases: Send + Sync + fmt::Debug {
     /// Gives `lease` back. Releasing a lease that was released or has lapsed changes nothing.
     fn release(&self, lease: &Lease) -> KernelResult<()>;
 
-    /// Runs `write` once while `lease` stands, holding its scope against every other grant
+    /// Runs `write` once while `lease` stands, holding its document against every other grant
     /// until `write` returns. Refused with `lease_lost`, without running `write`, once the lease
     /// has been released or has lapsed.
     fn fence(&self, lease: &Lease, write: &mut dyn FnMut() -> KernelResult<()>)
@@ -146,24 +117,24 @@ fn next_epoch() -> u64 {
 fn lost(lease: &Lease) -> KernelError {
     KernelError::conflict(format!(
         "The lease {} held on {} has been released or has lapsed.",
-        lease.epoch, lease.scope
+        lease.epoch, lease.document
     ))
     .with_reason(reason_codes::LEASE_LOST)
 }
 
 type Now = Arc<dyn Fn() -> Moment + Send + Sync>;
 
-/// The grant standing on one scope, if any.
+/// The grant standing on one document, if any.
 type Slot = Arc<Mutex<Option<Lease>>>;
 
 fn locked<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
     mutex.lock().unwrap_or_else(PoisonError::into_inner)
 }
 
-/// Grants by scope. Each scope has a lock of its own, so a write under one lease holds back
-/// grants of its scope alone.
+/// Grants by document. Each document has a lock of its own, so a write under one lease holds
+/// back grants of its document alone.
 struct Grants {
-    slots: Mutex<HashMap<LeaseScope, Slot>>,
+    slots: Mutex<HashMap<DocumentId, Slot>>,
     /// How long a grant stands unless renewed, or `None` when grants never lapse.
     term: Option<Duration>,
     now: Now,
@@ -178,9 +149,9 @@ impl Grants {
         }
     }
 
-    fn slot(&self, scope: &LeaseScope) -> Slot {
+    fn slot(&self, document: &DocumentId) -> Slot {
         locked(&self.slots)
-            .entry(scope.clone())
+            .entry(document.clone())
             .or_default()
             .clone()
     }
@@ -196,8 +167,8 @@ impl Grants {
             .filter(|lease| lease.expires.is_none_or(|expires| now < expires))
     }
 
-    fn acquire(&self, scope: &LeaseScope, holder: &LeaseHolder) -> Option<Lease> {
-        let slot = self.slot(scope);
+    fn acquire(&self, document: &DocumentId, holder: &LeaseHolder) -> Option<Lease> {
+        let slot = self.slot(document);
         let mut granted = locked(&slot);
         let expires = self.expires();
         if let Some(standing) = self.standing(&mut granted) {
@@ -208,7 +179,7 @@ impl Grants {
             return Some(standing.clone());
         }
         let lease = Lease {
-            scope: scope.clone(),
+            document: document.clone(),
             holder: holder.clone(),
             epoch: next_epoch(),
             expires,
@@ -218,7 +189,7 @@ impl Grants {
     }
 
     fn renew(&self, lease: &Lease) -> Option<Lease> {
-        let slot = self.slot(&lease.scope);
+        let slot = self.slot(&lease.document);
         let mut granted = locked(&slot);
         let expires = self.expires();
         let standing = self
@@ -229,7 +200,7 @@ impl Grants {
     }
 
     fn release(&self, lease: &Lease) {
-        let Some(slot) = locked(&self.slots).get(&lease.scope).cloned() else {
+        let Some(slot) = locked(&self.slots).get(&lease.document).cloned() else {
             return;
         };
         {
@@ -245,12 +216,12 @@ impl Grants {
         // slot, so an empty one is dropped.
         let mut slots = locked(&self.slots);
         if slots
-            .get(&lease.scope)
+            .get(&lease.document)
             .is_some_and(|held| Arc::ptr_eq(held, &slot))
             && Arc::strong_count(&slot) == 2
             && locked(&slot).is_none()
         {
-            slots.remove(&lease.scope);
+            slots.remove(&lease.document);
         }
     }
 
@@ -259,7 +230,7 @@ impl Grants {
         lease: &Lease,
         write: &mut dyn FnMut() -> KernelResult<()>,
     ) -> KernelResult<()> {
-        let slot = self.slot(&lease.scope);
+        let slot = self.slot(&lease.document);
         let mut granted = locked(&slot);
         if self
             .standing(&mut granted)
@@ -325,10 +296,10 @@ macro_rules! leases_over_grants {
         impl Leases for $leases {
             fn acquire(
                 &self,
-                scope: &LeaseScope,
+                document: &DocumentId,
                 holder: &LeaseHolder,
             ) -> KernelResult<Option<Lease>> {
-                Ok(self.grants.acquire(scope, holder))
+                Ok(self.grants.acquire(document, holder))
             }
 
             fn renew(&self, lease: &Lease) -> KernelResult<Option<Lease>> {
@@ -381,8 +352,8 @@ mod tests {
         }
     }
 
-    fn document(resource: &str) -> LeaseScope {
-        LeaseScope::new("Session", resource)
+    fn document(resource: &str) -> DocumentId {
+        DocumentId::new("Session", resource)
     }
 
     fn engine(name: &str) -> LeaseHolder {
@@ -408,7 +379,7 @@ mod tests {
     }
 
     #[test]
-    fn a_scope_held_by_one_holder_is_refused_to_another_until_released() {
+    fn a_document_held_by_one_holder_is_refused_to_another_until_released() {
         for (leases, _root) in adapters() {
             let first = leases
                 .acquire(&document("held"), &engine("a"))
@@ -429,7 +400,7 @@ mod tests {
     }
 
     #[test]
-    fn scopes_are_granted_independently() {
+    fn documents_are_granted_independently() {
         for (leases, _root) in adapters() {
             let one = leases.acquire(&document("one"), &engine("a")).unwrap();
             let two = leases.acquire(&document("two"), &engine("b")).unwrap();
@@ -438,7 +409,7 @@ mod tests {
     }
 
     #[test]
-    fn a_holder_acquiring_its_own_scope_again_keeps_its_grant() {
+    fn a_holder_acquiring_its_own_document_again_keeps_its_grant() {
         for (leases, _root) in adapters() {
             let first = leases
                 .acquire(&document("mine"), &engine("a"))

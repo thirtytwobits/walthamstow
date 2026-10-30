@@ -211,8 +211,11 @@ is refused, on a read as on a write, so a product that retires a kind can no lon
 other file of its type. The document directory is `DocumentLayout`'s, shared with the file log
 store:
 
-- The entity directory is the entity's name in lowercase, with every character except ASCII
-  letters, digits, `-` and `_` written as `-`. A name that is empty or a device name is refused.
+- The product registers each entity with the layout, with the files the log store keeps in its
+  documents. The entity directory is the entity's name in lowercase, with every character except
+  ASCII letters, digits, `-` and `_` written as `-`. A name that is empty or a device name is
+  refused, and so is a second entity whose directory is a registered entity's, since the two
+  would share their documents. A document of an entity not registered is refused.
 - A resource that is not a safe file name is refused. So is one that matches another document's
   directory compared case-folded, whenever a document is named, since a file system that folds
   case would hold the two as one.

@@ -711,7 +711,7 @@ pub fn walthamstow_logs::layout::DocumentLayout::entity_directory(&self, entity:
 pub fn walthamstow_logs::layout::DocumentLayout::files(&self) -> impl core::iter::traits::iterator::Iterator<Item = &str>
 pub fn walthamstow_logs::layout::DocumentLayout::new(root: impl core::convert::Into<std::path::PathBuf>) -> Self
 pub fn walthamstow_logs::layout::DocumentLayout::root(&self) -> &std::path::Path
-pub fn walthamstow_logs::layout::DocumentLayout::with_files<I>(self, entity: &str, names: I) -> Self where I: core::iter::traits::collect::IntoIterator, <I as core::iter::traits::collect::IntoIterator>::Item: core::convert::Into<alloc::string::String>
+pub fn walthamstow_logs::layout::DocumentLayout::with_entity<I>(self, entity: &str, files: I) -> walthamstow_kernel::error::KernelResult<Self> where I: core::iter::traits::collect::IntoIterator, <I as core::iter::traits::collect::IntoIterator>::Item: core::convert::Into<alloc::string::String>
 impl core::clone::Clone for walthamstow_logs::layout::DocumentLayout
 pub fn walthamstow_logs::layout::DocumentLayout::clone(&self) -> walthamstow_logs::layout::DocumentLayout
 impl core::fmt::Debug for walthamstow_logs::layout::DocumentLayout
@@ -3081,7 +3081,7 @@ pub fn walthamstow_logs::layout::DocumentLayout::entity_directory(&self, entity:
 pub fn walthamstow_logs::layout::DocumentLayout::files(&self) -> impl core::iter::traits::iterator::Iterator<Item = &str>
 pub fn walthamstow_logs::layout::DocumentLayout::new(root: impl core::convert::Into<std::path::PathBuf>) -> Self
 pub fn walthamstow_logs::layout::DocumentLayout::root(&self) -> &std::path::Path
-pub fn walthamstow_logs::layout::DocumentLayout::with_files<I>(self, entity: &str, names: I) -> Self where I: core::iter::traits::collect::IntoIterator, <I as core::iter::traits::collect::IntoIterator>::Item: core::convert::Into<alloc::string::String>
+pub fn walthamstow_logs::layout::DocumentLayout::with_entity<I>(self, entity: &str, files: I) -> walthamstow_kernel::error::KernelResult<Self> where I: core::iter::traits::collect::IntoIterator, <I as core::iter::traits::collect::IntoIterator>::Item: core::convert::Into<alloc::string::String>
 impl core::clone::Clone for walthamstow_logs::layout::DocumentLayout
 pub fn walthamstow_logs::layout::DocumentLayout::clone(&self) -> walthamstow_logs::layout::DocumentLayout
 impl core::fmt::Debug for walthamstow_logs::layout::DocumentLayout

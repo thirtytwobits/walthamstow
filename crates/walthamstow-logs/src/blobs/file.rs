@@ -288,7 +288,8 @@ mod tests {
         fn layout(&self) -> Arc<DocumentLayout> {
             Arc::new(
                 DocumentLayout::new(self.root.path())
-                    .with_files("Log", ["head.json", "log.ndjson"]),
+                    .with_entity("Log", ["head.json", "log.ndjson"])
+                    .unwrap(),
             )
         }
 
@@ -363,7 +364,11 @@ mod tests {
     #[test]
     fn a_kind_matching_a_file_the_log_store_names_is_refused() {
         let root = tempfile::tempdir().unwrap();
-        let layout = Arc::new(DocumentLayout::new(root.path()).with_files("Log", ["Capture"]));
+        let layout = Arc::new(
+            DocumentLayout::new(root.path())
+                .with_entity("Log", ["Capture"])
+                .unwrap(),
+        );
         let leases: Arc<dyn Leases> = Arc::new(MemoryLeases::new(
             std::time::Duration::from_secs(60),
             || walthamstow_kernel::clock::Moment::ORIGIN,

@@ -3,7 +3,8 @@
 //! Where a product's log documents and their blobs are laid out on disk. Each document is the
 //! directory `<root>/<entity directory>/<resource>/`, which the file log store and the file blob
 //! store share. This module owns the directory and its rules, so each store takes it rather
-//! than restating them.
+//! than restating them. The product registers each entity, and two whose names map to one
+//! directory are refused, so no two documents share a directory.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
@@ -12,35 +13,59 @@ use walthamstow_kernel::durability::{create_dir_all_synced, WriteDurability};
 use walthamstow_kernel::files;
 use walthamstow_kernel::{DocumentId, KernelError, KernelResult};
 
-/// The root a product's log documents are kept under, and the files the log store names in
-/// each entity's documents.
+/// The root a product's log documents are kept under, and the entities it registers.
 #[derive(Debug, Clone)]
 pub struct DocumentLayout {
     root: PathBuf,
-    /// By entity: the names of the files the log store keeps in each of its documents.
-    files: BTreeMap<String, BTreeSet<String>>,
+    /// By entity name.
+    entities: BTreeMap<String, Entity>,
+}
+
+/// An entity the product registers: the name of its directory, and the files the log store
+/// keeps in each of its documents.
+#[derive(Debug, Clone)]
+struct Entity {
+    directory: String,
+    files: BTreeSet<String>,
 }
 
 impl DocumentLayout {
-    /// Documents kept under `root`, which is used as given.
+    /// Documents kept under `root`, which is used as given, of no entity yet.
     pub fn new(root: impl Into<PathBuf>) -> Self {
         Self {
             root: root.into(),
-            files: BTreeMap::new(),
+            entities: BTreeMap::new(),
         }
     }
 
-    /// This layout, with `names` the files the log store keeps in each document of `entity`.
-    pub fn with_files<I>(mut self, entity: &str, names: I) -> Self
+    /// This layout with `entity` registered, `files` being the files the log store keeps in each
+    /// of its documents. Refused as an invalid request when the entity's name cannot name a
+    /// directory, or when its directory is another registered entity's, since the two would
+    /// share their documents.
+    pub fn with_entity<I>(mut self, entity: &str, files: I) -> KernelResult<Self>
     where
         I: IntoIterator,
         I::Item: Into<String>,
     {
-        self.files
+        let directory = entity_directory_name(entity)?;
+        if let Some((other, _)) = self
+            .entities
+            .iter()
+            .find(|(other, registered)| *other != entity && registered.directory == directory)
+        {
+            return Err(KernelError::invalid_request(format!(
+                "The entities {entity:?} and {other:?} both map to the directory {directory:?}."
+            )));
+        }
+        self.entities
             .entry(entity.to_owned())
-            .or_default()
-            .extend(names.into_iter().map(Into::into));
-        self
+            .or_insert_with(|| Entity {
+                directory,
+                files: BTreeSet::new(),
+            })
+            .files
+            .extend(files.into_iter().map(Into::into));
+        Ok(self)
     }
 
     pub fn root(&self) -> &Path {
@@ -49,14 +74,24 @@ impl DocumentLayout {
 
     /// The name of every file the log store keeps in a document, of any entity.
     pub fn files(&self) -> impl Iterator<Item = &str> {
-        self.files
+        self.entities
             .values()
-            .flat_map(|names| names.iter().map(String::as_str))
+            .flat_map(|entity| entity.files.iter().map(String::as_str))
     }
 
-    /// The directory holding `entity`'s documents, refused when it is a link.
+    /// The registered entity named `entity`.
+    fn entity(&self, entity: &str) -> KernelResult<&Entity> {
+        self.entities.get(entity).ok_or_else(|| {
+            KernelError::invalid_request(format!(
+                "The entity {entity:?} is not registered with the document layout."
+            ))
+        })
+    }
+
+    /// The directory holding `entity`'s documents, refused when the entity is not registered or
+    /// the directory is a link.
     pub fn entity_directory(&self, entity: &str) -> KernelResult<PathBuf> {
-        let directory = self.root.join(entity_directory_name(entity)?);
+        let directory = self.root.join(&self.entity(entity)?.directory);
         refuse_link(&directory)?;
         Ok(directory)
     }
@@ -183,11 +218,17 @@ mod tests {
         }
     }
 
+    /// A layout with `Session` registered.
+    fn layout(root: impl Into<PathBuf>) -> DocumentLayout {
+        DocumentLayout::new(root)
+            .with_entity("Session", ["head.json"])
+            .unwrap()
+    }
+
     #[test]
     fn a_document_directory_is_root_entity_resource() {
-        let layout = DocumentLayout::new("/data");
         assert_eq!(
-            layout
+            layout("/data")
                 .document_directory(&DocumentId::new("Session", "turn-1"))
                 .unwrap(),
             Path::new("/data/session/turn-1")
@@ -195,9 +236,30 @@ mod tests {
     }
 
     #[test]
+    fn an_entity_is_registered_once_and_shares_its_directory_with_no_other() {
+        let layout = layout("/data")
+            .with_entity("Session", ["log.ndjson"])
+            .unwrap();
+        assert_eq!(
+            layout.files().collect::<Vec<_>>(),
+            ["head.json", "log.ndjson"]
+        );
+        assert!(layout
+            .document_directory(&DocumentId::new("Notes", "one"))
+            .is_err());
+        assert!(layout
+            .clone()
+            .with_entity("My Notes", ["head.json"])
+            .unwrap()
+            .with_entity("My-Notes", ["head.json"])
+            .is_err());
+        assert!(layout.with_entity("", ["head.json"]).is_err());
+    }
+
+    #[test]
     fn a_resource_matching_another_document_case_folded_is_refused() {
         let root = tempfile::tempdir().unwrap();
-        let layout = DocumentLayout::new(root.path());
+        let layout = layout(root.path());
         let durability = WriteDurability::System;
         layout
             .create_document_directory(durability, &DocumentId::new("Session", "Turn"))
@@ -221,7 +283,7 @@ mod tests {
     fn a_linked_entity_or_document_directory_is_refused() {
         let root = tempfile::tempdir().unwrap();
         let elsewhere = tempfile::tempdir().unwrap();
-        let layout = DocumentLayout::new(root.path());
+        let layout = layout(root.path());
         std::os::unix::fs::symlink(elsewhere.path(), root.path().join("session")).unwrap();
         assert!(layout
             .document_directory(&DocumentId::new("Session", "turn"))

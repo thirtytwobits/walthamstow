@@ -9,6 +9,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
 use std::path::{Path, PathBuf};
+use std::sync::{Mutex, PoisonError};
 use walthamstow_kernel::durability::{create_dir_all_synced, WriteDurability};
 use walthamstow_kernel::files;
 use walthamstow_kernel::{DocumentId, KernelError, KernelResult};
@@ -110,17 +111,24 @@ impl DocumentLayout {
     }
 
     /// Creates the directory holding `document`, durable as `durability` asks, and returns it.
+    /// The collision check and the creation run under one lock, so of two spellings of a
+    /// resource created at once only the first is accepted.
     pub fn create_document_directory(
         &self,
         durability: WriteDurability,
         document: &DocumentId,
     ) -> KernelResult<PathBuf> {
+        let _creating = CREATING.lock().unwrap_or_else(PoisonError::into_inner);
         let directory = self.document_directory(document)?;
         create_dir_all_synced(durability, &directory)
             .map_err(|error| internal(&directory, error))?;
         Ok(directory)
     }
 }
+
+/// Held from a document directory's collision check to its creation. One engine owns a
+/// workspace, so a lock within the process is enough.
+static CREATING: Mutex<()> = Mutex::new(());
 
 /// The name of the directory holding `entity`'s documents: the entity's name in lowercase, with
 /// every character except ASCII letters, digits, `-` and `_` written as `-`. An empty name, or

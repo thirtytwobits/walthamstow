@@ -9,8 +9,13 @@
 //! documents can be broken from outside also implements [`Breaker`] and invokes
 //! `log_store_conformance!(broken = ...)`.
 //!
+//! [`blobs`] is the blob section: [`BlobHarness`](blobs::BlobHarness),
+//! [`BlobBreaker`](blobs::BlobBreaker) and
+//! [`blob_store_conformance!`](crate::blob_store_conformance).
+//!
 //! The tests take their clocks from the suite and never sleep.
 
+pub mod blobs;
 mod model;
 pub mod property;
 pub mod rules;

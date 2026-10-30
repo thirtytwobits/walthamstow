@@ -810,9 +810,9 @@ pub fn reads_change_nothing(harness: &dyn Harness) {
 pub fn blob_references_are_returned_as_stored(harness: &dyn Harness) {
     let fixture = Fixture::new(harness);
     let blobs = vec![
-        BlobRef::new("ff".repeat(32)).unwrap(),
-        BlobRef::new("00".repeat(32)).unwrap(),
-        BlobRef::new("ff".repeat(32)).unwrap(),
+        BlobRef::new("capture", "ff".repeat(32)).unwrap(),
+        BlobRef::new("capture", "00".repeat(32)).unwrap(),
+        BlobRef::new("capture", "ff".repeat(32)).unwrap(),
     ];
     let document = document("a");
     let mut imaged = stored(0, 0, fixture.now());

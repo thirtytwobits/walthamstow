@@ -316,7 +316,7 @@ impl Run {
         (0..self.rng.random_range(0..3))
             .map(|_| {
                 let digit = ["0", "a", "f"][self.rng.random_range(0..3)];
-                BlobRef::new(digit.repeat(64)).unwrap()
+                BlobRef::new("capture", digit.repeat(64)).unwrap()
             })
             .collect()
     }

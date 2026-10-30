@@ -140,50 +140,129 @@ impl fmt::Display for WriteId {
     }
 }
 
-/// A blob a record names: the lowercase hex SHA-256 of its bytes. The log store never follows
-/// one.
+/// Whether `name` can name a kind of blob, and so a directory: one or more lowercase ASCII
+/// letters, digits, `-` or `_`, and no device name Windows reserves.
+fn is_kind_name(name: &str) -> bool {
+    !name.is_empty()
+        && name
+            .bytes()
+            .all(|byte| matches!(byte, b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_'))
+        && !walthamstow_kernel::files::is_windows_device_name(name)
+}
+
+/// A kind of blob the product registers: its name, which names the directory its blobs are
+/// kept in, and the extension their files take.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct BlobKind {
+    name: String,
+    extension: String,
+}
+
+impl BlobKind {
+    /// The kind named `name`, whose files take `extension`. A name is one or more lowercase ASCII
+    /// letters, digits, `-` or `_`, and no device name Windows reserves; an extension is one or
+    /// more lowercase ASCII letters or digits.
+    pub fn new(name: impl Into<String>, extension: impl Into<String>) -> KernelResult<Self> {
+        let name = name.into();
+        let extension = extension.into();
+        if !is_kind_name(&name) {
+            return Err(KernelError::invalid_request(format!(
+                "{name:?} is not a blob kind: one or more lowercase ASCII letters, digits, '-' \
+                 or '_', and no device name."
+            )));
+        }
+        if extension.is_empty()
+            || !extension
+                .bytes()
+                .all(|byte| matches!(byte, b'a'..=b'z' | b'0'..=b'9'))
+        {
+            return Err(KernelError::invalid_request(format!(
+                "{extension:?} is not a blob extension: one or more lowercase ASCII letters or \
+                 digits."
+            )));
+        }
+        Ok(Self { name, extension })
+    }
+
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    pub fn extension(&self) -> &str {
+        &self.extension
+    }
+}
+
+/// A blob a record names: its kind, and the lowercase hex SHA-256 of its bytes. It is written
+/// as `<kind>/<sha256>`, as its file is laid out. The log store never follows one.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
 #[serde(try_from = "String", into = "String")]
-pub struct BlobRef(String);
+pub struct BlobRef {
+    kind: String,
+    sha256: String,
+}
 
 impl BlobRef {
-    /// The blob named by `digest`, which must be 64 lowercase hex digits.
-    pub fn new(digest: impl Into<String>) -> KernelResult<Self> {
-        let digest = digest.into();
-        if digest.len() != 64
-            || !digest
+    /// The blob of `kind` named by `sha256`, which must be 64 lowercase hex digits.
+    pub fn new(kind: impl Into<String>, sha256: impl Into<String>) -> KernelResult<Self> {
+        let kind = kind.into();
+        let sha256 = sha256.into();
+        if !is_kind_name(&kind) {
+            return Err(KernelError::invalid_request(format!(
+                "{kind:?} is not a blob kind."
+            )));
+        }
+        if sha256.len() != 64
+            || !sha256
                 .bytes()
                 .all(|byte| matches!(byte, b'0'..=b'9' | b'a'..=b'f'))
         {
             return Err(KernelError::invalid_request(format!(
-                "{digest:?} is not a lowercase hex SHA-256 digest."
+                "{sha256:?} is not a lowercase hex SHA-256 digest."
             )));
         }
-        Ok(Self(digest))
+        Ok(Self { kind, sha256 })
     }
 
-    pub fn as_str(&self) -> &str {
-        &self.0
+    /// The name of the blob's kind.
+    pub fn kind(&self) -> &str {
+        &self.kind
+    }
+
+    /// The lowercase hex SHA-256 of the blob's bytes.
+    pub fn sha256(&self) -> &str {
+        &self.sha256
+    }
+}
+
+impl FromStr for BlobRef {
+    type Err = KernelError;
+
+    fn from_str(text: &str) -> KernelResult<Self> {
+        let (kind, sha256) = text.split_once('/').ok_or_else(|| {
+            KernelError::invalid_request(format!("{text:?} is not a blob reference."))
+        })?;
+        Self::new(kind, sha256)
     }
 }
 
 impl TryFrom<String> for BlobRef {
     type Error = KernelError;
 
-    fn try_from(digest: String) -> KernelResult<Self> {
-        Self::new(digest)
+    fn try_from(text: String) -> KernelResult<Self> {
+        text.parse()
     }
 }
 
 impl From<BlobRef> for String {
     fn from(blob: BlobRef) -> Self {
-        blob.0
+        blob.to_string()
     }
 }
 
 impl fmt::Display for BlobRef {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        formatter.write_str(&self.0)
+        write!(formatter, "{}/{}", self.kind, self.sha256)
     }
 }
 
@@ -298,11 +377,46 @@ mod tests {
     }
 
     #[test]
-    fn a_blob_is_named_by_a_lowercase_sha_256_digest() {
-        assert!(BlobRef::new("a".repeat(64)).is_ok());
+    fn a_blob_is_named_by_its_kind_and_a_lowercase_sha_256_digest() {
+        let blob = BlobRef::new("capture", "a".repeat(64)).unwrap();
+        assert_eq!(
+            (blob.kind(), blob.sha256()),
+            ("capture", "a".repeat(64).as_str())
+        );
+        assert_eq!(blob.to_string().parse::<BlobRef>().unwrap(), blob);
+        assert_eq!(
+            serde_json::from_value::<BlobRef>(serde_json::to_value(&blob).unwrap()).unwrap(),
+            blob
+        );
         for digest in ["A".repeat(64), "a".repeat(63), "g".repeat(64)] {
-            assert!(BlobRef::new(digest).is_err());
+            assert!(BlobRef::new("capture", digest).is_err());
         }
-        assert!(serde_json::from_value::<BlobRef>(serde_json::json!("x")).is_err());
+        for kind in ["", "Capture", "con", "a/b", ".hidden", "a b"] {
+            assert!(BlobRef::new(kind, "a".repeat(64)).is_err(), "{kind:?}");
+        }
+        for text in ["x", "a".repeat(64).as_str(), "capture/"] {
+            assert!(text.parse::<BlobRef>().is_err(), "{text:?}");
+        }
+    }
+
+    #[test]
+    fn a_kind_is_named_as_a_directory_with_an_extension_for_its_files() {
+        let kind = BlobKind::new("capture", "png").unwrap();
+        assert_eq!((kind.name(), kind.extension()), ("capture", "png"));
+        for (name, extension) in [
+            ("", "png"),
+            ("Capture", "png"),
+            ("com1", "png"),
+            ("a.b", "png"),
+            ("capture", ""),
+            ("capture", "PNG"),
+            ("capture", ".png"),
+            ("capture", "tar.gz"),
+        ] {
+            assert!(
+                BlobKind::new(name, extension).is_err(),
+                "{name:?} {extension:?}"
+            );
+        }
     }
 }

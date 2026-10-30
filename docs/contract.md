@@ -162,8 +162,9 @@ Writes:
 - A write is checked for its lease, then whether it is a retry, then its base, then what it
   carries. A write that is refused changes nothing.
 - The store never gives a revision twice, including across a document's removal and re-creation:
-  a revision carries the document's incarnation, which `create` chooses. Content restored from
-  outside the store carries the revision it had.
+  a revision carries the document's incarnation, which `create` chooses, and a tag the adapter
+  chooses so that it never repeats one. `MemoryLogStore` tags a revision with a count of the
+  document's writes. Content restored from outside the store carries the revision it had.
 
 Reads:
 

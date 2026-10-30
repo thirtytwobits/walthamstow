@@ -13,9 +13,10 @@
   by one lease holder at a time. `LogStore` creates, commits to, rewinds, replaces and removes a
   document under its lease and over the revision its writer read, retries a write by its id under
   the lease that made it, and reads a document's head, a page of its records or a page of an
-  entity's documents, reporting a broken document by a `LogFault`. `MemoryLogStore` keeps them in
-  memory. The `conformance` feature adds the suite every adapter runs: each rule as a named test,
-  and a property test against a reference model.
+  entity's documents, reporting a broken document by a `LogFault`. A `Revision` is the document's
+  incarnation and a tag the adapter chooses. `MemoryLogStore` keeps them in memory. The
+  `conformance` feature adds the suite every adapter runs: each rule as a named test, and a
+  property test against a reference model.
 
 ## 0.6.0
 

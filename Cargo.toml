@@ -20,6 +20,7 @@ repository = "https://github.com/thirtytwobits/walthamstow"
 [workspace.dependencies]
 anyhow = "1.0.100"
 axum = "0.8.6"
+cap-fs-ext = "4.0.3"
 cap-std = "4.0.3"
 chrono = { version = "0.4.42", features = ["serde"] }
 # The tag Clerkenwell takes, so one application composes both pieces' operations.
@@ -46,7 +47,6 @@ tokio = { version = "1.48.0", features = ["macros", "rt-multi-thread", "signal",
 tokio-util = "0.7.17"
 tracing = "0.1.41"
 uuid = { version = "1.18.1", features = ["serde", "v4", "v5"] }
-winx = "0.36.4"
 
 # Clerkenwell's crates build on a Loro fork, and workspace patches do not propagate to
 # dependents: every workspace that builds Clerkenwell carries Clerkenwell's override, at the

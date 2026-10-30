@@ -135,7 +135,8 @@ pub fn read_files(dir: &Path) -> Result<BTreeMap<PathBuf, Vec<u8>>> {
 
 /// The directory at `path`, held as a `cap-std` directory, every link in `path` followed. On
 /// Windows the handle shares deletion, as every open of a workspace root must while an engine
-/// holds it.
+/// holds it, and holds write access, through which
+/// [`WriteDurability::sync_dir`](crate::durability::WriteDurability::sync_dir) flushes it.
 pub fn open_dir(path: &Path) -> std::io::Result<Dir> {
     #[cfg(not(windows))]
     {
@@ -148,6 +149,7 @@ pub fn open_dir(path: &Path) -> std::io::Result<Dir> {
         const FILE_FLAG_BACKUP_SEMANTICS: u32 = 0x0200_0000;
         let opened = std::fs::OpenOptions::new()
             .read(true)
+            .write(true)
             .share_mode(FILE_SHARE_READ_WRITE_DELETE)
             .custom_flags(FILE_FLAG_BACKUP_SEMANTICS)
             .open(path)?;

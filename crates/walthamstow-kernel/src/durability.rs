@@ -38,8 +38,22 @@ impl WriteDurability {
     }
 
     /// Makes the entries of the directory `dir` holds durable.
+    #[cfg(unix)]
     pub fn sync_dir(self, dir: &Dir) -> io::Result<()> {
         self.sync(&open_dir(dir)?)
+    }
+
+    /// Makes the entries of the directory `dir` holds durable. Windows flushes a directory only
+    /// through a handle with write access. A root [`files::open_dir`](crate::files::open_dir)
+    /// opened holds one, and is flushed through it; any other `Dir` is opened again for writing.
+    #[cfg(windows)]
+    pub fn sync_dir(self, dir: &Dir) -> io::Result<()> {
+        match self.sync(&dir.try_clone()?.into_std_file()) {
+            Err(error) if error.kind() == io::ErrorKind::PermissionDenied => {
+                self.sync(&open_dir(dir)?)
+            }
+            flushed => flushed,
+        }
     }
 }
 
@@ -57,19 +71,15 @@ fn open_dir(dir: &Dir) -> io::Result<File> {
     Ok(File::from(opened))
 }
 
-/// The directory `dir` holds, opened again so its entries can be flushed: Windows flushes only
-/// through a handle with write access, which a `Dir` does not hold. The handle shares deletion,
-/// as every open of a held workspace root must.
+/// The directory `dir` holds, opened again for writing so its entries can be flushed. The open
+/// does not share deletion, so it fails on a workspace root an engine holds, which
+/// [`files::open_dir`](crate::files::open_dir) opens for writing instead.
 #[cfg(windows)]
 fn open_dir(dir: &Dir) -> io::Result<File> {
-    use std::os::windows::io::AsHandle;
-    use winx::file::{reopen_file, AccessMode, Flags, ShareMode};
-    reopen_file(
-        dir.as_handle(),
-        AccessMode::GENERIC_WRITE,
-        ShareMode::FILE_SHARE_READ | ShareMode::FILE_SHARE_WRITE | ShareMode::FILE_SHARE_DELETE,
-        Flags::FILE_FLAG_BACKUP_SEMANTICS,
-    )
+    use cap_fs_ext::OpenOptionsMaybeDirExt;
+    let mut options = cap_std::fs::OpenOptions::new();
+    options.write(true).maybe_dir(true);
+    Ok(dir.open_with(".", &options)?.into_std())
 }
 
 /// `directory`, opened so its entries can be synced.

@@ -153,11 +153,14 @@ pub fn entity_directory_name(entity: &str) -> KernelResult<String> {
 }
 
 /// Refuses `resource` unless it is a safe directory name on every supported platform: one
-/// visible component, with no separator, that Windows allows.
+/// visible component in ASCII, with no separator, that Windows allows. ASCII, because a file
+/// system may fold two spellings of one name into one entry, by case or by Unicode
+/// normalisation, and comparing names case-folded catches every such fold only in ASCII.
 pub fn check_resource(resource: &str) -> KernelResult<()> {
-    if files::safe_id(resource).is_err() || !files::windows_allows(resource) {
+    if !resource.is_ascii() || files::safe_id(resource).is_err() || !files::windows_allows(resource)
+    {
         return Err(KernelError::invalid_request(format!(
-            "The resource {resource:?} is not a safe directory name."
+            "The resource {resource:?} is not a safe directory name in ASCII."
         )));
     }
     Ok(())
@@ -221,7 +224,18 @@ mod tests {
     #[test]
     fn a_resource_is_one_safe_visible_directory_name() {
         check_resource("turn-1").unwrap();
-        for refused in ["", ".hidden", "a/b", "a\\b", "..", "con", "note.", "what?"] {
+        for refused in [
+            "",
+            ".hidden",
+            "a/b",
+            "a\\b",
+            "..",
+            "con",
+            "note.",
+            "what?",
+            "caf\u{e9}",
+            "cafe\u{301}",
+        ] {
             assert!(check_resource(refused).is_err(), "{refused:?}");
         }
     }

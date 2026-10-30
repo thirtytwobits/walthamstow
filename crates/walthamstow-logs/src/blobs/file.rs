@@ -379,7 +379,7 @@ mod tests {
     #[test]
     fn a_resource_that_is_not_a_safe_directory_name_is_refused() {
         let harness = FileHarness::new();
-        for resource in ["..", ".hidden", "a/b", "con"] {
+        for resource in ["..", ".hidden", "a/b", "con", "caf\u{e9}"] {
             let document = document(resource);
             let (store, lease) = open(&harness, &document);
             assert!(

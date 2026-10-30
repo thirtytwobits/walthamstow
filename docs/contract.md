@@ -216,9 +216,11 @@ store:
   ASCII letters, digits, `-` and `_` written as `-`. A name that is empty or a device name is
   refused, and so is a second entity whose directory is a registered entity's, since the two
   would share their documents. A document of an entity not registered is refused.
-- A resource that is not a safe file name is refused. So is one that matches another document's
-  directory compared case-folded, whenever a document is named, since a file system that folds
-  case would hold the two as one.
+- A resource that is not a safe file name in ASCII is refused, as a configured workspace
+  directory is. So is one that matches another document's directory compared case-folded,
+  whenever a document is named. A file system may fold two spellings of a name into one entry,
+  by case or by Unicode normalisation; in ASCII the case-folded comparison catches every such
+  fold.
 - A kind whose name matches a file the log store names in a document, compared case-folded, is
   refused when the store is built.
 - A put is a durable write. A file present with the right bytes is settled, so a put that

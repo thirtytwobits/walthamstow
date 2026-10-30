@@ -2,8 +2,8 @@
 //!
 //! The engine kernel's foundation, which every part of the engine builds on whatever product
 //! it serves: errors and events, the daemon's lifecycle, the clocks, durable writes, content
-//! hashes, the data directory's journal layout, the engine's local records, document names, leases
-//! and collaboration envelope storage.
+//! hashes, the data directory's journal layout, the engine's local records, document names,
+//! leases, publication of staged files and collaboration envelope storage.
 
 pub mod clock;
 pub mod collaboration_storage;
@@ -16,6 +16,7 @@ pub mod hashing;
 pub mod journals;
 pub mod leases;
 pub mod local_store;
+pub mod publication;
 pub mod reason_codes;
 mod workspace_lock;
 

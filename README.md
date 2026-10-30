@@ -5,7 +5,7 @@ the parts of an engine daemon that do not depend on what the product is.
 
 - `walthamstow-kernel`: errors and reason codes, the event bus and daemon lifecycle, clocks,
   durable writes, file helpers, hashes, journal layout, the engine's local records, document names,
-  leases and collaboration storage.
+  leases, the fenced publication of staged files and collaboration storage.
 - `walthamstow-logs`: log documents, which do not merge: a head and an ordered log of records,
   written by one lease holder at a time, and the blobs they name. It holds the `LogStore` and
   `BlobStore` ports, their memory adapters, the file blob store and the document layout it
@@ -14,8 +14,8 @@ the parts of an engine daemon that do not depend on what the product is.
   within the root, listing and parsing documents, schemas, mounts, the walk of a schema into field
   guidance, each collaborative entity's documents, and the journal of accepted documents still
   waiting for their files.
-- `walthamstow-upgrades`: explicit document upgrades. A fenced, staged publication replaces a
-  workspace's files, and its journal recovers an interrupted one.
+- `walthamstow-upgrades`: explicit document upgrades. The kernel's publication replaces a
+  workspace's files, and an upgrade's journal recovers an interrupted one.
 - `walthamstow-ops`: the workspace's status, documents, upgrades and recovery, and the engine's
   journals, as operations contributed to [Clapham](https://github.com/thirtytwobits/clapham), and
   the daemon's endpoint record. The other crates take no Clapham.

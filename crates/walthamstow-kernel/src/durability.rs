@@ -2,6 +2,7 @@
 //!
 //! How far the engine's durable writes go before it relies on them.
 
+use cap_std::fs::Dir;
 use serde::Deserialize;
 use std::fs::File;
 use std::io;
@@ -35,6 +36,27 @@ impl WriteDurability {
     pub fn sync_directory(self, directory: &Path) -> io::Result<()> {
         self.sync(&open_directory(directory)?)
     }
+
+    /// Makes the entries of the directory `dir` holds durable.
+    pub fn sync_dir(self, dir: &Dir) -> io::Result<()> {
+        self.sync(&open_dir(dir)?)
+    }
+}
+
+/// The directory `dir` holds, opened so its entries can be synced.
+#[cfg(not(windows))]
+fn open_dir(dir: &Dir) -> io::Result<File> {
+    Ok(dir.try_clone()?.into_std_file())
+}
+
+/// The directory `dir` holds, opened so its entries can be flushed: Windows flushes only
+/// through a handle with write access, which a `Dir` does not hold.
+#[cfg(windows)]
+fn open_dir(dir: &Dir) -> io::Result<File> {
+    use cap_fs_ext::OpenOptionsMaybeDirExt;
+    let mut options = cap_std::fs::OpenOptions::new();
+    options.write(true).maybe_dir(true);
+    Ok(dir.open_with(".", &options)?.into_std())
 }
 
 /// `directory`, opened so its entries can be synced.
@@ -221,6 +243,100 @@ pub(crate) fn write_synced_as(
         durability.sync_directory(directory)?;
     }
     Ok(())
+}
+
+/// Writes `bytes` to `path` within `dir` by a rename, as [`write_synced`] does, with every
+/// entry resolved through `dir`: a path or a link that would leave it fails.
+pub fn write_synced_in(
+    durability: WriteDurability,
+    dir: &Dir,
+    path: &Path,
+    bytes: &[u8],
+) -> anyhow::Result<()> {
+    use std::io::Write;
+    let name = path
+        .file_name()
+        .ok_or_else(|| anyhow::anyhow!("{} names no file.", path.display()))?;
+    let holder = match path
+        .parent()
+        .filter(|parent| !parent.as_os_str().is_empty())
+    {
+        Some(parent) => {
+            create_dir_all_in(durability, dir, parent)?;
+            dir.open_dir(parent)?
+        }
+        None => dir.try_clone()?,
+    };
+    let tmp = Path::new(name).with_extension(format!("{}.tmp", uuid::Uuid::new_v4()));
+    let mut options = cap_std::fs::OpenOptions::new();
+    options.write(true).create_new(true);
+    let file = holder.open_with(&tmp, &options)?;
+    let staged = (|| -> io::Result<()> {
+        match holder.metadata(name) {
+            Ok(replaced) => file.set_permissions(replaced.permissions())?,
+            Err(error) if error.kind() == io::ErrorKind::NotFound => {}
+            Err(error) => return Err(error),
+        }
+        let mut file = file.into_std();
+        file.write_all(bytes)?;
+        durability.sync(&file)?;
+        drop(file);
+        holder.rename(&tmp, &holder, name)
+    })();
+    if let Err(error) = staged {
+        let _ = holder.remove_file(&tmp);
+        return Err(error.into());
+    }
+    durability.sync_dir(&holder)?;
+    Ok(())
+}
+
+/// Creates the directory `relative` within `dir` and every missing ancestor, each new entry
+/// durable as `durability` asks once it returns. When creating or syncing fails, what it
+/// created is removed again, so a retry creates it and syncs it once more.
+pub fn create_dir_all_in(
+    durability: WriteDurability,
+    dir: &Dir,
+    relative: &Path,
+) -> io::Result<()> {
+    let _creating = CREATING
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let mut missing = Vec::new();
+    let mut ancestor = Some(relative).filter(|path| !path.as_os_str().is_empty());
+    while let Some(path) = ancestor {
+        match dir.metadata(path) {
+            Ok(metadata) if metadata.is_dir() => break,
+            Ok(_) => {
+                return Err(io::Error::other(format!(
+                    "{} is not a directory.",
+                    path.display()
+                )))
+            }
+            Err(error) if error.kind() == io::ErrorKind::NotFound => missing.push(path),
+            Err(error) => return Err(error),
+        }
+        ancestor = path.parent().filter(|path| !path.as_os_str().is_empty());
+    }
+    let mut made = Vec::new();
+    let created = missing.iter().rev().try_for_each(|missing| {
+        match dir.create_dir(missing) {
+            Ok(()) => made.push(*missing),
+            // Another caller made it meanwhile, and may not have synced its entry yet.
+            Err(error) if error.kind() == io::ErrorKind::AlreadyExists => {}
+            Err(error) => return Err(error),
+        }
+        match missing.parent().filter(|path| !path.as_os_str().is_empty()) {
+            Some(holder) => durability.sync_dir(&dir.open_dir(holder)?),
+            None => durability.sync_dir(dir),
+        }
+    });
+    if created.is_err() {
+        for made in made.iter().rev() {
+            let _ = dir.remove_dir(made);
+        }
+    }
+    created
 }
 
 #[cfg(test)]
@@ -454,6 +570,107 @@ mod tests {
             std::fs::write(&file, b"x").expect("write");
             assert!(super::create_dir_all_synced(durability, &file).is_err());
             assert!(super::create_dir_all_synced(durability, &file.join("below")).is_err());
+        }
+    }
+
+    /// The directory at `path`, held as a `Dir`.
+    fn dir(path: &std::path::Path) -> cap_std::fs::Dir {
+        cap_std::fs::Dir::open_ambient_dir(path, cap_std::ambient_authority()).expect("open")
+    }
+
+    #[test]
+    fn a_write_within_a_dir_creates_its_directories_and_replaces_the_file() {
+        for durability in [WriteDurability::Device, WriteDurability::System] {
+            let root = tempfile::tempdir().expect("tempdir");
+            let path = std::path::Path::new("a/b/record.json");
+            super::write_synced_in(durability, &dir(root.path()), path, b"first").expect("write");
+            super::write_synced_in(durability, &dir(root.path()), path, b"second")
+                .expect("replace");
+            assert_eq!(
+                std::fs::read(root.path().join(path)).expect("read"),
+                b"second"
+            );
+            let held = std::fs::read_dir(root.path().join("a/b"))
+                .expect("list")
+                .map(|entry| entry.expect("entry").file_name())
+                .collect::<Vec<_>>();
+            assert_eq!(held, [std::ffi::OsString::from("record.json")]);
+        }
+    }
+
+    #[test]
+    fn a_write_within_a_dir_that_fails_leaves_nothing_staged() {
+        let root = tempfile::tempdir().expect("tempdir");
+        std::fs::create_dir(root.path().join("occupied")).expect("a directory where the file goes");
+        assert!(super::write_synced_in(
+            WriteDurability::System,
+            &dir(root.path()),
+            std::path::Path::new("occupied"),
+            b"bytes"
+        )
+        .is_err());
+        let held = std::fs::read_dir(root.path())
+            .expect("list")
+            .map(|entry| entry.expect("entry").file_name())
+            .collect::<Vec<_>>();
+        assert_eq!(held, [std::ffi::OsString::from("occupied")]);
+    }
+
+    #[test]
+    fn a_write_within_a_dir_does_not_leave_it() {
+        let root = tempfile::tempdir().expect("tempdir");
+        for path in ["../escape.json", "/absolute.json"] {
+            assert!(
+                super::write_synced_in(
+                    WriteDurability::System,
+                    &dir(root.path()),
+                    std::path::Path::new(path),
+                    b"bytes"
+                )
+                .is_err(),
+                "{path}"
+            );
+        }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_write_within_a_dir_is_not_made_through_a_link_leaving_it() {
+        let root = tempfile::tempdir().expect("tempdir");
+        let outside = tempfile::tempdir().expect("tempdir");
+        std::os::unix::fs::symlink(outside.path(), root.path().join("linked")).expect("link");
+        assert!(super::write_synced_in(
+            WriteDurability::System,
+            &dir(root.path()),
+            std::path::Path::new("linked/a.json"),
+            b"bytes"
+        )
+        .is_err());
+        assert!(!outside.path().join("a.json").exists());
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_file_replaced_within_a_dir_keeps_its_permissions() {
+        use std::os::unix::fs::PermissionsExt;
+        let root = tempfile::tempdir().expect("tempdir");
+        let path = root.path().join("record");
+        for mode in [0o600, 0o640] {
+            std::fs::write(&path, b"before").expect("write");
+            std::fs::set_permissions(&path, std::fs::Permissions::from_mode(mode)).expect("chmod");
+            super::write_synced_in(
+                WriteDurability::System,
+                &dir(root.path()),
+                std::path::Path::new("record"),
+                b"after",
+            )
+            .expect("replace");
+            assert_eq!(std::fs::read(&path).expect("read"), b"after");
+            let kept = std::fs::metadata(&path)
+                .expect("metadata")
+                .permissions()
+                .mode();
+            assert_eq!(kept & 0o777, mode, "{mode:o}");
         }
     }
 }

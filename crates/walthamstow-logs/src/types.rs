@@ -46,38 +46,46 @@ impl fmt::Display for Position {
 }
 
 /// A log document as one write left it. A revision carries the document's incarnation, which
-/// `create` chooses, and a sequence its writes advance, so the store never gives one twice. It is
-/// written as `<incarnation>.<sequence>`.
+/// `create` chooses, and a tag the adapter chooses so that it never gives one revision twice: a
+/// count of the document's writes, or a digest of what the document holds. It is written as
+/// `<incarnation>.<tag>`.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Revision {
     incarnation: Uuid,
-    sequence: u64,
+    tag: String,
 }
 
 impl Revision {
-    /// The first revision of a new incarnation.
-    pub(crate) fn incarnate() -> Self {
-        Self {
-            incarnation: Uuid::new_v4(),
-            sequence: 1,
+    /// The revision of `incarnation` tagged `tag`, which is one or more ASCII lowercase letters
+    /// or digits.
+    pub fn new(incarnation: Uuid, tag: impl Into<String>) -> KernelResult<Self> {
+        let tag = tag.into();
+        if tag.is_empty()
+            || !tag
+                .bytes()
+                .all(|byte| matches!(byte, b'0'..=b'9' | b'a'..=b'z'))
+        {
+            return Err(KernelError::invalid_request(format!(
+                "{tag:?} is not a revision tag: one or more ASCII lowercase letters or digits."
+            )));
         }
+        Ok(Self { incarnation, tag })
     }
 
-    /// The revision the next write to the same incarnation leaves.
-    pub(crate) fn successor(&self) -> KernelResult<Self> {
-        let sequence = self.sequence.checked_add(1).ok_or_else(|| {
-            KernelError::internal(format!("The revision {self} has no successor."))
-        })?;
-        Ok(Self {
-            incarnation: self.incarnation,
-            sequence,
-        })
+    /// The document's incarnation, which `create` chose.
+    pub fn incarnation(&self) -> Uuid {
+        self.incarnation
+    }
+
+    /// The tag the adapter gave this revision.
+    pub fn tag(&self) -> &str {
+        &self.tag
     }
 }
 
 impl fmt::Display for Revision {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(formatter, "{}.{}", self.incarnation, self.sequence)
+        write!(formatter, "{}.{}", self.incarnation, self.tag)
     }
 }
 
@@ -86,13 +94,11 @@ impl FromStr for Revision {
 
     fn from_str(text: &str) -> KernelResult<Self> {
         let invalid = || KernelError::invalid_request(format!("{text:?} is not a log revision."));
-        let (incarnation, sequence) = text.split_once('.').ok_or_else(invalid)?;
-        let revision = Self {
-            incarnation: Uuid::try_parse(incarnation).map_err(|_| invalid())?,
-            sequence: sequence.parse().map_err(|_| invalid())?,
-        };
+        let (incarnation, tag) = text.split_once('.').ok_or_else(invalid)?;
+        let revision = Self::new(Uuid::try_parse(incarnation).map_err(|_| invalid())?, tag)
+            .map_err(|_| invalid())?;
         // A revision has one spelling, the one it is written with.
-        if revision.sequence == 0 || revision.to_string() != text {
+        if revision.to_string() != text {
             return Err(invalid());
         }
         Ok(revision)
@@ -262,7 +268,7 @@ mod tests {
 
     #[test]
     fn a_revision_reads_back_from_its_text() {
-        let revision = Revision::incarnate().successor().unwrap();
+        let revision = Revision::new(Uuid::new_v4(), "a".repeat(64)).unwrap();
         let text = revision.to_string();
         assert_eq!(text.parse::<Revision>().unwrap(), revision);
         assert_eq!(
@@ -273,12 +279,15 @@ mod tests {
 
     #[test]
     fn a_revision_has_one_spelling() {
-        let revision = Revision::incarnate().to_string();
-        let (incarnation, _) = revision.split_once('.').unwrap();
+        let incarnation = Uuid::new_v4();
+        for tag in ["", "+1", "A", "1.2", "a b"] {
+            assert!(Revision::new(incarnation, tag).is_err(), "{tag:?}");
+        }
+        let incarnation = incarnation.to_string();
         for text in [
-            format!("{incarnation}.0"),
-            format!("{incarnation}.01"),
+            format!("{incarnation}."),
             format!("{incarnation}.+1"),
+            format!("{incarnation}.A"),
             format!("{}.1", incarnation.to_uppercase()),
             format!("{}.1", incarnation.replace('-', "")),
             incarnation.to_string(),

@@ -1123,6 +1123,10 @@ impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusi
 impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_logs::types::Position where V: ppv_lite86::types::MultiLane<T>
 pub fn walthamstow_logs::types::Position::vzip(self) -> V
 pub struct walthamstow_logs::types::Revision
+impl walthamstow_logs::types::Revision
+pub fn walthamstow_logs::types::Revision::incarnation(&self) -> uuid::Uuid
+pub fn walthamstow_logs::types::Revision::new(incarnation: uuid::Uuid, tag: impl core::convert::Into<alloc::string::String>) -> walthamstow_kernel::error::KernelResult<Self>
+pub fn walthamstow_logs::types::Revision::tag(&self) -> &str
 impl core::clone::Clone for walthamstow_logs::types::Revision
 pub fn walthamstow_logs::types::Revision::clone(&self) -> walthamstow_logs::types::Revision
 impl core::cmp::Eq for walthamstow_logs::types::Revision
@@ -2716,6 +2720,10 @@ impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusi
 impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_logs::types::Position where V: ppv_lite86::types::MultiLane<T>
 pub fn walthamstow_logs::types::Position::vzip(self) -> V
 pub struct walthamstow_logs::Revision
+impl walthamstow_logs::types::Revision
+pub fn walthamstow_logs::types::Revision::incarnation(&self) -> uuid::Uuid
+pub fn walthamstow_logs::types::Revision::new(incarnation: uuid::Uuid, tag: impl core::convert::Into<alloc::string::String>) -> walthamstow_kernel::error::KernelResult<Self>
+pub fn walthamstow_logs::types::Revision::tag(&self) -> &str
 impl core::clone::Clone for walthamstow_logs::types::Revision
 pub fn walthamstow_logs::types::Revision::clone(&self) -> walthamstow_logs::types::Revision
 impl core::cmp::Eq for walthamstow_logs::types::Revision

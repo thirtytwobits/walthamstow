@@ -13,6 +13,7 @@ use std::collections::BTreeMap;
 use std::fmt;
 use std::ops::Bound;
 use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
+use uuid::Uuid;
 use walthamstow_kernel::leases::{Lease, Leases};
 use walthamstow_kernel::{DocumentId, KernelError, KernelResult, WallClock};
 
@@ -41,12 +42,20 @@ struct Slot {
     last: Option<LastWrite>,
 }
 
+/// A document, at the revision of its incarnation tagged by a count of its writes.
 struct Document {
     format: u32,
     head: Value,
     records: Vec<StoredRecord>,
     next: Position,
+    incarnation: Uuid,
+    writes: u64,
     revision: Revision,
+}
+
+/// The revision of `incarnation` after `writes` writes.
+fn revision(incarnation: Uuid, writes: u64) -> Revision {
+    Revision::new(incarnation, writes.to_string()).expect("a count is a tag")
 }
 
 /// The last write to a document, which a retry under the same lease repeats: its lease's epoch,
@@ -148,8 +157,15 @@ impl MemoryLogStore {
                 return Ok(given.clone());
             }
             let document = slot.at(lease.document(), base)?;
-            let revision = document.revision.successor()?;
+            let writes = document.writes.checked_add(1).ok_or_else(|| {
+                KernelError::internal(format!(
+                    "The log document {} has been written more times than are counted.",
+                    lease.document()
+                ))
+            })?;
+            let revision = revision(document.incarnation, writes);
             change(document)?;
+            document.writes = writes;
             document.revision = revision.clone();
             slot.last = Some(LastWrite {
                 epoch: lease.epoch(),
@@ -210,12 +226,15 @@ impl LogStore for MemoryLogStore {
                 .with_reason(reason_codes::LOG_STALE));
             }
             let next = image.next_position()?;
-            let revision = Revision::incarnate();
+            let incarnation = Uuid::new_v4();
+            let revision = revision(incarnation, 1);
             slot.document = Some(Document {
                 format: image.format,
                 head: image.head.clone(),
                 records: image.records.clone(),
                 next,
+                incarnation,
+                writes: 1,
                 revision: revision.clone(),
             });
             slot.last = Some(LastWrite {

@@ -164,7 +164,8 @@ Writes:
 - The store never gives a revision twice, including across a document's removal and re-creation:
   a revision carries the document's incarnation, which `create` chooses, and a tag the adapter
   chooses so that it never repeats one. `MemoryLogStore` tags a revision with a count of the
-  document's writes. Content restored from outside the store carries the revision it had.
+  document's writes, and `FileLogStore` with a hash of its files. Content restored from outside
+  the store carries the revision it had.
 
 Reads:
 
@@ -174,7 +175,8 @@ Reads:
   revision, and is refused with `log_stale` once the document is at another revision or at none.
   `list` returns a page of an entity's documents, in resource order, after a resource. A page of
   none is refused as an invalid request.
-- A read never creates, repairs, truncates or upgrades anything.
+- A read never creates, repairs, truncates or upgrades anything. `FileLogStore` may record a
+  stamp in the engine's local records, which changes no document.
 - A read reports a broken document by a `LogFault`. `list` carries the fault, and `head` and
   `records` refuse with it as their reason: `log_missing` when data the store needs is absent,
   naming each part; `log_invalid` when what is stored breaks this contract; `log_inaccessible`
@@ -182,8 +184,8 @@ Reads:
   never rebuilt from another copy.
 - A record's blob references are returned as stored. A log read never consults a blob store.
 
-`MemoryLogStore` keeps log documents in memory. Every adapter passes
-`walthamstow_logs::conformance`, behind the `conformance` feature.
+`MemoryLogStore` keeps log documents in memory, and `FileLogStore` as files people can read and
+edit. Every adapter passes `walthamstow_logs::conformance`, behind the `conformance` feature.
 
 ## Blobs
 
@@ -235,6 +237,63 @@ file log store:
 
 `MemoryBlobStore` keeps blobs in memory. Every adapter passes the blob section of
 `walthamstow_logs::conformance`.
+
+## File log documents
+
+`FileLogStore` keeps each log document in its `DocumentLayout` document directory as two files,
+which the product names for each entity with `LogFiles`, such as `head.json` and `log.ndjson`.
+The layout registers both for the entity.
+
+- The head file is one JSON object: `format`, `incarnation`, `writes`, `next_position` and `head`,
+  the product's value. `writes` counts the store's writes to the document, so no two writes leave
+  the same head file.
+- The log file holds one record per line, each a `StoredRecord` as JSON.
+- A document exists when its head file does. A directory holding neither file is no document; one
+  holding one of the two is `log_missing`, naming the absent file. Every other entry in the
+  directory is the product's, which the store neither reads nor changes, except that removing a
+  document removes its directory whole, its blobs with it.
+- A head or log file that is not a regular file is refused unopened, with `log_inaccessible`.
+
+A revision is the head file's incarnation, tagged with the SHA-256 of the head file's digest and
+the chain. The chain is the SHA-256, over the committed lines in order, of the previous chain
+value and the line without its newline. Two copies of the same bytes give the same revision. The
+revision is of the bytes as they are, so a checkout that converts line endings changes it.
+
+The files are the record:
+
+- A line counts once the head's `next_position` is past it, whoever wrote it. Reads pass over the
+  lines no head counts, and over a final line without a newline that is not a record.
+- Every other line must be a record, and positions must increase along the log, or the document
+  is `log_invalid`. A line a person edits or adds is read as written once the head counts it.
+- A commit drops the lines no head counts, appends its lines and syncs the log, then replaces the
+  head file durably. Its cost depends on its size, not the log's.
+- `create`, `rewind`, `replace` and `remove` stage their files in `staging/log-operations/<id>/`,
+  and a record in the `log-operations` journal authorises their [publication](#publication) over
+  the document's files.
+- A write that finds the files at a revision other than its base is refused with `log_stale`, so
+  an edit, a `git checkout` or a copy made since the writer read the document is never written
+  over.
+- A write is remembered for a retry before its head file lands, and forgotten when it fails
+  without landing.
+
+Opening the store recovers. It finishes each publication a record authorises, discards one whose
+file changed after it was authorised, keeping the change, and discards staging no record
+authorises. A publication a write could not finish is finished by the next write to the document.
+
+The store learns a revision through the stamp cache, the `log-stamps` journal of the engine's
+local records. Per document, it records a stamp of the log file, the head's next position and
+what the committed lines gave. A stamp is device, inode, length, modification time and change
+time on Unix, and length and modification time on Windows.
+
+- A read whose log file matches its stamp, under the same next position, takes the recorded
+  result without reading the log. Any other read hashes the log.
+- A stamp is recorded only when the log file last changed at least the settled age before it was
+  taken, on the store's `WallClock`, since a file can change again within its clock's resolution
+  without changing its stamp. The product sets the settled age at or above that resolution.
+- Losing the cache costs one hash per document. A record of another format is passed over.
+  `verify` hashes every document of an entity and records the stamps of those that have settled.
+
+`records` reads the log from its start. Paging bounds the records returned, not the bytes read.
 
 ## Collaboration storage
 

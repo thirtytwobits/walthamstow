@@ -92,7 +92,8 @@ impl Slot {
     }
 }
 
-fn stale(document: &DocumentId, revision: &Revision) -> KernelError {
+/// The refusal of a write or a read over `revision` while `document` is at another or at none.
+pub(crate) fn stale(document: &DocumentId, revision: &Revision) -> KernelError {
     KernelError::conflict(format!(
         "The log document {document} is not at revision {revision}."
     ))
@@ -103,7 +104,8 @@ fn locked<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
     mutex.lock().unwrap_or_else(PoisonError::into_inner)
 }
 
-fn require_limit(limit: usize) -> KernelResult<()> {
+/// Refuses a page of none.
+pub(crate) fn require_limit(limit: usize) -> KernelResult<()> {
     if limit == 0 {
         return Err(KernelError::invalid_request(
             "A page of log documents or records holds at least one.",
@@ -179,7 +181,7 @@ impl MemoryLogStore {
 }
 
 /// The next position after appending `count` records from `next`.
-fn after(next: Position, count: usize) -> KernelResult<Position> {
+pub(crate) fn after(next: Position, count: usize) -> KernelResult<Position> {
     u64::try_from(count)
         .ok()
         .and_then(|count| next.get().checked_add(count))

@@ -702,6 +702,452 @@ pub fn walthamstow_logs::fault::LogFault::yellow(&self) -> yansi::paint::Painted
 impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_logs::fault::LogFault where T: ?core::marker::Sized
 impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_logs::fault::LogFault where V: ppv_lite86::types::MultiLane<T>
 pub fn walthamstow_logs::fault::LogFault::vzip(self) -> V
+pub mod walthamstow_logs::file
+pub struct walthamstow_logs::file::FileLogConfig
+pub walthamstow_logs::file::FileLogConfig::clock: walthamstow_kernel::clock::WallClock
+pub walthamstow_logs::file::FileLogConfig::data_dir: std::path::PathBuf
+pub walthamstow_logs::file::FileLogConfig::durability: walthamstow_kernel::durability::WriteDurability
+pub walthamstow_logs::file::FileLogConfig::files: alloc::collections::btree::map::BTreeMap<alloc::string::String, walthamstow_logs::file::LogFiles>
+pub walthamstow_logs::file::FileLogConfig::layout: alloc::sync::Arc<walthamstow_logs::layout::DocumentLayout>
+pub walthamstow_logs::file::FileLogConfig::leases: alloc::sync::Arc<dyn walthamstow_kernel::leases::Leases>
+pub walthamstow_logs::file::FileLogConfig::local: alloc::sync::Arc<dyn walthamstow_kernel::local_store::LocalStore>
+pub walthamstow_logs::file::FileLogConfig::settled: core::time::Duration
+impl core::marker::Freeze for walthamstow_logs::file::FileLogConfig
+impl core::marker::Send for walthamstow_logs::file::FileLogConfig
+impl core::marker::Sync for walthamstow_logs::file::FileLogConfig
+impl core::marker::Unpin for walthamstow_logs::file::FileLogConfig
+impl !core::panic::unwind_safe::RefUnwindSafe for walthamstow_logs::file::FileLogConfig
+impl !core::panic::unwind_safe::UnwindSafe for walthamstow_logs::file::FileLogConfig
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for walthamstow_logs::file::FileLogConfig where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for walthamstow_logs::file::FileLogConfig where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<T, U> core::convert::Into<U> for walthamstow_logs::file::FileLogConfig where U: core::convert::From<T>
+pub fn walthamstow_logs::file::FileLogConfig::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for walthamstow_logs::file::FileLogConfig where U: core::convert::Into<T>
+pub type walthamstow_logs::file::FileLogConfig::Error = core::convert::Infallible
+pub fn walthamstow_logs::file::FileLogConfig::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for walthamstow_logs::file::FileLogConfig where U: core::convert::TryFrom<T>
+pub type walthamstow_logs::file::FileLogConfig::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn walthamstow_logs::file::FileLogConfig::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for walthamstow_logs::file::FileLogConfig where T: 'static + ?core::marker::Sized
+pub fn walthamstow_logs::file::FileLogConfig::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for walthamstow_logs::file::FileLogConfig where T: ?core::marker::Sized
+pub fn walthamstow_logs::file::FileLogConfig::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for walthamstow_logs::file::FileLogConfig where T: ?core::marker::Sized
+pub fn walthamstow_logs::file::FileLogConfig::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for walthamstow_logs::file::FileLogConfig
+pub fn walthamstow_logs::file::FileLogConfig::from(t: T) -> T
+impl<T> either::into_either::IntoEither for walthamstow_logs::file::FileLogConfig
+impl<T> tracing::instrument::Instrument for walthamstow_logs::file::FileLogConfig
+impl<T> tracing::instrument::WithSubscriber for walthamstow_logs::file::FileLogConfig
+impl<T> typenum::type_operators::Same for walthamstow_logs::file::FileLogConfig
+pub type walthamstow_logs::file::FileLogConfig::Output = T
+impl<T> yansi::paint::Paint for walthamstow_logs::file::FileLogConfig where T: ?core::marker::Sized
+pub fn walthamstow_logs::file::FileLogConfig::attr(&self, value: yansi::attr_quirk::Attribute) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::bg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::bold(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::clear(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::conceal(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::dim(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::fg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::invert(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::italic(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::linger(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::mask(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::on_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::on_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::on_bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::on_bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::on_bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::on_bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::on_bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::on_bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::on_bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::on_bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::on_bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::on_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::on_fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::on_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::on_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::on_primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::on_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::on_rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::on_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::on_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::quirk(&self, value: yansi::attr_quirk::Quirk) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::rapid_blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::resetting(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::strike(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::underline(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::whenever(&self, value: yansi::condition::Condition) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::wrap(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::yellow(&self) -> yansi::paint::Painted<&T>
+impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_logs::file::FileLogConfig where T: ?core::marker::Sized
+impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_logs::file::FileLogConfig where V: ppv_lite86::types::MultiLane<T>
+pub fn walthamstow_logs::file::FileLogConfig::vzip(self) -> V
+pub struct walthamstow_logs::file::FileLogStore
+impl walthamstow_logs::file::FileLogStore
+pub fn walthamstow_logs::file::FileLogStore::open(config: walthamstow_logs::file::FileLogConfig) -> walthamstow_kernel::error::KernelResult<(Self, walthamstow_logs::LogRecovery)>
+pub fn walthamstow_logs::file::FileLogStore::verify(&self, entity: &str) -> walthamstow_kernel::error::KernelResult<alloc::vec::Vec<walthamstow_logs::types::Listed>>
+impl core::fmt::Debug for walthamstow_logs::file::FileLogStore
+pub fn walthamstow_logs::file::FileLogStore::fmt(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl walthamstow_logs::store::LogStore for walthamstow_logs::file::FileLogStore
+pub fn walthamstow_logs::file::FileLogStore::commit(&self, lease: &walthamstow_kernel::leases::Lease, base: &walthamstow_logs::types::Revision, commit: &walthamstow_logs::types::LogCommit) -> walthamstow_kernel::error::KernelResult<walthamstow_logs::types::Revision>
+pub fn walthamstow_logs::file::FileLogStore::create(&self, lease: &walthamstow_kernel::leases::Lease, image: &walthamstow_logs::types::LogImage) -> walthamstow_kernel::error::KernelResult<walthamstow_logs::types::Revision>
+pub fn walthamstow_logs::file::FileLogStore::head(&self, document: &walthamstow_kernel::document::DocumentId) -> walthamstow_kernel::error::KernelResult<core::option::Option<walthamstow_logs::types::StoredHead>>
+pub fn walthamstow_logs::file::FileLogStore::list(&self, entity: &str, after: core::option::Option<&str>, limit: usize) -> walthamstow_kernel::error::KernelResult<alloc::vec::Vec<walthamstow_logs::types::Listed>>
+pub fn walthamstow_logs::file::FileLogStore::records(&self, document: &walthamstow_kernel::document::DocumentId, revision: &walthamstow_logs::types::Revision, from: walthamstow_logs::types::Position, limit: usize) -> walthamstow_kernel::error::KernelResult<alloc::vec::Vec<walthamstow_logs::types::StoredRecord>>
+pub fn walthamstow_logs::file::FileLogStore::remove(&self, lease: &walthamstow_kernel::leases::Lease, base: &walthamstow_logs::types::Revision, id: &walthamstow_logs::types::WriteId) -> walthamstow_kernel::error::KernelResult<()>
+pub fn walthamstow_logs::file::FileLogStore::replace(&self, lease: &walthamstow_kernel::leases::Lease, base: &walthamstow_logs::types::Revision, image: &walthamstow_logs::types::LogImage) -> walthamstow_kernel::error::KernelResult<walthamstow_logs::types::Revision>
+pub fn walthamstow_logs::file::FileLogStore::rewind(&self, lease: &walthamstow_kernel::leases::Lease, base: &walthamstow_logs::types::Revision, from: walthamstow_logs::types::Position, commit: &walthamstow_logs::types::LogCommit) -> walthamstow_kernel::error::KernelResult<walthamstow_logs::types::Revision>
+impl !core::marker::Freeze for walthamstow_logs::file::FileLogStore
+impl core::marker::Send for walthamstow_logs::file::FileLogStore
+impl core::marker::Sync for walthamstow_logs::file::FileLogStore
+impl core::marker::Unpin for walthamstow_logs::file::FileLogStore
+impl !core::panic::unwind_safe::RefUnwindSafe for walthamstow_logs::file::FileLogStore
+impl !core::panic::unwind_safe::UnwindSafe for walthamstow_logs::file::FileLogStore
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for walthamstow_logs::file::FileLogStore where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for walthamstow_logs::file::FileLogStore where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<T, U> core::convert::Into<U> for walthamstow_logs::file::FileLogStore where U: core::convert::From<T>
+pub fn walthamstow_logs::file::FileLogStore::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for walthamstow_logs::file::FileLogStore where U: core::convert::Into<T>
+pub type walthamstow_logs::file::FileLogStore::Error = core::convert::Infallible
+pub fn walthamstow_logs::file::FileLogStore::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for walthamstow_logs::file::FileLogStore where U: core::convert::TryFrom<T>
+pub type walthamstow_logs::file::FileLogStore::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn walthamstow_logs::file::FileLogStore::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for walthamstow_logs::file::FileLogStore where T: 'static + ?core::marker::Sized
+pub fn walthamstow_logs::file::FileLogStore::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for walthamstow_logs::file::FileLogStore where T: ?core::marker::Sized
+pub fn walthamstow_logs::file::FileLogStore::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for walthamstow_logs::file::FileLogStore where T: ?core::marker::Sized
+pub fn walthamstow_logs::file::FileLogStore::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for walthamstow_logs::file::FileLogStore
+pub fn walthamstow_logs::file::FileLogStore::from(t: T) -> T
+impl<T> either::into_either::IntoEither for walthamstow_logs::file::FileLogStore
+impl<T> tracing::instrument::Instrument for walthamstow_logs::file::FileLogStore
+impl<T> tracing::instrument::WithSubscriber for walthamstow_logs::file::FileLogStore
+impl<T> typenum::type_operators::Same for walthamstow_logs::file::FileLogStore
+pub type walthamstow_logs::file::FileLogStore::Output = T
+impl<T> yansi::paint::Paint for walthamstow_logs::file::FileLogStore where T: ?core::marker::Sized
+pub fn walthamstow_logs::file::FileLogStore::attr(&self, value: yansi::attr_quirk::Attribute) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::bg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::bold(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::clear(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::conceal(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::dim(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::fg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::invert(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::italic(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::linger(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::mask(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::on_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::on_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::on_bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::on_bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::on_bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::on_bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::on_bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::on_bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::on_bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::on_bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::on_bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::on_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::on_fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::on_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::on_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::on_primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::on_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::on_rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::on_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::on_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::quirk(&self, value: yansi::attr_quirk::Quirk) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::rapid_blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::resetting(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::strike(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::underline(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::whenever(&self, value: yansi::condition::Condition) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::wrap(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::yellow(&self) -> yansi::paint::Painted<&T>
+impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_logs::file::FileLogStore where T: ?core::marker::Sized
+impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_logs::file::FileLogStore where V: ppv_lite86::types::MultiLane<T>
+pub fn walthamstow_logs::file::FileLogStore::vzip(self) -> V
+pub struct walthamstow_logs::file::LogFiles
+impl walthamstow_logs::file::LogFiles
+pub fn walthamstow_logs::file::LogFiles::head(&self) -> &str
+pub fn walthamstow_logs::file::LogFiles::log(&self) -> &str
+pub fn walthamstow_logs::file::LogFiles::new(head: impl core::convert::Into<alloc::string::String>, log: impl core::convert::Into<alloc::string::String>) -> walthamstow_kernel::error::KernelResult<Self>
+impl core::clone::Clone for walthamstow_logs::file::LogFiles
+pub fn walthamstow_logs::file::LogFiles::clone(&self) -> walthamstow_logs::file::LogFiles
+impl core::cmp::Eq for walthamstow_logs::file::LogFiles
+impl core::cmp::PartialEq for walthamstow_logs::file::LogFiles
+pub fn walthamstow_logs::file::LogFiles::eq(&self, other: &walthamstow_logs::file::LogFiles) -> bool
+impl core::fmt::Debug for walthamstow_logs::file::LogFiles
+pub fn walthamstow_logs::file::LogFiles::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for walthamstow_logs::file::LogFiles
+impl core::marker::Freeze for walthamstow_logs::file::LogFiles
+impl core::marker::Send for walthamstow_logs::file::LogFiles
+impl core::marker::Sync for walthamstow_logs::file::LogFiles
+impl core::marker::Unpin for walthamstow_logs::file::LogFiles
+impl core::panic::unwind_safe::RefUnwindSafe for walthamstow_logs::file::LogFiles
+impl core::panic::unwind_safe::UnwindSafe for walthamstow_logs::file::LogFiles
+impl<Q, K> equivalent::Equivalent<K> for walthamstow_logs::file::LogFiles where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn walthamstow_logs::file::LogFiles::equivalent(&self, key: &K) -> bool
+impl<Q, K> hashbrown::Equivalent<K> for walthamstow_logs::file::LogFiles where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn walthamstow_logs::file::LogFiles::equivalent(&self, key: &K) -> bool
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for walthamstow_logs::file::LogFiles where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for walthamstow_logs::file::LogFiles where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<T, U> core::convert::Into<U> for walthamstow_logs::file::LogFiles where U: core::convert::From<T>
+pub fn walthamstow_logs::file::LogFiles::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for walthamstow_logs::file::LogFiles where U: core::convert::Into<T>
+pub type walthamstow_logs::file::LogFiles::Error = core::convert::Infallible
+pub fn walthamstow_logs::file::LogFiles::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for walthamstow_logs::file::LogFiles where U: core::convert::TryFrom<T>
+pub type walthamstow_logs::file::LogFiles::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn walthamstow_logs::file::LogFiles::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for walthamstow_logs::file::LogFiles where T: core::clone::Clone
+pub type walthamstow_logs::file::LogFiles::Owned = T
+pub fn walthamstow_logs::file::LogFiles::clone_into(&self, target: &mut T)
+pub fn walthamstow_logs::file::LogFiles::to_owned(&self) -> T
+impl<T> core::any::Any for walthamstow_logs::file::LogFiles where T: 'static + ?core::marker::Sized
+pub fn walthamstow_logs::file::LogFiles::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for walthamstow_logs::file::LogFiles where T: ?core::marker::Sized
+pub fn walthamstow_logs::file::LogFiles::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for walthamstow_logs::file::LogFiles where T: ?core::marker::Sized
+pub fn walthamstow_logs::file::LogFiles::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for walthamstow_logs::file::LogFiles where T: core::clone::Clone
+pub unsafe fn walthamstow_logs::file::LogFiles::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for walthamstow_logs::file::LogFiles
+pub fn walthamstow_logs::file::LogFiles::from(t: T) -> T
+impl<T> dyn_clone::DynClone for walthamstow_logs::file::LogFiles where T: core::clone::Clone
+pub fn walthamstow_logs::file::LogFiles::__clone_box(&self, _: dyn_clone::sealed::Private) -> *mut ()
+impl<T> either::into_either::IntoEither for walthamstow_logs::file::LogFiles
+impl<T> tracing::instrument::Instrument for walthamstow_logs::file::LogFiles
+impl<T> tracing::instrument::WithSubscriber for walthamstow_logs::file::LogFiles
+impl<T> typenum::type_operators::Same for walthamstow_logs::file::LogFiles
+pub type walthamstow_logs::file::LogFiles::Output = T
+impl<T> yansi::paint::Paint for walthamstow_logs::file::LogFiles where T: ?core::marker::Sized
+pub fn walthamstow_logs::file::LogFiles::attr(&self, value: yansi::attr_quirk::Attribute) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::bg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::bold(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::clear(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::conceal(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::dim(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::fg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::invert(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::italic(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::linger(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::mask(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::on_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::on_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::on_bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::on_bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::on_bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::on_bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::on_bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::on_bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::on_bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::on_bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::on_bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::on_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::on_fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::on_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::on_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::on_primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::on_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::on_rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::on_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::on_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::quirk(&self, value: yansi::attr_quirk::Quirk) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::rapid_blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::resetting(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::strike(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::underline(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::whenever(&self, value: yansi::condition::Condition) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::wrap(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::yellow(&self) -> yansi::paint::Painted<&T>
+impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_logs::file::LogFiles where T: ?core::marker::Sized
+impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_logs::file::LogFiles where V: ppv_lite86::types::MultiLane<T>
+pub fn walthamstow_logs::file::LogFiles::vzip(self) -> V
+pub struct walthamstow_logs::file::LogRecovery
+pub walthamstow_logs::file::LogRecovery::discarded: alloc::vec::Vec<alloc::string::String>
+pub walthamstow_logs::file::LogRecovery::finished: alloc::vec::Vec<walthamstow_kernel::document::DocumentId>
+pub walthamstow_logs::file::LogRecovery::stale: alloc::vec::Vec<walthamstow_kernel::document::DocumentId>
+impl core::clone::Clone for walthamstow_logs::LogRecovery
+pub fn walthamstow_logs::LogRecovery::clone(&self) -> walthamstow_logs::LogRecovery
+impl core::cmp::Eq for walthamstow_logs::LogRecovery
+impl core::cmp::PartialEq for walthamstow_logs::LogRecovery
+pub fn walthamstow_logs::LogRecovery::eq(&self, other: &walthamstow_logs::LogRecovery) -> bool
+impl core::default::Default for walthamstow_logs::LogRecovery
+pub fn walthamstow_logs::LogRecovery::default() -> walthamstow_logs::LogRecovery
+impl core::fmt::Debug for walthamstow_logs::LogRecovery
+pub fn walthamstow_logs::LogRecovery::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for walthamstow_logs::LogRecovery
+impl core::marker::Freeze for walthamstow_logs::LogRecovery
+impl core::marker::Send for walthamstow_logs::LogRecovery
+impl core::marker::Sync for walthamstow_logs::LogRecovery
+impl core::marker::Unpin for walthamstow_logs::LogRecovery
+impl core::panic::unwind_safe::RefUnwindSafe for walthamstow_logs::LogRecovery
+impl core::panic::unwind_safe::UnwindSafe for walthamstow_logs::LogRecovery
+impl<Q, K> equivalent::Equivalent<K> for walthamstow_logs::LogRecovery where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn walthamstow_logs::LogRecovery::equivalent(&self, key: &K) -> bool
+impl<Q, K> hashbrown::Equivalent<K> for walthamstow_logs::LogRecovery where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn walthamstow_logs::LogRecovery::equivalent(&self, key: &K) -> bool
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for walthamstow_logs::LogRecovery where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for walthamstow_logs::LogRecovery where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<T, U> core::convert::Into<U> for walthamstow_logs::LogRecovery where U: core::convert::From<T>
+pub fn walthamstow_logs::LogRecovery::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for walthamstow_logs::LogRecovery where U: core::convert::Into<T>
+pub type walthamstow_logs::LogRecovery::Error = core::convert::Infallible
+pub fn walthamstow_logs::LogRecovery::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for walthamstow_logs::LogRecovery where U: core::convert::TryFrom<T>
+pub type walthamstow_logs::LogRecovery::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn walthamstow_logs::LogRecovery::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for walthamstow_logs::LogRecovery where T: core::clone::Clone
+pub type walthamstow_logs::LogRecovery::Owned = T
+pub fn walthamstow_logs::LogRecovery::clone_into(&self, target: &mut T)
+pub fn walthamstow_logs::LogRecovery::to_owned(&self) -> T
+impl<T> core::any::Any for walthamstow_logs::LogRecovery where T: 'static + ?core::marker::Sized
+pub fn walthamstow_logs::LogRecovery::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for walthamstow_logs::LogRecovery where T: ?core::marker::Sized
+pub fn walthamstow_logs::LogRecovery::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for walthamstow_logs::LogRecovery where T: ?core::marker::Sized
+pub fn walthamstow_logs::LogRecovery::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for walthamstow_logs::LogRecovery where T: core::clone::Clone
+pub unsafe fn walthamstow_logs::LogRecovery::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for walthamstow_logs::LogRecovery
+pub fn walthamstow_logs::LogRecovery::from(t: T) -> T
+impl<T> dyn_clone::DynClone for walthamstow_logs::LogRecovery where T: core::clone::Clone
+pub fn walthamstow_logs::LogRecovery::__clone_box(&self, _: dyn_clone::sealed::Private) -> *mut ()
+impl<T> either::into_either::IntoEither for walthamstow_logs::LogRecovery
+impl<T> loro_rle::rle_trait::ZeroElement for walthamstow_logs::LogRecovery where T: core::default::Default
+pub fn walthamstow_logs::LogRecovery::zero_element() -> T
+impl<T> tracing::instrument::Instrument for walthamstow_logs::LogRecovery
+impl<T> tracing::instrument::WithSubscriber for walthamstow_logs::LogRecovery
+impl<T> typenum::type_operators::Same for walthamstow_logs::LogRecovery
+pub type walthamstow_logs::LogRecovery::Output = T
+impl<T> yansi::paint::Paint for walthamstow_logs::LogRecovery where T: ?core::marker::Sized
+pub fn walthamstow_logs::LogRecovery::attr(&self, value: yansi::attr_quirk::Attribute) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::bg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::bold(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::clear(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::conceal(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::dim(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::fg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::invert(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::italic(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::linger(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::mask(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::on_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::on_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::on_bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::on_bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::on_bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::on_bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::on_bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::on_bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::on_bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::on_bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::on_bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::on_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::on_fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::on_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::on_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::on_primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::on_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::on_rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::on_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::on_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::quirk(&self, value: yansi::attr_quirk::Quirk) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::rapid_blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::resetting(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::strike(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::underline(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::whenever(&self, value: yansi::condition::Condition) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::wrap(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::yellow(&self) -> yansi::paint::Painted<&T>
+impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_logs::LogRecovery where T: ?core::marker::Sized
+impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_logs::LogRecovery where V: ppv_lite86::types::MultiLane<T>
+pub fn walthamstow_logs::LogRecovery::vzip(self) -> V
 pub mod walthamstow_logs::layout
 pub struct walthamstow_logs::layout::DocumentDir
 pub walthamstow_logs::layout::DocumentDir::dir: cap_std::fs::dir::Dir
@@ -1028,6 +1474,15 @@ pub fn walthamstow_logs::store::LogStore::records(&self, document: &walthamstow_
 pub fn walthamstow_logs::store::LogStore::remove(&self, lease: &walthamstow_kernel::leases::Lease, base: &walthamstow_logs::types::Revision, id: &walthamstow_logs::types::WriteId) -> walthamstow_kernel::error::KernelResult<()>
 pub fn walthamstow_logs::store::LogStore::replace(&self, lease: &walthamstow_kernel::leases::Lease, base: &walthamstow_logs::types::Revision, image: &walthamstow_logs::types::LogImage) -> walthamstow_kernel::error::KernelResult<walthamstow_logs::types::Revision>
 pub fn walthamstow_logs::store::LogStore::rewind(&self, lease: &walthamstow_kernel::leases::Lease, base: &walthamstow_logs::types::Revision, from: walthamstow_logs::types::Position, commit: &walthamstow_logs::types::LogCommit) -> walthamstow_kernel::error::KernelResult<walthamstow_logs::types::Revision>
+impl walthamstow_logs::store::LogStore for walthamstow_logs::file::FileLogStore
+pub fn walthamstow_logs::file::FileLogStore::commit(&self, lease: &walthamstow_kernel::leases::Lease, base: &walthamstow_logs::types::Revision, commit: &walthamstow_logs::types::LogCommit) -> walthamstow_kernel::error::KernelResult<walthamstow_logs::types::Revision>
+pub fn walthamstow_logs::file::FileLogStore::create(&self, lease: &walthamstow_kernel::leases::Lease, image: &walthamstow_logs::types::LogImage) -> walthamstow_kernel::error::KernelResult<walthamstow_logs::types::Revision>
+pub fn walthamstow_logs::file::FileLogStore::head(&self, document: &walthamstow_kernel::document::DocumentId) -> walthamstow_kernel::error::KernelResult<core::option::Option<walthamstow_logs::types::StoredHead>>
+pub fn walthamstow_logs::file::FileLogStore::list(&self, entity: &str, after: core::option::Option<&str>, limit: usize) -> walthamstow_kernel::error::KernelResult<alloc::vec::Vec<walthamstow_logs::types::Listed>>
+pub fn walthamstow_logs::file::FileLogStore::records(&self, document: &walthamstow_kernel::document::DocumentId, revision: &walthamstow_logs::types::Revision, from: walthamstow_logs::types::Position, limit: usize) -> walthamstow_kernel::error::KernelResult<alloc::vec::Vec<walthamstow_logs::types::StoredRecord>>
+pub fn walthamstow_logs::file::FileLogStore::remove(&self, lease: &walthamstow_kernel::leases::Lease, base: &walthamstow_logs::types::Revision, id: &walthamstow_logs::types::WriteId) -> walthamstow_kernel::error::KernelResult<()>
+pub fn walthamstow_logs::file::FileLogStore::replace(&self, lease: &walthamstow_kernel::leases::Lease, base: &walthamstow_logs::types::Revision, image: &walthamstow_logs::types::LogImage) -> walthamstow_kernel::error::KernelResult<walthamstow_logs::types::Revision>
+pub fn walthamstow_logs::file::FileLogStore::rewind(&self, lease: &walthamstow_kernel::leases::Lease, base: &walthamstow_logs::types::Revision, from: walthamstow_logs::types::Position, commit: &walthamstow_logs::types::LogCommit) -> walthamstow_kernel::error::KernelResult<walthamstow_logs::types::Revision>
 impl walthamstow_logs::store::LogStore for walthamstow_logs::memory::MemoryLogStore
 pub fn walthamstow_logs::memory::MemoryLogStore::commit(&self, lease: &walthamstow_kernel::leases::Lease, base: &walthamstow_logs::types::Revision, commit: &walthamstow_logs::types::LogCommit) -> walthamstow_kernel::error::KernelResult<walthamstow_logs::types::Revision>
 pub fn walthamstow_logs::memory::MemoryLogStore::create(&self, lease: &walthamstow_kernel::leases::Lease, image: &walthamstow_logs::types::LogImage) -> walthamstow_kernel::error::KernelResult<walthamstow_logs::types::Revision>
@@ -3365,6 +3820,214 @@ pub fn walthamstow_logs::FileBlobStore::yellow(&self) -> yansi::paint::Painted<&
 impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_logs::FileBlobStore where T: ?core::marker::Sized
 impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_logs::FileBlobStore where V: ppv_lite86::types::MultiLane<T>
 pub fn walthamstow_logs::FileBlobStore::vzip(self) -> V
+pub struct walthamstow_logs::FileLogConfig
+pub walthamstow_logs::FileLogConfig::clock: walthamstow_kernel::clock::WallClock
+pub walthamstow_logs::FileLogConfig::data_dir: std::path::PathBuf
+pub walthamstow_logs::FileLogConfig::durability: walthamstow_kernel::durability::WriteDurability
+pub walthamstow_logs::FileLogConfig::files: alloc::collections::btree::map::BTreeMap<alloc::string::String, walthamstow_logs::file::LogFiles>
+pub walthamstow_logs::FileLogConfig::layout: alloc::sync::Arc<walthamstow_logs::layout::DocumentLayout>
+pub walthamstow_logs::FileLogConfig::leases: alloc::sync::Arc<dyn walthamstow_kernel::leases::Leases>
+pub walthamstow_logs::FileLogConfig::local: alloc::sync::Arc<dyn walthamstow_kernel::local_store::LocalStore>
+pub walthamstow_logs::FileLogConfig::settled: core::time::Duration
+impl core::marker::Freeze for walthamstow_logs::file::FileLogConfig
+impl core::marker::Send for walthamstow_logs::file::FileLogConfig
+impl core::marker::Sync for walthamstow_logs::file::FileLogConfig
+impl core::marker::Unpin for walthamstow_logs::file::FileLogConfig
+impl !core::panic::unwind_safe::RefUnwindSafe for walthamstow_logs::file::FileLogConfig
+impl !core::panic::unwind_safe::UnwindSafe for walthamstow_logs::file::FileLogConfig
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for walthamstow_logs::file::FileLogConfig where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for walthamstow_logs::file::FileLogConfig where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<T, U> core::convert::Into<U> for walthamstow_logs::file::FileLogConfig where U: core::convert::From<T>
+pub fn walthamstow_logs::file::FileLogConfig::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for walthamstow_logs::file::FileLogConfig where U: core::convert::Into<T>
+pub type walthamstow_logs::file::FileLogConfig::Error = core::convert::Infallible
+pub fn walthamstow_logs::file::FileLogConfig::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for walthamstow_logs::file::FileLogConfig where U: core::convert::TryFrom<T>
+pub type walthamstow_logs::file::FileLogConfig::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn walthamstow_logs::file::FileLogConfig::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for walthamstow_logs::file::FileLogConfig where T: 'static + ?core::marker::Sized
+pub fn walthamstow_logs::file::FileLogConfig::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for walthamstow_logs::file::FileLogConfig where T: ?core::marker::Sized
+pub fn walthamstow_logs::file::FileLogConfig::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for walthamstow_logs::file::FileLogConfig where T: ?core::marker::Sized
+pub fn walthamstow_logs::file::FileLogConfig::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for walthamstow_logs::file::FileLogConfig
+pub fn walthamstow_logs::file::FileLogConfig::from(t: T) -> T
+impl<T> either::into_either::IntoEither for walthamstow_logs::file::FileLogConfig
+impl<T> tracing::instrument::Instrument for walthamstow_logs::file::FileLogConfig
+impl<T> tracing::instrument::WithSubscriber for walthamstow_logs::file::FileLogConfig
+impl<T> typenum::type_operators::Same for walthamstow_logs::file::FileLogConfig
+pub type walthamstow_logs::file::FileLogConfig::Output = T
+impl<T> yansi::paint::Paint for walthamstow_logs::file::FileLogConfig where T: ?core::marker::Sized
+pub fn walthamstow_logs::file::FileLogConfig::attr(&self, value: yansi::attr_quirk::Attribute) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::bg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::bold(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::clear(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::conceal(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::dim(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::fg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::invert(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::italic(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::linger(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::mask(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::on_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::on_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::on_bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::on_bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::on_bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::on_bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::on_bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::on_bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::on_bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::on_bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::on_bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::on_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::on_fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::on_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::on_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::on_primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::on_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::on_rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::on_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::on_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::quirk(&self, value: yansi::attr_quirk::Quirk) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::rapid_blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::resetting(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::strike(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::underline(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::whenever(&self, value: yansi::condition::Condition) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::wrap(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogConfig::yellow(&self) -> yansi::paint::Painted<&T>
+impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_logs::file::FileLogConfig where T: ?core::marker::Sized
+impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_logs::file::FileLogConfig where V: ppv_lite86::types::MultiLane<T>
+pub fn walthamstow_logs::file::FileLogConfig::vzip(self) -> V
+pub struct walthamstow_logs::FileLogStore
+impl walthamstow_logs::file::FileLogStore
+pub fn walthamstow_logs::file::FileLogStore::open(config: walthamstow_logs::file::FileLogConfig) -> walthamstow_kernel::error::KernelResult<(Self, walthamstow_logs::LogRecovery)>
+pub fn walthamstow_logs::file::FileLogStore::verify(&self, entity: &str) -> walthamstow_kernel::error::KernelResult<alloc::vec::Vec<walthamstow_logs::types::Listed>>
+impl core::fmt::Debug for walthamstow_logs::file::FileLogStore
+pub fn walthamstow_logs::file::FileLogStore::fmt(&self, formatter: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl walthamstow_logs::store::LogStore for walthamstow_logs::file::FileLogStore
+pub fn walthamstow_logs::file::FileLogStore::commit(&self, lease: &walthamstow_kernel::leases::Lease, base: &walthamstow_logs::types::Revision, commit: &walthamstow_logs::types::LogCommit) -> walthamstow_kernel::error::KernelResult<walthamstow_logs::types::Revision>
+pub fn walthamstow_logs::file::FileLogStore::create(&self, lease: &walthamstow_kernel::leases::Lease, image: &walthamstow_logs::types::LogImage) -> walthamstow_kernel::error::KernelResult<walthamstow_logs::types::Revision>
+pub fn walthamstow_logs::file::FileLogStore::head(&self, document: &walthamstow_kernel::document::DocumentId) -> walthamstow_kernel::error::KernelResult<core::option::Option<walthamstow_logs::types::StoredHead>>
+pub fn walthamstow_logs::file::FileLogStore::list(&self, entity: &str, after: core::option::Option<&str>, limit: usize) -> walthamstow_kernel::error::KernelResult<alloc::vec::Vec<walthamstow_logs::types::Listed>>
+pub fn walthamstow_logs::file::FileLogStore::records(&self, document: &walthamstow_kernel::document::DocumentId, revision: &walthamstow_logs::types::Revision, from: walthamstow_logs::types::Position, limit: usize) -> walthamstow_kernel::error::KernelResult<alloc::vec::Vec<walthamstow_logs::types::StoredRecord>>
+pub fn walthamstow_logs::file::FileLogStore::remove(&self, lease: &walthamstow_kernel::leases::Lease, base: &walthamstow_logs::types::Revision, id: &walthamstow_logs::types::WriteId) -> walthamstow_kernel::error::KernelResult<()>
+pub fn walthamstow_logs::file::FileLogStore::replace(&self, lease: &walthamstow_kernel::leases::Lease, base: &walthamstow_logs::types::Revision, image: &walthamstow_logs::types::LogImage) -> walthamstow_kernel::error::KernelResult<walthamstow_logs::types::Revision>
+pub fn walthamstow_logs::file::FileLogStore::rewind(&self, lease: &walthamstow_kernel::leases::Lease, base: &walthamstow_logs::types::Revision, from: walthamstow_logs::types::Position, commit: &walthamstow_logs::types::LogCommit) -> walthamstow_kernel::error::KernelResult<walthamstow_logs::types::Revision>
+impl !core::marker::Freeze for walthamstow_logs::file::FileLogStore
+impl core::marker::Send for walthamstow_logs::file::FileLogStore
+impl core::marker::Sync for walthamstow_logs::file::FileLogStore
+impl core::marker::Unpin for walthamstow_logs::file::FileLogStore
+impl !core::panic::unwind_safe::RefUnwindSafe for walthamstow_logs::file::FileLogStore
+impl !core::panic::unwind_safe::UnwindSafe for walthamstow_logs::file::FileLogStore
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for walthamstow_logs::file::FileLogStore where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for walthamstow_logs::file::FileLogStore where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<T, U> core::convert::Into<U> for walthamstow_logs::file::FileLogStore where U: core::convert::From<T>
+pub fn walthamstow_logs::file::FileLogStore::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for walthamstow_logs::file::FileLogStore where U: core::convert::Into<T>
+pub type walthamstow_logs::file::FileLogStore::Error = core::convert::Infallible
+pub fn walthamstow_logs::file::FileLogStore::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for walthamstow_logs::file::FileLogStore where U: core::convert::TryFrom<T>
+pub type walthamstow_logs::file::FileLogStore::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn walthamstow_logs::file::FileLogStore::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for walthamstow_logs::file::FileLogStore where T: 'static + ?core::marker::Sized
+pub fn walthamstow_logs::file::FileLogStore::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for walthamstow_logs::file::FileLogStore where T: ?core::marker::Sized
+pub fn walthamstow_logs::file::FileLogStore::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for walthamstow_logs::file::FileLogStore where T: ?core::marker::Sized
+pub fn walthamstow_logs::file::FileLogStore::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for walthamstow_logs::file::FileLogStore
+pub fn walthamstow_logs::file::FileLogStore::from(t: T) -> T
+impl<T> either::into_either::IntoEither for walthamstow_logs::file::FileLogStore
+impl<T> tracing::instrument::Instrument for walthamstow_logs::file::FileLogStore
+impl<T> tracing::instrument::WithSubscriber for walthamstow_logs::file::FileLogStore
+impl<T> typenum::type_operators::Same for walthamstow_logs::file::FileLogStore
+pub type walthamstow_logs::file::FileLogStore::Output = T
+impl<T> yansi::paint::Paint for walthamstow_logs::file::FileLogStore where T: ?core::marker::Sized
+pub fn walthamstow_logs::file::FileLogStore::attr(&self, value: yansi::attr_quirk::Attribute) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::bg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::bold(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::clear(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::conceal(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::dim(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::fg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::invert(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::italic(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::linger(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::mask(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::on_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::on_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::on_bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::on_bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::on_bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::on_bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::on_bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::on_bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::on_bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::on_bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::on_bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::on_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::on_fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::on_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::on_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::on_primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::on_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::on_rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::on_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::on_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::quirk(&self, value: yansi::attr_quirk::Quirk) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::rapid_blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::resetting(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::strike(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::underline(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::whenever(&self, value: yansi::condition::Condition) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::wrap(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::FileLogStore::yellow(&self) -> yansi::paint::Painted<&T>
+impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_logs::file::FileLogStore where T: ?core::marker::Sized
+impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_logs::file::FileLogStore where V: ppv_lite86::types::MultiLane<T>
+pub fn walthamstow_logs::file::FileLogStore::vzip(self) -> V
 pub struct walthamstow_logs::Listed
 pub walthamstow_logs::Listed::document: walthamstow_kernel::document::DocumentId
 pub walthamstow_logs::Listed::state: core::result::Result<walthamstow_logs::types::Revision, walthamstow_logs::fault::LogFault>
@@ -3596,6 +4259,123 @@ pub fn walthamstow_logs::types::LogCommit::yellow(&self) -> yansi::paint::Painte
 impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_logs::types::LogCommit where T: ?core::marker::Sized
 impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_logs::types::LogCommit where V: ppv_lite86::types::MultiLane<T>
 pub fn walthamstow_logs::types::LogCommit::vzip(self) -> V
+pub struct walthamstow_logs::LogFiles
+impl walthamstow_logs::file::LogFiles
+pub fn walthamstow_logs::file::LogFiles::head(&self) -> &str
+pub fn walthamstow_logs::file::LogFiles::log(&self) -> &str
+pub fn walthamstow_logs::file::LogFiles::new(head: impl core::convert::Into<alloc::string::String>, log: impl core::convert::Into<alloc::string::String>) -> walthamstow_kernel::error::KernelResult<Self>
+impl core::clone::Clone for walthamstow_logs::file::LogFiles
+pub fn walthamstow_logs::file::LogFiles::clone(&self) -> walthamstow_logs::file::LogFiles
+impl core::cmp::Eq for walthamstow_logs::file::LogFiles
+impl core::cmp::PartialEq for walthamstow_logs::file::LogFiles
+pub fn walthamstow_logs::file::LogFiles::eq(&self, other: &walthamstow_logs::file::LogFiles) -> bool
+impl core::fmt::Debug for walthamstow_logs::file::LogFiles
+pub fn walthamstow_logs::file::LogFiles::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for walthamstow_logs::file::LogFiles
+impl core::marker::Freeze for walthamstow_logs::file::LogFiles
+impl core::marker::Send for walthamstow_logs::file::LogFiles
+impl core::marker::Sync for walthamstow_logs::file::LogFiles
+impl core::marker::Unpin for walthamstow_logs::file::LogFiles
+impl core::panic::unwind_safe::RefUnwindSafe for walthamstow_logs::file::LogFiles
+impl core::panic::unwind_safe::UnwindSafe for walthamstow_logs::file::LogFiles
+impl<Q, K> equivalent::Equivalent<K> for walthamstow_logs::file::LogFiles where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn walthamstow_logs::file::LogFiles::equivalent(&self, key: &K) -> bool
+impl<Q, K> hashbrown::Equivalent<K> for walthamstow_logs::file::LogFiles where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn walthamstow_logs::file::LogFiles::equivalent(&self, key: &K) -> bool
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for walthamstow_logs::file::LogFiles where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for walthamstow_logs::file::LogFiles where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<T, U> core::convert::Into<U> for walthamstow_logs::file::LogFiles where U: core::convert::From<T>
+pub fn walthamstow_logs::file::LogFiles::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for walthamstow_logs::file::LogFiles where U: core::convert::Into<T>
+pub type walthamstow_logs::file::LogFiles::Error = core::convert::Infallible
+pub fn walthamstow_logs::file::LogFiles::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for walthamstow_logs::file::LogFiles where U: core::convert::TryFrom<T>
+pub type walthamstow_logs::file::LogFiles::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn walthamstow_logs::file::LogFiles::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for walthamstow_logs::file::LogFiles where T: core::clone::Clone
+pub type walthamstow_logs::file::LogFiles::Owned = T
+pub fn walthamstow_logs::file::LogFiles::clone_into(&self, target: &mut T)
+pub fn walthamstow_logs::file::LogFiles::to_owned(&self) -> T
+impl<T> core::any::Any for walthamstow_logs::file::LogFiles where T: 'static + ?core::marker::Sized
+pub fn walthamstow_logs::file::LogFiles::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for walthamstow_logs::file::LogFiles where T: ?core::marker::Sized
+pub fn walthamstow_logs::file::LogFiles::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for walthamstow_logs::file::LogFiles where T: ?core::marker::Sized
+pub fn walthamstow_logs::file::LogFiles::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for walthamstow_logs::file::LogFiles where T: core::clone::Clone
+pub unsafe fn walthamstow_logs::file::LogFiles::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for walthamstow_logs::file::LogFiles
+pub fn walthamstow_logs::file::LogFiles::from(t: T) -> T
+impl<T> dyn_clone::DynClone for walthamstow_logs::file::LogFiles where T: core::clone::Clone
+pub fn walthamstow_logs::file::LogFiles::__clone_box(&self, _: dyn_clone::sealed::Private) -> *mut ()
+impl<T> either::into_either::IntoEither for walthamstow_logs::file::LogFiles
+impl<T> tracing::instrument::Instrument for walthamstow_logs::file::LogFiles
+impl<T> tracing::instrument::WithSubscriber for walthamstow_logs::file::LogFiles
+impl<T> typenum::type_operators::Same for walthamstow_logs::file::LogFiles
+pub type walthamstow_logs::file::LogFiles::Output = T
+impl<T> yansi::paint::Paint for walthamstow_logs::file::LogFiles where T: ?core::marker::Sized
+pub fn walthamstow_logs::file::LogFiles::attr(&self, value: yansi::attr_quirk::Attribute) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::bg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::bold(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::clear(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::conceal(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::dim(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::fg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::invert(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::italic(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::linger(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::mask(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::on_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::on_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::on_bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::on_bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::on_bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::on_bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::on_bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::on_bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::on_bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::on_bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::on_bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::on_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::on_fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::on_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::on_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::on_primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::on_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::on_rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::on_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::on_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::quirk(&self, value: yansi::attr_quirk::Quirk) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::rapid_blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::resetting(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::strike(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::underline(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::whenever(&self, value: yansi::condition::Condition) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::wrap(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::file::LogFiles::yellow(&self) -> yansi::paint::Painted<&T>
+impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_logs::file::LogFiles where T: ?core::marker::Sized
+impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_logs::file::LogFiles where V: ppv_lite86::types::MultiLane<T>
+pub fn walthamstow_logs::file::LogFiles::vzip(self) -> V
 pub struct walthamstow_logs::LogImage
 pub walthamstow_logs::LogImage::format: u32
 pub walthamstow_logs::LogImage::head: serde_json::value::Value
@@ -3713,6 +4493,126 @@ pub fn walthamstow_logs::types::LogImage::yellow(&self) -> yansi::paint::Painted
 impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_logs::types::LogImage where T: ?core::marker::Sized
 impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_logs::types::LogImage where V: ppv_lite86::types::MultiLane<T>
 pub fn walthamstow_logs::types::LogImage::vzip(self) -> V
+pub struct walthamstow_logs::LogRecovery
+pub walthamstow_logs::LogRecovery::discarded: alloc::vec::Vec<alloc::string::String>
+pub walthamstow_logs::LogRecovery::finished: alloc::vec::Vec<walthamstow_kernel::document::DocumentId>
+pub walthamstow_logs::LogRecovery::stale: alloc::vec::Vec<walthamstow_kernel::document::DocumentId>
+impl core::clone::Clone for walthamstow_logs::LogRecovery
+pub fn walthamstow_logs::LogRecovery::clone(&self) -> walthamstow_logs::LogRecovery
+impl core::cmp::Eq for walthamstow_logs::LogRecovery
+impl core::cmp::PartialEq for walthamstow_logs::LogRecovery
+pub fn walthamstow_logs::LogRecovery::eq(&self, other: &walthamstow_logs::LogRecovery) -> bool
+impl core::default::Default for walthamstow_logs::LogRecovery
+pub fn walthamstow_logs::LogRecovery::default() -> walthamstow_logs::LogRecovery
+impl core::fmt::Debug for walthamstow_logs::LogRecovery
+pub fn walthamstow_logs::LogRecovery::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for walthamstow_logs::LogRecovery
+impl core::marker::Freeze for walthamstow_logs::LogRecovery
+impl core::marker::Send for walthamstow_logs::LogRecovery
+impl core::marker::Sync for walthamstow_logs::LogRecovery
+impl core::marker::Unpin for walthamstow_logs::LogRecovery
+impl core::panic::unwind_safe::RefUnwindSafe for walthamstow_logs::LogRecovery
+impl core::panic::unwind_safe::UnwindSafe for walthamstow_logs::LogRecovery
+impl<Q, K> equivalent::Equivalent<K> for walthamstow_logs::LogRecovery where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn walthamstow_logs::LogRecovery::equivalent(&self, key: &K) -> bool
+impl<Q, K> hashbrown::Equivalent<K> for walthamstow_logs::LogRecovery where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn walthamstow_logs::LogRecovery::equivalent(&self, key: &K) -> bool
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for walthamstow_logs::LogRecovery where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for walthamstow_logs::LogRecovery where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<T, U> core::convert::Into<U> for walthamstow_logs::LogRecovery where U: core::convert::From<T>
+pub fn walthamstow_logs::LogRecovery::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for walthamstow_logs::LogRecovery where U: core::convert::Into<T>
+pub type walthamstow_logs::LogRecovery::Error = core::convert::Infallible
+pub fn walthamstow_logs::LogRecovery::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for walthamstow_logs::LogRecovery where U: core::convert::TryFrom<T>
+pub type walthamstow_logs::LogRecovery::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn walthamstow_logs::LogRecovery::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for walthamstow_logs::LogRecovery where T: core::clone::Clone
+pub type walthamstow_logs::LogRecovery::Owned = T
+pub fn walthamstow_logs::LogRecovery::clone_into(&self, target: &mut T)
+pub fn walthamstow_logs::LogRecovery::to_owned(&self) -> T
+impl<T> core::any::Any for walthamstow_logs::LogRecovery where T: 'static + ?core::marker::Sized
+pub fn walthamstow_logs::LogRecovery::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for walthamstow_logs::LogRecovery where T: ?core::marker::Sized
+pub fn walthamstow_logs::LogRecovery::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for walthamstow_logs::LogRecovery where T: ?core::marker::Sized
+pub fn walthamstow_logs::LogRecovery::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for walthamstow_logs::LogRecovery where T: core::clone::Clone
+pub unsafe fn walthamstow_logs::LogRecovery::clone_to_uninit(&self, dest: *mut u8)
+impl<T> core::convert::From<T> for walthamstow_logs::LogRecovery
+pub fn walthamstow_logs::LogRecovery::from(t: T) -> T
+impl<T> dyn_clone::DynClone for walthamstow_logs::LogRecovery where T: core::clone::Clone
+pub fn walthamstow_logs::LogRecovery::__clone_box(&self, _: dyn_clone::sealed::Private) -> *mut ()
+impl<T> either::into_either::IntoEither for walthamstow_logs::LogRecovery
+impl<T> loro_rle::rle_trait::ZeroElement for walthamstow_logs::LogRecovery where T: core::default::Default
+pub fn walthamstow_logs::LogRecovery::zero_element() -> T
+impl<T> tracing::instrument::Instrument for walthamstow_logs::LogRecovery
+impl<T> tracing::instrument::WithSubscriber for walthamstow_logs::LogRecovery
+impl<T> typenum::type_operators::Same for walthamstow_logs::LogRecovery
+pub type walthamstow_logs::LogRecovery::Output = T
+impl<T> yansi::paint::Paint for walthamstow_logs::LogRecovery where T: ?core::marker::Sized
+pub fn walthamstow_logs::LogRecovery::attr(&self, value: yansi::attr_quirk::Attribute) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::bg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::bold(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::clear(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::conceal(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::dim(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::fg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::invert(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::italic(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::linger(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::mask(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::on_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::on_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::on_bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::on_bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::on_bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::on_bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::on_bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::on_bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::on_bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::on_bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::on_bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::on_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::on_fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::on_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::on_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::on_primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::on_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::on_rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::on_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::on_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::quirk(&self, value: yansi::attr_quirk::Quirk) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::rapid_blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::resetting(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::strike(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::underline(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::whenever(&self, value: yansi::condition::Condition) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::wrap(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_logs::LogRecovery::yellow(&self) -> yansi::paint::Painted<&T>
+impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_logs::LogRecovery where T: ?core::marker::Sized
+impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_logs::LogRecovery where V: ppv_lite86::types::MultiLane<T>
+pub fn walthamstow_logs::LogRecovery::vzip(self) -> V
 pub struct walthamstow_logs::MemoryBlobStore
 impl walthamstow_logs::MemoryBlobStore
 pub fn walthamstow_logs::MemoryBlobStore::new(leases: alloc::sync::Arc<dyn walthamstow_kernel::leases::Leases>, kinds: walthamstow_logs::blobs::BlobKinds) -> Self
@@ -4709,6 +5609,15 @@ pub fn walthamstow_logs::LogStore::records(&self, document: &walthamstow_kernel:
 pub fn walthamstow_logs::LogStore::remove(&self, lease: &walthamstow_kernel::leases::Lease, base: &walthamstow_logs::types::Revision, id: &walthamstow_logs::types::WriteId) -> walthamstow_kernel::error::KernelResult<()>
 pub fn walthamstow_logs::LogStore::replace(&self, lease: &walthamstow_kernel::leases::Lease, base: &walthamstow_logs::types::Revision, image: &walthamstow_logs::types::LogImage) -> walthamstow_kernel::error::KernelResult<walthamstow_logs::types::Revision>
 pub fn walthamstow_logs::LogStore::rewind(&self, lease: &walthamstow_kernel::leases::Lease, base: &walthamstow_logs::types::Revision, from: walthamstow_logs::types::Position, commit: &walthamstow_logs::types::LogCommit) -> walthamstow_kernel::error::KernelResult<walthamstow_logs::types::Revision>
+impl walthamstow_logs::store::LogStore for walthamstow_logs::file::FileLogStore
+pub fn walthamstow_logs::file::FileLogStore::commit(&self, lease: &walthamstow_kernel::leases::Lease, base: &walthamstow_logs::types::Revision, commit: &walthamstow_logs::types::LogCommit) -> walthamstow_kernel::error::KernelResult<walthamstow_logs::types::Revision>
+pub fn walthamstow_logs::file::FileLogStore::create(&self, lease: &walthamstow_kernel::leases::Lease, image: &walthamstow_logs::types::LogImage) -> walthamstow_kernel::error::KernelResult<walthamstow_logs::types::Revision>
+pub fn walthamstow_logs::file::FileLogStore::head(&self, document: &walthamstow_kernel::document::DocumentId) -> walthamstow_kernel::error::KernelResult<core::option::Option<walthamstow_logs::types::StoredHead>>
+pub fn walthamstow_logs::file::FileLogStore::list(&self, entity: &str, after: core::option::Option<&str>, limit: usize) -> walthamstow_kernel::error::KernelResult<alloc::vec::Vec<walthamstow_logs::types::Listed>>
+pub fn walthamstow_logs::file::FileLogStore::records(&self, document: &walthamstow_kernel::document::DocumentId, revision: &walthamstow_logs::types::Revision, from: walthamstow_logs::types::Position, limit: usize) -> walthamstow_kernel::error::KernelResult<alloc::vec::Vec<walthamstow_logs::types::StoredRecord>>
+pub fn walthamstow_logs::file::FileLogStore::remove(&self, lease: &walthamstow_kernel::leases::Lease, base: &walthamstow_logs::types::Revision, id: &walthamstow_logs::types::WriteId) -> walthamstow_kernel::error::KernelResult<()>
+pub fn walthamstow_logs::file::FileLogStore::replace(&self, lease: &walthamstow_kernel::leases::Lease, base: &walthamstow_logs::types::Revision, image: &walthamstow_logs::types::LogImage) -> walthamstow_kernel::error::KernelResult<walthamstow_logs::types::Revision>
+pub fn walthamstow_logs::file::FileLogStore::rewind(&self, lease: &walthamstow_kernel::leases::Lease, base: &walthamstow_logs::types::Revision, from: walthamstow_logs::types::Position, commit: &walthamstow_logs::types::LogCommit) -> walthamstow_kernel::error::KernelResult<walthamstow_logs::types::Revision>
 impl walthamstow_logs::store::LogStore for walthamstow_logs::memory::MemoryLogStore
 pub fn walthamstow_logs::memory::MemoryLogStore::commit(&self, lease: &walthamstow_kernel::leases::Lease, base: &walthamstow_logs::types::Revision, commit: &walthamstow_logs::types::LogCommit) -> walthamstow_kernel::error::KernelResult<walthamstow_logs::types::Revision>
 pub fn walthamstow_logs::memory::MemoryLogStore::create(&self, lease: &walthamstow_kernel::leases::Lease, image: &walthamstow_logs::types::LogImage) -> walthamstow_kernel::error::KernelResult<walthamstow_logs::types::Revision>

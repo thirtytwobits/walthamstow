@@ -109,6 +109,36 @@ impl DocumentLayout {
         })
     }
 
+    /// The files the log store keeps in each document of `entity`.
+    pub(crate) fn entity_files(&self, entity: &str) -> KernelResult<&BTreeSet<String>> {
+        Ok(&self.entity(entity)?.files)
+    }
+
+    /// `entity`'s directory and where it lies under the root, or `None` when it does not exist.
+    pub(crate) fn entity_dir(&self, entity: &str) -> KernelResult<Option<(Dir, PathBuf)>> {
+        let relative = PathBuf::from(&self.entity(entity)?.directory);
+        Ok(self.open_dir(&relative)?.map(|dir| (dir, relative)))
+    }
+
+    /// Removes `document`'s directory whole, every entry in it included, and makes the removal
+    /// durable as `durability` asks. A directory that does not exist is left so.
+    pub(crate) fn remove_document_dir(
+        &self,
+        durability: WriteDurability,
+        document: &DocumentId,
+    ) -> KernelResult<()> {
+        let relative = self.document_path(document)?;
+        match self.root.remove_dir_all(&relative) {
+            Ok(()) => {}
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+            Err(error) => return Err(internal(&self.path.join(&relative), error)),
+        }
+        self.sync(
+            durability,
+            relative.parent().expect("a document lies in its entity"),
+        )
+    }
+
     /// Where `document`'s directory lies under the root, whether or not it exists.
     pub fn document_path(&self, document: &DocumentId) -> KernelResult<PathBuf> {
         Ok(Path::new(&self.entity(document.entity())?.directory)

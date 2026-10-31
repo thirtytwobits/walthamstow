@@ -35,6 +35,14 @@
   log store shares: a `cap-std` root no operation leaves, an entity directory per registered
   entity, and a resource directory that is the resource percent-encoded. The conformance suite
   has a blob section.
+- `walthamstow-logs` keeps log documents as files people can read and edit. `FileLogStore` keeps
+  each as a head file and a log file under a `DocumentLayout`, named for each entity by
+  `LogFiles`. A line counts once the head's next position is past it: a commit appends its lines,
+  then replaces the head. `create`, `rewind`, `replace` and `remove` publish through the kernel's
+  publication under the `log-operations` journal, which opening the store recovers into a
+  `LogRecovery`. A revision is a hash of the files, so a write over a revision an edit outside the
+  store replaced is refused with `log_stale`. A stamp cache in the `log-stamps` journal spares
+  the hash of a log file that has settled, and `verify` hashes every document of an entity.
 
 ## 0.6.0
 

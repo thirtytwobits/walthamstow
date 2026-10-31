@@ -285,9 +285,9 @@ The files are the record:
 
 Opening the store recovers. It finishes each publication a record authorises, discards one whose
 file changed after it was authorised, keeping the change, and discards staging no record
-authorises. A write that leaves its publication authorised stops the document: every later write
-to it is refused until the store is opened again and recovery finishes or discards the
-publication. Reads go on.
+authorises. A write that leaves its publication authorised, or fails while authorising it, stops
+the document: every later write to it is refused until the store is opened again and recovery
+finishes or discards the publication. Reads go on.
 
 The store learns a revision through the stamp cache, the `log-stamps` journal of the engine's
 local records. Per document, it records a stamp of the log file, the head's next position and

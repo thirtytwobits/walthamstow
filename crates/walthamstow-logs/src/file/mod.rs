@@ -602,7 +602,8 @@ impl FileLogStore {
 
     /// Publishes `changes` to `document` through a journalled operation, and once it is published
     /// remembers it as the write of `id` over `base` under `lease` that gave `given`. An operation
-    /// the write does not see through stops the document, until recovery sees it through.
+    /// the write does not see through, or may have authorised, stops the document until recovery
+    /// sees it through.
     fn journalled(
         &self,
         lease: &Lease,
@@ -613,12 +614,14 @@ impl FileLogStore {
         remove_directory: bool,
     ) -> KernelResult<()> {
         let document = lease.document();
-        let operation = self
-            .operations
-            .authorise(document, changes, remove_directory)?;
         let stop = |_: &KernelError| {
             locked(&self.stopped).insert(document.clone());
         };
+        // An authorisation that fails may have left its record.
+        let operation = self
+            .operations
+            .authorise(document, changes, remove_directory)
+            .inspect_err(stop)?;
         match self.operations.publish(&self.layout, &operation, true) {
             Ok((_, Published::Done)) => {
                 self.remember(lease, id, base, given);

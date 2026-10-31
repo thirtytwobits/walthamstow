@@ -138,13 +138,17 @@ mod files {
 
     impl Setup {
         fn new() -> Self {
+            Self::with_local(Arc::new(MemoryLocalStore::new()))
+        }
+
+        /// A setup whose store keeps its local records in `local`.
+        fn with_local(local: Arc<dyn LocalStore>) -> Self {
             let harness = FileHarness::new();
             harness.fresh();
             let leases = Arc::new(MemoryLeases::new(Duration::from_secs(60), || {
                 Moment::ORIGIN
             }));
             let wall = Arc::new(Mutex::new(SystemTime::UNIX_EPOCH + Duration::from_secs(1)));
-            let local: Arc<dyn LocalStore> = Arc::new(MemoryLocalStore::new());
             let store = Self::open(&harness, &leases, &wall, &local).0;
             Self {
                 harness,
@@ -858,6 +862,71 @@ mod files {
             0o444
         );
         assert_eq!(setup.store.commit(&lease, &base, &commit).unwrap(), given);
+    }
+
+    /// Local records whose next swap in the `log-operations` journal, once armed, writes its
+    /// record and then fails, as a swap whose directory sync fails does.
+    #[derive(Debug, Default)]
+    struct LandsAndFails {
+        inner: MemoryLocalStore,
+        armed: std::sync::atomic::AtomicBool,
+    }
+
+    impl LocalStore for LandsAndFails {
+        fn get(
+            &self,
+            key: &walthamstow_kernel::local_store::JournalKey,
+        ) -> KernelResult<Option<(Vec<u8>, walthamstow_kernel::local_store::Tag)>> {
+            self.inner.get(key)
+        }
+
+        fn compare_and_swap(
+            &self,
+            key: &walthamstow_kernel::local_store::JournalKey,
+            expected: Option<&walthamstow_kernel::local_store::Tag>,
+            bytes: &[u8],
+        ) -> KernelResult<Option<walthamstow_kernel::local_store::Tag>> {
+            let swapped = self.inner.compare_and_swap(key, expected, bytes)?;
+            if key.journal_of() == super::operations::JOURNAL
+                && self.armed.swap(false, std::sync::atomic::Ordering::Relaxed)
+            {
+                return Err(KernelError::internal("the record's directory did not sync"));
+            }
+            Ok(swapped)
+        }
+
+        fn list(
+            &self,
+            prefix: &walthamstow_kernel::local_store::JournalKey,
+        ) -> KernelResult<Vec<walthamstow_kernel::local_store::JournalKey>> {
+            self.inner.list(prefix)
+        }
+
+        fn remove(
+            &self,
+            key: &walthamstow_kernel::local_store::JournalKey,
+            expected: &walthamstow_kernel::local_store::Tag,
+        ) -> KernelResult<bool> {
+            self.inner.remove(key, expected)
+        }
+    }
+
+    #[test]
+    fn a_write_whose_authorisation_landed_and_failed_stops_the_document_until_recovery() {
+        let local = Arc::new(LandsAndFails::default());
+        let mut setup = Setup::with_local(local.clone());
+        let (document, base) = with_records(&setup, "a");
+        local
+            .armed
+            .store(true, std::sync::atomic::Ordering::Relaxed);
+        assert!(rewind_as(&setup, &document, &base, "rewind").is_err());
+        assert_eq!(
+            setup.commit(&document, &base, &[3]).unwrap_err().code,
+            "internal_error"
+        );
+        let recovery = setup.reopen();
+        assert_eq!(recovery.finished, std::slice::from_ref(&document));
+        assert_eq!(setup.payloads(&document), payloads(&[1, 7]));
     }
 
     #[test]

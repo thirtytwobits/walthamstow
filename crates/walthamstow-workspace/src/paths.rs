@@ -17,9 +17,6 @@ pub struct ConfiguredDirectory {
     pub relative: String,
 }
 
-/// How many links the way to a configured directory may pass through.
-const MAX_LINKS: usize = 40;
-
 /// Resolves each `(name, configured)` directory through the workspace root `root`, creating each
 /// that does not exist as durably as `durability` asks, and gives where each lies with every link
 /// within the root resolved. A directory must be a normalised relative path in ASCII, every
@@ -43,7 +40,7 @@ pub fn resolve_directories<const N: usize>(
     let mut held = Vec::with_capacity(N);
     for (name, value) in configured {
         let dir = open_or_create(durability, root, name, value)?;
-        let relative = resolved_path(root, name, value)?;
+        let relative = resolved_path(root, &dir, name, value)?;
         held.push(ConfiguredDirectory { dir, relative });
     }
     let folded = held
@@ -118,72 +115,56 @@ fn open_or_create(
     name: &str,
     configured: &str,
 ) -> Result<Dir> {
-    let refused = |error: std::io::Error| {
-        if error.kind() == std::io::ErrorKind::PermissionDenied {
-            anyhow::anyhow!("{name} must stay within the workspace root: {error}")
-        } else {
-            anyhow::Error::from(error).context(format!(
-                "{name} must be a directory within the workspace root."
-            ))
-        }
-    };
-    create_dir_all_in(durability, root, Path::new(configured)).map_err(refused)?;
-    root.open_dir(configured).map_err(refused)
+    create_dir_all_in(durability, root, Path::new(configured))
+        .map_err(|error| refused(name, error))?;
+    root.open_dir(configured)
+        .map_err(|error| refused(name, error))
 }
 
-/// Where `configured` lies beneath `root` with every link on the way resolved, read through the
-/// root's handle a component at a time: a link is replaced by its target, which a handle follows
-/// only when it is relative, and `..` in a target leaves the directory before it. Each component
-/// needs only to be searchable, not listable.
-fn resolved_path(root: &Dir, name: &str, configured: &str) -> Result<String> {
-    let mut resolved: Vec<String> = Vec::new();
-    let mut pending: std::collections::VecDeque<String> =
-        configured.split('/').map(str::to_owned).collect();
-    let mut links = 0;
-    while let Some(component) = pending.pop_front() {
-        match component.as_str() {
-            "" | "." => continue,
-            ".." => {
-                if resolved.pop().is_none() {
-                    bail!("{name} must stay within the workspace root.");
-                }
-                continue;
-            }
-            _ => {}
-        }
-        let here = resolved
-            .iter()
-            .chain(std::iter::once(&component))
-            .collect::<PathBuf>();
-        let metadata = root
-            .symlink_metadata(&here)
-            .with_context(|| format!("Failed to resolve {name}."))?;
-        if !metadata.is_symlink() {
-            resolved.push(component);
-            continue;
-        }
-        links += 1;
-        if links > MAX_LINKS {
-            bail!("{name} passes through more than {MAX_LINKS} links.");
-        }
-        let target = root
-            .read_link(&here)
-            .with_context(|| format!("{name} must stay within the workspace root."))?;
-        let mut followed = Vec::new();
-        for part in target.components() {
-            let part = part.as_os_str().to_str().ok_or_else(|| {
+/// The refusal of `name` when reaching it through the root failed with `error`. A handle reports
+/// a path that would leave the root as permission denied.
+fn refused(name: &str, error: std::io::Error) -> anyhow::Error {
+    if error.kind() == std::io::ErrorKind::PermissionDenied {
+        anyhow::anyhow!("{name} must stay within the workspace root: {error}")
+    } else {
+        anyhow::Error::from(error).context(format!(
+            "{name} must be a directory within the workspace root."
+        ))
+    }
+}
+
+/// Where `configured`, held as `held`, lies beneath `root` with every link on the way resolved,
+/// as the root's handle canonicalises it. The place must open as the directory held, so a
+/// resolution cut short or a link changed meanwhile is refused.
+fn resolved_path(root: &Dir, held: &Dir, name: &str, configured: &str) -> Result<String> {
+    let canonical = root
+        .canonicalize(configured)
+        .map_err(|error| refused(name, error))?;
+    let mut parts = Vec::new();
+    for component in canonical.components() {
+        match component {
+            Component::CurDir => {}
+            Component::Normal(part) => parts.push(part.to_str().ok_or_else(|| {
                 anyhow::anyhow!("{name} passes through a link not named in UTF-8.")
-            })?;
-            followed.push(part.to_owned());
-        }
-        for part in followed.into_iter().rev() {
-            pending.push_front(part);
+            })?),
+            _ => bail!("{name} must stay within the workspace root."),
         }
     }
-    if resolved.is_empty() {
+    if parts.is_empty() {
         bail!("{name} must lie beneath the workspace root, not be it.");
     }
-    Ok(resolved.join("/"))
+    let resolved = parts.join("/");
+    let identity = |dir: &Dir| {
+        walthamstow_kernel::files::identity(dir)
+            .with_context(|| format!("Failed to resolve {name}."))
+    };
+    let lies = root
+        .open_dir(&resolved)
+        .map_err(|error| refused(name, error))?;
+    if identity(&lies)? != identity(held)? {
+        bail!("{name} changed while it was resolved.");
+    }
+    Ok(resolved)
 }
 
 #[cfg(test)]
@@ -396,6 +377,25 @@ mod tests {
         std::fs::set_permissions(&data, std::fs::Permissions::from_mode(0o755)).unwrap();
         let [notes] = resolved.unwrap();
         assert_eq!(notes.relative, "data/real/notes");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_link_to_the_root_itself_is_refused() {
+        let root = tempfile::tempdir().unwrap();
+        std::os::unix::fs::symlink(".", root.path().join("alias")).unwrap();
+        let error = resolve(root.path(), [("notes", "alias")]).unwrap_err();
+        assert!(error.to_string().contains("not be it"), "{error}");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_link_loop_is_refused() {
+        let root = tempfile::tempdir().unwrap();
+        std::os::unix::fs::symlink("second", root.path().join("first")).unwrap();
+        std::os::unix::fs::symlink("first", root.path().join("second")).unwrap();
+        let error = resolve(root.path(), [("notes", "first/notes")]).unwrap_err();
+        assert!(error.to_string().contains("notes"), "{error}");
     }
 
     #[cfg(unix)]

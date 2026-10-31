@@ -269,7 +269,9 @@ The files are the record:
 - Every other line must be a record, and positions must increase along the log, or the document
   is `log_invalid`. A line a person edits or adds is read as written once the head counts it.
 - A commit drops the lines no head counts, appends its lines and syncs the log, then replaces the
-  head file durably. Its cost depends on its size, not the log's.
+  head file durably. What it writes depends on its size, not the log's. It reads the whole log to
+  check its base unless a stamp vouches for the log, and no stamp vouches for a log within the
+  settled age of a write, the store's own included.
 - `create`, `rewind`, `replace` and `remove` stage their files in `staging/log-operations/<id>/`,
   and a record in the `log-operations` journal authorises their [publication](#publication) over
   the document's files.

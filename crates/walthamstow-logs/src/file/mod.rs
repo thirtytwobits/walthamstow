@@ -189,6 +189,15 @@ fn changed(document: &DocumentId) -> KernelError {
     .with_reason(reason_codes::LOG_STALE)
 }
 
+/// Refuses a write that repeats the id and base of `document`'s last write while being of the
+/// other kind, a removal or not, whatever the document holds now.
+fn crossed(document: &DocumentId, id: &WriteId) -> KernelError {
+    KernelError::conflict(format!(
+        "The write {id} to the log document {document} repeats a write of another kind."
+    ))
+    .with_reason(reason_codes::LOG_STALE)
+}
+
 /// Whether `name` in `dir` is a regular file. Anything else there is refused unopened.
 fn regular(dir: &Dir, name: &str) -> Result<bool, LogFault> {
     match dir.symlink_metadata(name) {
@@ -503,11 +512,14 @@ impl FileLogStore {
         id: &WriteId,
         base: Option<&Revision>,
     ) -> KernelResult<Option<Revision>> {
-        let Some(Some(given)) = self.retried(lease, id, base) else {
-            return Ok(None);
-        };
-        self.make_durable(lease.document())?;
-        Ok(Some(given))
+        match self.retried(lease, id, base) {
+            None => Ok(None),
+            Some(None) => Err(crossed(lease.document(), id)),
+            Some(Some(given)) => {
+                self.make_durable(lease.document())?;
+                Ok(Some(given))
+            }
+        }
     }
 
     /// Makes `document`'s head and log files and its directory's entries durable. A file that is
@@ -520,9 +532,11 @@ impl FileLogStore {
         let path = self.layout.root().join(&dir.relative);
         let syncing = || -> std::io::Result<()> {
             for name in [files.log(), files.head()] {
-                // Windows flushes a file only through a handle with write access.
                 let mut options = cap_std::fs::OpenOptions::new();
-                options.read(true).write(true);
+                options.read(true);
+                // Windows flushes a file only through a handle with write access.
+                #[cfg(windows)]
+                options.write(true);
                 match dir.dir.open_with(name, &options) {
                     Ok(file) => self.durability.sync(&file.into_std())?,
                     Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
@@ -846,8 +860,10 @@ impl LogStore for FileLogStore {
 
     fn remove(&self, lease: &Lease, base: &Revision, id: &WriteId) -> KernelResult<()> {
         self.fenced(lease, |document| {
-            if let Some(None) = self.retried(lease, id, Some(base)) {
-                return Ok(());
+            match self.retried(lease, id, Some(base)) {
+                Some(None) => return Ok(()),
+                Some(Some(_)) => return Err(crossed(document, id)),
+                None => {}
             }
             let found = self.at(document, base, Reading::Whole)?;
             let files = self.files_of(document.entity())?;

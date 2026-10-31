@@ -793,6 +793,74 @@ mod files {
     }
 
     #[test]
+    fn a_retry_of_another_kind_is_stale_over_restored_files() {
+        let setup = Setup::new();
+        let (document, base) = with_records(&setup, "a");
+        let lease = setup.lease(&document);
+        let copy = [HEAD, LOG].map(|file| std::fs::read(setup.path(&document, file)).unwrap());
+        let restore = || {
+            std::fs::create_dir_all(setup.path(&document, HEAD).parent().unwrap()).unwrap();
+            for (file, bytes) in [HEAD, LOG].iter().zip(&copy) {
+                std::fs::write(setup.path(&document, file), bytes).unwrap();
+            }
+        };
+        let commit = LogCommit {
+            id: WriteId::new("crossed"),
+            head: None,
+            records: vec![record(3)],
+        };
+        setup.store.commit(&lease, &base, &commit).unwrap();
+        restore();
+        let removal = setup.store.remove(&lease, &base, &WriteId::new("crossed"));
+        assert_eq!(
+            removal.unwrap_err().reason_code(),
+            Some(reason_codes::LOG_STALE)
+        );
+        assert_eq!(setup.revision(&document), base);
+
+        setup
+            .store
+            .remove(&lease, &base, &WriteId::new("removed"))
+            .unwrap();
+        restore();
+        let commit = LogCommit {
+            id: WriteId::new("removed"),
+            ..commit
+        };
+        assert_eq!(
+            setup
+                .store
+                .commit(&lease, &base, &commit)
+                .unwrap_err()
+                .reason_code(),
+            Some(reason_codes::LOG_STALE)
+        );
+        assert_eq!(setup.revision(&document), base);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_retried_commit_over_a_read_only_head_file_is_given_its_revision() {
+        use std::os::unix::fs::PermissionsExt;
+        let setup = Setup::new();
+        let (document, base) = with_records(&setup, "a");
+        let head = setup.path(&document, HEAD);
+        std::fs::set_permissions(&head, std::fs::Permissions::from_mode(0o444)).unwrap();
+        let lease = setup.lease(&document);
+        let commit = LogCommit {
+            id: WriteId::new("read-only"),
+            head: None,
+            records: vec![record(3)],
+        };
+        let given = setup.store.commit(&lease, &base, &commit).unwrap();
+        assert_eq!(
+            std::fs::metadata(&head).unwrap().permissions().mode() & 0o777,
+            0o444
+        );
+        assert_eq!(setup.store.commit(&lease, &base, &commit).unwrap(), given);
+    }
+
+    #[test]
     fn an_unsettled_stamp_is_hashed_and_a_settled_one_is_trusted() {
         let setup = Setup::new();
         let (document, revision) = with_records(&setup, "a");

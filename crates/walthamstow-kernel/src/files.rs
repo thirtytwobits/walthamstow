@@ -139,8 +139,22 @@ pub fn read_files(dir: &Path) -> Result<BTreeMap<PathBuf, Vec<u8>>> {
 /// holds it, and holds write access, through which
 /// [`WriteDurability::sync_dir`](crate::durability::WriteDurability::sync_dir) flushes it.
 pub fn open_dir(path: &Path) -> std::io::Result<Dir> {
+    open_dir_as(path, true)
+}
+
+/// The directory at `path`, held as a `cap-std` directory to read through, every link in `path`
+/// followed. On Windows the handle shares deletion as [`open_dir`]'s does, and asks for no write
+/// access, so a directory its owner lets the engine only read opens.
+pub fn open_dir_to_read(path: &Path) -> std::io::Result<Dir> {
+    open_dir_as(path, false)
+}
+
+/// The directory at `path`, held as a `cap-std` directory, with write access on Windows when
+/// `writing`.
+fn open_dir_as(path: &Path, writing: bool) -> std::io::Result<Dir> {
     #[cfg(not(windows))]
     {
+        let _ = writing;
         Dir::open_ambient_dir(path, cap_std::ambient_authority())
     }
     #[cfg(windows)]
@@ -150,7 +164,7 @@ pub fn open_dir(path: &Path) -> std::io::Result<Dir> {
         const FILE_FLAG_BACKUP_SEMANTICS: u32 = 0x0200_0000;
         let opened = std::fs::OpenOptions::new()
             .read(true)
-            .write(true)
+            .write(writing)
             .share_mode(FILE_SHARE_READ_WRITE_DELETE)
             .custom_flags(FILE_FLAG_BACKUP_SEMANTICS)
             .open(path)?;

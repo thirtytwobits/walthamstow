@@ -90,11 +90,11 @@ impl Root {
         }
     }
 
-    /// The root, created with every missing ancestor when it does not exist.
+    /// The root, created with every missing ancestor when it does not exist. It goes through
+    /// the kernel's directory creation even when the root exists, which holds out every
+    /// creation from its check to its sync, so a root another caller is still settling is
+    /// not used before its entry is durable.
     fn create(&self, durability: WriteDurability) -> StoreResult<Place> {
-        if let Some(place) = self.open()? {
-            return Ok(place);
-        }
         crate::durability::create_dir_all_synced(durability, &self.path).map_err(|error| {
             StoreError::internal(format!(
                 "Could not create collaboration storage directory {}: {error}",

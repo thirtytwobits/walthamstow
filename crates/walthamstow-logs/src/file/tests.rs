@@ -822,6 +822,33 @@ mod files {
         assert_eq!(setup.reopen(), LogRecovery::default());
     }
 
+    #[cfg(unix)]
+    #[test]
+    fn recovery_refuses_a_linked_operation_staging_and_leaves_both_sides_alone() {
+        let setup = Setup::new();
+        let (document, base) = with_records(&setup, "a");
+        let (_, _, operation) = interrupted(&setup, &document, |setup| {
+            rewind_as(setup, &document, &base, "rewind").unwrap()
+        });
+        let staged = super::operations::STAGING
+            .root(&locked(&setup.harness.current).1)
+            .join(&operation);
+        let outside = tempfile::tempdir().unwrap();
+        let moved = outside.path().join("staged");
+        std::fs::rename(&staged, &moved).unwrap();
+        std::os::unix::fs::symlink(&moved, &staged).unwrap();
+        let before = [HEAD, LOG].map(|file| std::fs::read(setup.path(&document, file)).unwrap());
+        assert!(FileLogStore::open(setup.harness.config(
+            setup.leases.clone(),
+            Setup::clock(&setup.wall),
+            setup.local.clone(),
+        ))
+        .is_err());
+        let after = [HEAD, LOG].map(|file| std::fs::read(setup.path(&document, file)).unwrap());
+        assert_eq!(after, before);
+        assert!(moved.join(LOG).exists());
+    }
+
     #[test]
     fn an_unsettled_stamp_is_hashed_and_a_settled_one_is_trusted() {
         let setup = Setup::new();

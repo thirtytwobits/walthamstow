@@ -11,10 +11,13 @@
 //! record.
 
 use crate::layout::DocumentLayout;
+use cap_std::fs::Dir;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
-use walthamstow_kernel::durability::{create_dir_all_synced, write_synced, WriteDurability};
+use walthamstow_kernel::durability::{
+    create_dir_all_in, create_dir_all_synced, write_synced_in, WriteDurability,
+};
 use walthamstow_kernel::hashing::sha256_hex;
 use walthamstow_kernel::journals::{Journal, Staging};
 use walthamstow_kernel::local_store::{JournalKey, LocalStore};
@@ -97,6 +100,34 @@ impl Operations {
             .map_err(|error| internal("staging", error))
     }
 
+    /// The staging of every operation, created when absent, held as a `Dir`.
+    fn staging_root(&self) -> KernelResult<Dir> {
+        let root = self.staging()?;
+        create_dir_all_synced(self.durability, &root)
+            .and_then(|()| walthamstow_kernel::files::open_dir(&root))
+            .map_err(|error| internal("staging", error))
+    }
+
+    /// The staging of `id` within `root`, created when absent. Anything there but a directory, a
+    /// link included, is refused unfollowed.
+    fn operation_dir(&self, root: &Dir, id: &str) -> KernelResult<Dir> {
+        match root.symlink_metadata(id) {
+            Ok(metadata) if metadata.is_dir() => {}
+            Ok(_) => {
+                return Err(internal(
+                    id,
+                    "its staging is not a directory; it is not followed or opened",
+                ))
+            }
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                create_dir_all_in(self.durability, root, Path::new(id))
+                    .map_err(|error| internal(id, error))?;
+            }
+            Err(error) => return Err(internal(id, error)),
+        }
+        root.open_dir(id).map_err(|error| internal(id, error))
+    }
+
     fn key(id: &str) -> KernelResult<JournalKey> {
         JournalKey::new(JOURNAL, [id])
     }
@@ -135,12 +166,11 @@ impl Operations {
         remove_directory: bool,
     ) -> KernelResult<String> {
         let id = uuid::Uuid::new_v4().simple().to_string();
-        let work = self.staging()?.join(&id);
-        create_dir_all_synced(self.durability, &work).map_err(|error| internal(&id, error))?;
+        let work = self.operation_dir(&self.staging_root()?, &id)?;
         let mut replacements = Vec::with_capacity(changes.len());
         for change in changes {
             if let Some(bytes) = &change.target {
-                write_synced(self.durability, &work.join(&change.name), bytes)
+                write_synced_in(self.durability, &work, Path::new(&change.name), bytes)
                     .map_err(|error| internal(&id, error))?;
             }
             replacements.push(Replacement {
@@ -183,10 +213,7 @@ impl Operations {
             layout.remove_document_dir(self.durability, &document)?;
             return Ok((document, Published::Done));
         };
-        let work = self.staging()?.join(id);
-        create_dir_all_synced(self.durability, &work).map_err(|error| internal(id, error))?;
-        let staged =
-            walthamstow_kernel::files::open_dir(&work).map_err(|error| internal(id, error))?;
+        let staged = self.operation_dir(&self.staging_root()?, id)?;
         let published = if first {
             publish_first(self.durability, &live.dir, &staged, &record.replacements)
         } else {

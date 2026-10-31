@@ -279,7 +279,8 @@ The files are the record:
 - A write is remembered for a retry before its head file lands. A commit that fails without
   landing is forgotten. A journalled write left unfinished stays remembered until the next write
   to the document settles it: kept when its publication is finished, forgotten when it is
-  discarded.
+  discarded. A retry given a revision first makes the document's files durable, since the write
+  may have landed and failed before it made them so.
 
 Opening the store recovers. It finishes each publication a record authorises, discards one whose
 file changed after it was authorised, keeping the change, and discards staging no record

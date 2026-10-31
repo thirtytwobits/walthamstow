@@ -527,6 +527,46 @@ impl FileLogStore {
             .map(|last| last.given.clone())
     }
 
+    /// What the last write gave, when a write of `id` over `base` under `lease` repeats a write
+    /// that gave a revision, once the document's files are durable: a write that landed may have
+    /// failed before it made them so.
+    fn repeated(
+        &self,
+        lease: &Lease,
+        id: &WriteId,
+        base: Option<&Revision>,
+    ) -> KernelResult<Option<Revision>> {
+        let Some(Some(given)) = self.retried(lease, id, base) else {
+            return Ok(None);
+        };
+        self.make_durable(lease.document())?;
+        Ok(Some(given))
+    }
+
+    /// Makes `document`'s head and log files and its directory's entries durable. A file that is
+    /// absent has nothing to make durable.
+    fn make_durable(&self, document: &DocumentId) -> KernelResult<()> {
+        let files = self.files_of(document.entity())?;
+        let Some(dir) = self.layout.document_dir(document)? else {
+            return Ok(());
+        };
+        let path = self.layout.root().join(&dir.relative);
+        let syncing = || -> std::io::Result<()> {
+            for name in [files.log(), files.head()] {
+                // Windows flushes a file only through a handle with write access.
+                let mut options = cap_std::fs::OpenOptions::new();
+                options.read(true).write(true);
+                match dir.dir.open_with(name, &options) {
+                    Ok(file) => self.durability.sync(&file.into_std())?,
+                    Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+                    Err(error) => return Err(error),
+                }
+            }
+            self.durability.sync_dir(&dir.dir)
+        };
+        syncing().map_err(|error| internal(&path, error))
+    }
+
     /// Remembers a write of `id` over `base` under `lease` as giving `given`, and returns the
     /// write it replaces.
     fn remember(
@@ -690,7 +730,7 @@ impl FileLogStore {
 impl LogStore for FileLogStore {
     fn create(&self, lease: &Lease, image: &LogImage) -> KernelResult<Revision> {
         self.fenced(lease, |document| {
-            if let Some(Some(given)) = self.retried(lease, &image.id, None) {
+            if let Some(given) = self.repeated(lease, &image.id, None)? {
                 return Ok(given);
             }
             let files = self.files_of(document.entity())?;
@@ -740,7 +780,7 @@ impl LogStore for FileLogStore {
 
     fn commit(&self, lease: &Lease, base: &Revision, commit: &LogCommit) -> KernelResult<Revision> {
         self.fenced(lease, |document| {
-            if let Some(Some(given)) = self.retried(lease, &commit.id, Some(base)) {
+            if let Some(given) = self.repeated(lease, &commit.id, Some(base))? {
                 return Ok(given);
             }
             let found = self.at(document, base, Reading::Stamped)?;
@@ -797,7 +837,7 @@ impl LogStore for FileLogStore {
         commit: &LogCommit,
     ) -> KernelResult<Revision> {
         self.fenced(lease, |document| {
-            if let Some(Some(given)) = self.retried(lease, &commit.id, Some(base)) {
+            if let Some(given) = self.repeated(lease, &commit.id, Some(base))? {
                 return Ok(given);
             }
             let found = self.at(document, base, Reading::Whole)?;
@@ -830,7 +870,7 @@ impl LogStore for FileLogStore {
 
     fn replace(&self, lease: &Lease, base: &Revision, image: &LogImage) -> KernelResult<Revision> {
         self.fenced(lease, |document| {
-            if let Some(Some(given)) = self.retried(lease, &image.id, Some(base)) {
+            if let Some(given) = self.repeated(lease, &image.id, Some(base))? {
                 return Ok(given);
             }
             let found = self.at(document, base, Reading::Whole)?;

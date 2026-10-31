@@ -773,7 +773,7 @@ impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusi
 impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_workspace::documents::WorkspaceWarning where V: ppv_lite86::types::MultiLane<T>
 pub fn walthamstow_workspace::documents::WorkspaceWarning::vzip(self) -> V
 pub fn walthamstow_workspace::documents::hash_text(value: &str) -> alloc::string::String
-pub fn walthamstow_workspace::documents::list_documents(directory: &std::path::Path) -> anyhow::Result<alloc::vec::Vec<std::path::PathBuf>>
+pub fn walthamstow_workspace::documents::list_documents(directory: &cap_std::fs::dir::Dir) -> anyhow::Result<alloc::vec::Vec<std::path::PathBuf>>
 pub fn walthamstow_workspace::documents::parse_document<T>(path: &std::path::Path, text: &str) -> anyhow::Result<T> where T: for<'de> serde_core::de::Deserialize<'de>
 pub fn walthamstow_workspace::documents::relative_path(root: &std::path::Path, file: &std::path::Path) -> anyhow::Result<alloc::string::String>
 pub fn walthamstow_workspace::documents::supported_document(path: &std::path::Path) -> bool
@@ -781,9 +781,110 @@ pub mod walthamstow_workspace::mounts
 pub fn walthamstow_workspace::mounts::infer_mime_type(path: &str) -> core::option::Option<alloc::string::String>
 pub fn walthamstow_workspace::mounts::join_mount_path(parent: &str, child: &str) -> alloc::string::String
 pub fn walthamstow_workspace::mounts::normalize_mount_relative_path(path: &str) -> alloc::string::String
-pub fn walthamstow_workspace::mounts::resolve_mount_path(root: &std::path::Path, requested_path: &str) -> walthamstow_kernel::error::KernelResult<std::path::PathBuf>
+pub fn walthamstow_workspace::mounts::open_mount(root: &std::path::Path) -> walthamstow_kernel::error::KernelResult<cap_std::fs::dir::Dir>
+pub fn walthamstow_workspace::mounts::resolve_mount_path(mount: &cap_std::fs::dir::Dir, requested_path: &str) -> walthamstow_kernel::error::KernelResult<std::path::PathBuf>
 pub mod walthamstow_workspace::paths
-pub fn walthamstow_workspace::paths::resolve_directories<const N: usize>(root_dir: &std::path::Path, configured: [(&str, &str); N]) -> anyhow::Result<[std::path::PathBuf; N]>
+pub struct walthamstow_workspace::paths::ConfiguredDirectory
+pub walthamstow_workspace::paths::ConfiguredDirectory::dir: cap_std::fs::dir::Dir
+pub walthamstow_workspace::paths::ConfiguredDirectory::relative: alloc::string::String
+impl core::fmt::Debug for walthamstow_workspace::paths::ConfiguredDirectory
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for walthamstow_workspace::paths::ConfiguredDirectory
+impl core::marker::Send for walthamstow_workspace::paths::ConfiguredDirectory
+impl core::marker::Sync for walthamstow_workspace::paths::ConfiguredDirectory
+impl core::marker::Unpin for walthamstow_workspace::paths::ConfiguredDirectory
+impl core::panic::unwind_safe::RefUnwindSafe for walthamstow_workspace::paths::ConfiguredDirectory
+impl core::panic::unwind_safe::UnwindSafe for walthamstow_workspace::paths::ConfiguredDirectory
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for walthamstow_workspace::paths::ConfiguredDirectory where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for walthamstow_workspace::paths::ConfiguredDirectory where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<T, U> core::convert::Into<U> for walthamstow_workspace::paths::ConfiguredDirectory where U: core::convert::From<T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for walthamstow_workspace::paths::ConfiguredDirectory where U: core::convert::Into<T>
+pub type walthamstow_workspace::paths::ConfiguredDirectory::Error = core::convert::Infallible
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::try_from(value: U) -> core::result::Result<T, <T as core::convert::TryFrom<U>>::Error>
+impl<T, U> core::convert::TryInto<U> for walthamstow_workspace::paths::ConfiguredDirectory where U: core::convert::TryFrom<T>
+pub type walthamstow_workspace::paths::ConfiguredDirectory::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for walthamstow_workspace::paths::ConfiguredDirectory where T: 'static + ?core::marker::Sized
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for walthamstow_workspace::paths::ConfiguredDirectory where T: ?core::marker::Sized
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for walthamstow_workspace::paths::ConfiguredDirectory where T: ?core::marker::Sized
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for walthamstow_workspace::paths::ConfiguredDirectory
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::from(t: T) -> T
+impl<T> either::into_either::IntoEither for walthamstow_workspace::paths::ConfiguredDirectory
+impl<T> tower_http::follow_redirect::policy::PolicyExt for walthamstow_workspace::paths::ConfiguredDirectory where T: ?core::marker::Sized
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::and<P, B, E>(self, other: P) -> tower_http::follow_redirect::policy::and::And<T, P> where T: tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::or<P, B, E>(self, other: P) -> tower_http::follow_redirect::policy::or::Or<T, P> where T: tower_http::follow_redirect::policy::Policy<B, E>, P: tower_http::follow_redirect::policy::Policy<B, E>
+impl<T> tracing::instrument::Instrument for walthamstow_workspace::paths::ConfiguredDirectory
+impl<T> tracing::instrument::WithSubscriber for walthamstow_workspace::paths::ConfiguredDirectory
+impl<T> typenum::type_operators::Same for walthamstow_workspace::paths::ConfiguredDirectory
+pub type walthamstow_workspace::paths::ConfiguredDirectory::Output = T
+impl<T> yansi::paint::Paint for walthamstow_workspace::paths::ConfiguredDirectory where T: ?core::marker::Sized
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::attr(&self, value: yansi::attr_quirk::Attribute) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::bg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::bold(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::clear(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::conceal(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::dim(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::fg(&self, value: yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::invert(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::italic(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::linger(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::mask(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::on_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::on_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::on_bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::on_bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::on_bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::on_bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::on_bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::on_bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::on_bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::on_bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::on_bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::on_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::on_fixed(&self, color: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::on_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::on_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::on_primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::on_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::on_rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::on_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::on_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::quirk(&self, value: yansi::attr_quirk::Quirk) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::rapid_blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::resetting(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::rgb(&self, r: u8, g: u8, b: u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::strike(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::underline(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::whenever(&self, value: yansi::condition::Condition) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::wrap(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::yellow(&self) -> yansi::paint::Painted<&T>
+impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_workspace::paths::ConfiguredDirectory where T: ?core::marker::Sized
+impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_workspace::paths::ConfiguredDirectory where V: ppv_lite86::types::MultiLane<T>
+pub fn walthamstow_workspace::paths::ConfiguredDirectory::vzip(self) -> V
+pub fn walthamstow_workspace::paths::resolve_directories<const N: usize>(durability: walthamstow_kernel::durability::WriteDurability, root: &cap_std::fs::dir::Dir, configured: [(&str, &str); N]) -> anyhow::Result<[walthamstow_workspace::paths::ConfiguredDirectory; N]>
 pub mod walthamstow_workspace::publications
 pub struct walthamstow_workspace::publications::PendingCommit
 impl core::fmt::Debug for walthamstow_workspace::publications::PendingCommit

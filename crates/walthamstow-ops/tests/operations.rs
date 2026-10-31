@@ -103,9 +103,12 @@ fn memory() -> Rig {
 fn files() -> Rig {
     let root = tempfile::tempdir().unwrap();
     let data = tempfile::tempdir().unwrap();
-    let [notes] =
-        walthamstow_workspace::paths::resolve_directories(root.path(), [("notes", "notes")])
-            .unwrap();
+    let [notes] = walthamstow_workspace::paths::resolve_directories(
+        DURABILITY,
+        &walthamstow_kernel::files::open_dir(root.path()).unwrap(),
+        [("notes", "notes")],
+    )
+    .unwrap();
     let workspace = Arc::new(
         FileWorkspace::new(root.path(), data.path(), DURABILITY)
             .unwrap()
@@ -499,10 +502,18 @@ async fn every_operation_declares_walthamstow_s_refusals_and_runs_against_the_wo
 async fn recovery_finishes_an_upgrade_a_stop_interrupted() {
     let root = tempfile::tempdir().unwrap();
     let data = tempfile::tempdir().unwrap();
-    let [notes] =
-        walthamstow_workspace::paths::resolve_directories(root.path(), [("notes", "notes")])
-            .unwrap();
-    write_synced(DURABILITY, &notes.join("old.json"), &note(1, "old")).unwrap();
+    let [notes] = walthamstow_workspace::paths::resolve_directories(
+        DURABILITY,
+        &walthamstow_kernel::files::open_dir(root.path()).unwrap(),
+        [("notes", "notes")],
+    )
+    .unwrap();
+    write_synced(
+        DURABILITY,
+        &root.path().join("notes/old.json"),
+        &note(1, "old"),
+    )
+    .unwrap();
     let held = walthamstow_kernel::files::open_dir(data.path()).unwrap();
     let path = Path::new("notes/old.json").to_path_buf();
     let upgraded = to_format_2("", "", &note(1, "old")).unwrap();

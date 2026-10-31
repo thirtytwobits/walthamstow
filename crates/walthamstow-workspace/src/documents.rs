@@ -2,8 +2,9 @@
 //!
 //! Finding, reading and reporting on a workspace's authored documents.
 
+use cap_fs_ext::DirExt;
+use cap_std::fs::Dir;
 use serde::Deserialize;
-use std::fs;
 use std::path::{Path, PathBuf};
 use walthamstow_kernel::hashing::sha256_hex;
 
@@ -33,38 +34,43 @@ pub fn supported_document(path: &Path) -> bool {
     )
 }
 
-/// Recursively lists supported YAML and JSON documents beneath a directory.
+/// Recursively lists supported YAML and JSON documents in `directory`, by their paths relative
+/// to it, sorted lexicographically for stable loader behaviour.
 ///
-/// Missing directories return `[]`. Results are recursively discovered, filtered to supported
-/// document extensions, and sorted lexicographically by path for stable loader behaviour. A
-/// link beneath `directory` to a directory or to a document is refused, so discovery never
-/// leaves it.
-pub fn list_documents(directory: &Path) -> anyhow::Result<Vec<PathBuf>> {
-    let entries = match fs::read_dir(directory) {
-        Ok(entries) => entries,
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
-        Err(error) => {
-            return Err(anyhow::anyhow!(
-                "Could not list {}: {error}",
-                directory.display()
-            ))
-        }
-    };
-
+/// Discovery walks the directory's handle and never follows a link. A link to a document, to a
+/// directory, or out of the directory is refused, since documents behind it would go unfound;
+/// a link within the directory to any other file, or to nothing, is passed over. A document that
+/// is not a regular file is refused.
+pub fn list_documents(directory: &Dir) -> anyhow::Result<Vec<PathBuf>> {
     let mut files = Vec::new();
-    for entry in entries {
-        let entry = entry?;
-        let path = entry.path();
-        let kind = entry.file_type()?;
+    collect_documents(directory, Path::new(""), &mut files)?;
+    files.sort();
+    Ok(files)
+}
+
+/// Adds each document in `dir`, which lies at `prefix` in the listed directory, to `files`.
+fn collect_documents(dir: &Dir, prefix: &Path, files: &mut Vec<PathBuf>) -> anyhow::Result<()> {
+    let listing =
+        |error: std::io::Error| anyhow::anyhow!("Could not list {}: {error}", prefix.display());
+    for entry in dir.entries().map_err(listing)? {
+        let entry = entry.map_err(listing)?;
+        let name = entry.file_name();
+        let path = prefix.join(&name);
+        let kind = entry.file_type().map_err(listing)?;
         if kind.is_symlink() {
-            if path.is_dir() || supported_document(&path) {
+            let leads_elsewhere = match dir.metadata(&name) {
+                Ok(metadata) => metadata.is_dir(),
+                Err(error) => error.kind() != std::io::ErrorKind::NotFound,
+            };
+            if leads_elsewhere || supported_document(&path) {
                 anyhow::bail!(
                     "{} is a link, which workspace discovery does not follow.",
                     path.display()
                 );
             }
         } else if kind.is_dir() {
-            files.extend(list_documents(&path)?);
+            let nested = dir.open_dir_nofollow(&name).map_err(listing)?;
+            collect_documents(&nested, &path, files)?;
         } else if supported_document(&path) {
             if !kind.is_file() {
                 anyhow::bail!(
@@ -75,8 +81,7 @@ pub fn list_documents(directory: &Path) -> anyhow::Result<Vec<PathBuf>> {
             files.push(path);
         }
     }
-    files.sort();
-    Ok(files)
+    Ok(())
 }
 
 /// Converts an absolute file path into a workspace-relative path using forward slashes.
@@ -124,6 +129,12 @@ pub fn hash_text(value: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs;
+
+    /// The directory at `path`, held as a `Dir`.
+    fn dir(path: &Path) -> Dir {
+        walthamstow_kernel::files::open_dir(path).unwrap()
+    }
 
     #[derive(Debug, Deserialize, PartialEq, Eq)]
     struct SimpleDocument {
@@ -184,13 +195,8 @@ mod tests {
             fs::create_dir_all(path.parent().unwrap()).unwrap();
             fs::write(path, "").unwrap();
         }
-        let listed = list_documents(root.path()).unwrap();
-        assert!(listed.iter().all(|path| supported_document(path)));
-        assert_eq!(listed.len(), 3);
-        assert!(listed.windows(2).all(|pair| pair[0] < pair[1]));
-        assert!(list_documents(&root.path().join("missing"))
-            .unwrap()
-            .is_empty());
+        let listed = list_documents(&dir(root.path())).unwrap();
+        assert_eq!(listed, ["a/c.json", "a/d.yml", "b.yaml"].map(PathBuf::from));
     }
 
     #[cfg(unix)]
@@ -201,21 +207,18 @@ mod tests {
         let _passed =
             std::os::unix::net::UnixListener::bind(root.path().join("notes.sock")).unwrap();
         assert_eq!(
-            list_documents(root.path()).unwrap(),
-            vec![root.path().join("kept.yaml")]
+            list_documents(&dir(root.path())).unwrap(),
+            vec![PathBuf::from("kept.yaml")]
         );
-        let special = root.path().join("special.yaml");
-        let _refused = std::os::unix::net::UnixListener::bind(&special).unwrap();
-        let error = list_documents(root.path()).unwrap_err();
-        assert!(
-            error.to_string().contains(&special.display().to_string()),
-            "{error}"
-        );
+        let _refused =
+            std::os::unix::net::UnixListener::bind(root.path().join("special.yaml")).unwrap();
+        let error = list_documents(&dir(root.path())).unwrap_err();
+        assert!(error.to_string().contains("special.yaml"), "{error}");
     }
 
     #[cfg(unix)]
     #[test]
-    fn listing_refuses_a_link_to_a_directory_or_a_document_and_passes_over_others() {
+    fn listing_refuses_a_link_to_a_directory_a_document_or_out_and_passes_over_others() {
         use std::os::unix::fs::symlink;
         let outside = tempfile::tempdir().unwrap();
         fs::write(outside.path().join("elsewhere.yaml"), "").unwrap();
@@ -224,40 +227,26 @@ mod tests {
             ("linked", outside.path().to_path_buf()),
             ("linked.yaml", outside.path().join("elsewhere.yaml")),
             ("nested/linked.json", outside.path().join("elsewhere.yaml")),
+            // A handle cannot see what a link out of the directory leads to.
+            ("notes.txt", outside.path().join("elsewhere.txt")),
         ] {
             let root = tempfile::tempdir().unwrap();
             fs::write(root.path().join("kept.yaml"), "").unwrap();
-            let link = root.path().join(link);
-            fs::create_dir_all(link.parent().unwrap()).unwrap();
-            symlink(&target, &link).unwrap();
-            let error = list_documents(root.path()).unwrap_err();
-            assert!(
-                error.to_string().contains(&link.display().to_string()),
-                "{error}"
-            );
+            let path = root.path().join(link);
+            fs::create_dir_all(path.parent().unwrap()).unwrap();
+            symlink(&target, &path).unwrap();
+            let error = list_documents(&dir(root.path())).unwrap_err();
+            assert!(error.to_string().contains(link), "{error}");
         }
         let root = tempfile::tempdir().unwrap();
         fs::write(root.path().join("kept.yaml"), "").unwrap();
-        symlink(
-            outside.path().join("elsewhere.txt"),
-            root.path().join("notes.txt"),
-        )
-        .unwrap();
+        fs::write(root.path().join("kept.txt"), "").unwrap();
+        symlink("kept.txt", root.path().join("notes.txt")).unwrap();
+        symlink("missing.txt", root.path().join("dangling.txt")).unwrap();
         assert_eq!(
-            list_documents(root.path()).unwrap(),
-            vec![root.path().join("kept.yaml")]
+            list_documents(&dir(root.path())).unwrap(),
+            vec![PathBuf::from("kept.yaml")]
         );
-    }
-
-    #[cfg(unix)]
-    #[test]
-    fn a_directory_that_cannot_be_listed_is_an_error_not_an_empty_workspace() {
-        let root = tempfile::tempdir().unwrap();
-        fs::write(root.path().join("plain"), "").unwrap();
-        assert!(list_documents(&root.path().join("plain/documents")).is_err());
-        assert!(list_documents(&root.path().join("missing"))
-            .unwrap()
-            .is_empty());
     }
 
     #[test]

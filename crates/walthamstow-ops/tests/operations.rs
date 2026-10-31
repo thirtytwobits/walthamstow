@@ -738,3 +738,46 @@ fn an_upgrade_id_outside_the_alphabet_or_registered_twice_is_refused() {
         .upgrade(UPGRADE, to_format_2)
         .is_err());
 }
+
+#[cfg(unix)]
+#[test]
+fn a_document_in_a_directory_reached_through_a_link_is_named_where_it_lies_and_upgraded() {
+    let root = tempfile::tempdir().unwrap();
+    let data = tempfile::tempdir().unwrap();
+    std::fs::create_dir_all(root.path().join("data/notes")).unwrap();
+    std::os::unix::fs::symlink("data/notes", root.path().join("notes")).unwrap();
+    write_synced(
+        DURABILITY,
+        &root.path().join("data/notes/old.json"),
+        &note(1, "old"),
+    )
+    .unwrap();
+    let [notes] = walthamstow_workspace::paths::resolve_directories(
+        DURABILITY,
+        &walthamstow_kernel::files::open_dir(root.path()).unwrap(),
+        [("notes", "notes")],
+    )
+    .unwrap();
+    assert_eq!(notes.relative, "data/notes");
+    let workspace = FileWorkspace::new(root.path(), data.path(), DURABILITY)
+        .unwrap()
+        .directory("note", notes);
+    let documents = workspace.documents("note").unwrap();
+    assert_eq!(
+        documents,
+        vec![("data/notes/old.json".to_owned(), note(1, "old"))]
+    );
+    let upgraded = note(2, "old");
+    workspace
+        .publish(
+            "through-a-link",
+            &BTreeMap::from([("data/notes/old.json".to_owned(), note(1, "old"))]),
+            &BTreeMap::from([("data/notes/old.json".to_owned(), upgraded.clone())]),
+        )
+        .unwrap();
+    assert_eq!(
+        std::fs::read(root.path().join("data/notes/old.json")).unwrap(),
+        upgraded
+    );
+    assert!(workspace.pending().unwrap().is_empty());
+}

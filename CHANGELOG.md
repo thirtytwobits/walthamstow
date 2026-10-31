@@ -27,8 +27,8 @@
   once, and returns a `Result`.
 - `walthamstow-workspace` resolves through `cap_std::fs::Dir` handles. `paths::resolve_directories`
   takes the workspace root's handle and a durability, creates each configured directory that does
-  not exist, and returns a `ConfiguredDirectory`, the directory held open with its configured
-  relative path; overlap through a link is found by where the link leads. `documents::list_documents`
+  not exist, and returns a `ConfiguredDirectory`, the directory held open with where it lies
+  relative to the root, every link resolved; overlap is compared case-folded where it lies. `documents::list_documents`
   walks a `Dir` and returns paths relative to it, and refuses a link out of the directory.
   `mounts::open_mount` opens a mount, and `mounts::resolve_mount_path` takes its handle and returns
   the mount-relative path to open through it. `walthamstow-ops`' `FileWorkspace::directory` takes a

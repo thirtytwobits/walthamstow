@@ -43,13 +43,20 @@ pub fn supported_document(path: &Path) -> bool {
 /// is not a regular file is refused.
 pub fn list_documents(directory: &Dir) -> anyhow::Result<Vec<PathBuf>> {
     let mut files = Vec::new();
-    collect_documents(directory, Path::new(""), &mut files)?;
+    collect_documents(directory, directory, Path::new(""), &mut files)?;
     files.sort();
     Ok(files)
 }
 
-/// Adds each document in `dir`, which lies at `prefix` in the listed directory, to `files`.
-fn collect_documents(dir: &Dir, prefix: &Path, files: &mut Vec<PathBuf>) -> anyhow::Result<()> {
+/// Adds each document in `dir`, which lies at `prefix` in the listed directory `listed`, to
+/// `files`. A link is classified through `listed`, so one that stays within it is told apart
+/// from one that leaves it wherever it lies.
+fn collect_documents(
+    listed: &Dir,
+    dir: &Dir,
+    prefix: &Path,
+    files: &mut Vec<PathBuf>,
+) -> anyhow::Result<()> {
     let listing =
         |error: std::io::Error| anyhow::anyhow!("Could not list {}: {error}", prefix.display());
     for entry in dir.entries().map_err(listing)? {
@@ -58,7 +65,7 @@ fn collect_documents(dir: &Dir, prefix: &Path, files: &mut Vec<PathBuf>) -> anyh
         let path = prefix.join(&name);
         let kind = entry.file_type().map_err(listing)?;
         if kind.is_symlink() {
-            let leads_elsewhere = match dir.metadata(&name) {
+            let leads_elsewhere = match listed.metadata(&path) {
                 Ok(metadata) => metadata.is_dir(),
                 Err(error) => error.kind() != std::io::ErrorKind::NotFound,
             };
@@ -70,7 +77,7 @@ fn collect_documents(dir: &Dir, prefix: &Path, files: &mut Vec<PathBuf>) -> anyh
             }
         } else if kind.is_dir() {
             let nested = dir.open_dir_nofollow(&name).map_err(listing)?;
-            collect_documents(&nested, &path, files)?;
+            collect_documents(listed, &nested, &path, files)?;
         } else if supported_document(&path) {
             if !kind.is_file() {
                 anyhow::bail!(
@@ -241,7 +248,9 @@ mod tests {
         let root = tempfile::tempdir().unwrap();
         fs::write(root.path().join("kept.yaml"), "").unwrap();
         fs::write(root.path().join("kept.txt"), "").unwrap();
+        fs::create_dir(root.path().join("nested")).unwrap();
         symlink("kept.txt", root.path().join("notes.txt")).unwrap();
+        symlink("../kept.txt", root.path().join("nested/notes.txt")).unwrap();
         symlink("missing.txt", root.path().join("dangling.txt")).unwrap();
         assert_eq!(
             list_documents(&dir(root.path())).unwrap(),

@@ -66,7 +66,8 @@ A file Walthamstow reads as state must be a regular file. A link, FIFO, socket o
 there is refused unopened.
 
 A configured workspace directory is resolved through the workspace root's handle, created when it
-does not exist, and held open, so a link changed later does not move it. The handle refuses one
+does not exist, and held open, so a link changed later does not move it. Its documents are named
+by where it lies relative to the root, with every link resolved. The handle refuses one
 that would leave the root, or where a part of it that exists is not a directory. Walthamstow
 checks the names:
 

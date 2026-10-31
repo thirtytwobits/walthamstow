@@ -4,6 +4,7 @@
 //! held open through the root's handle.
 
 use anyhow::{bail, Context, Result};
+use cap_fs_ext::DirExt;
 use cap_std::fs::Dir;
 use std::path::{Component, Path, PathBuf};
 use walthamstow_kernel::durability::{create_dir_all_in, WriteDurability};
@@ -13,7 +14,8 @@ use walthamstow_kernel::files::{identity, Identity};
 #[derive(Debug)]
 pub struct ConfiguredDirectory {
     pub dir: Dir,
-    /// Where the directory is configured, relative to the root, with `/` between components.
+    /// Where the directory lies relative to the root, every link on the way to it resolved, with
+    /// `/` between components.
     pub relative: String,
 }
 
@@ -22,12 +24,13 @@ pub struct ConfiguredDirectory {
 const MAX_DEPTH: usize = 256;
 
 /// Resolves each `(name, configured)` directory through the workspace root `root`, creating each
-/// that does not exist as durably as `durability` asks. A directory must be a normalised
-/// relative path in ASCII, every component a name Windows allows, and no two may overlap,
-/// compared case-folded or through a link within the root, since a case-insensitive file system
-/// holds two that differ only in case as one. A directory that would leave the root, or where a
-/// part of it that exists is not a directory, fails through the root's handle. A refusal names
-/// each directory by its `name`.
+/// that does not exist as durably as `durability` asks, and gives where each lies with every link
+/// within the root resolved. A directory must be a normalised relative path in ASCII, every
+/// component a name Windows allows, and no two may overlap, compared case-folded where they are
+/// configured and where they lie, since a case-insensitive file system holds two that differ only
+/// in case as one. A directory that would leave the root, or where a part of it that exists is
+/// not a directory, fails through the root's handle. A refusal names each directory by its
+/// `name`.
 pub fn resolve_directories<const N: usize>(
     durability: WriteDurability,
     root: &Dir,
@@ -42,18 +45,18 @@ pub fn resolve_directories<const N: usize>(
     })?;
     let root_identity = identity(root).context("Failed to identify the workspace root.")?;
     let mut held = Vec::with_capacity(N);
-    let mut ancestries = Vec::with_capacity(N);
     for (name, value) in configured {
         let dir = open_or_create(durability, root, name, value)?;
-        ancestries.push(ancestry(root, &root_identity, name, value, &dir)?);
-        held.push(ConfiguredDirectory {
-            dir,
-            relative: value.to_owned(),
-        });
+        let chain = ancestry(root, &root_identity, name, value, &dir)?;
+        let relative = resolved_path(root, name, &chain)?;
+        held.push(ConfiguredDirectory { dir, relative });
     }
+    let folded = held
+        .iter()
+        .map(|directory| PathBuf::from(directory.relative.to_lowercase()))
+        .collect::<Vec<_>>();
     refuse_overlap(&configured, |left, right| {
-        ancestries[left].contains(&ancestries[right][0])
-            || ancestries[right].contains(&ancestries[left][0])
+        folded[left].starts_with(&folded[right]) || folded[right].starts_with(&folded[left])
     })?;
     Ok(held
         .try_into()
@@ -131,6 +134,48 @@ fn open_or_create(
     };
     create_dir_all_in(durability, root, Path::new(configured)).map_err(refused)?;
     root.open_dir(configured).map_err(refused)
+}
+
+/// Where the directory whose identity and its ancestors' are `chain`, nearest first, lies
+/// beneath `root`, as the names of the directories it lies in: at each level, the directory, not
+/// a link, whose identity is the next in the chain.
+fn resolved_path(root: &Dir, name: &str, chain: &[Identity]) -> Result<String> {
+    let mut names = Vec::with_capacity(chain.len());
+    let mut current = root
+        .try_clone()
+        .with_context(|| format!("Failed to resolve {name}."))?;
+    for wanted in chain.iter().rev() {
+        let mut found = None;
+        for entry in current
+            .entries()
+            .with_context(|| format!("Failed to resolve {name}."))?
+        {
+            let entry = entry.with_context(|| format!("Failed to resolve {name}."))?;
+            if !entry
+                .file_type()
+                .with_context(|| format!("Failed to resolve {name}."))?
+                .is_dir()
+            {
+                continue;
+            }
+            let child = current
+                .open_dir_nofollow(entry.file_name())
+                .with_context(|| format!("Failed to resolve {name}."))?;
+            if &identity(&child).with_context(|| format!("Failed to identify {name}."))? == wanted {
+                found = Some((entry.file_name(), child));
+                break;
+            }
+        }
+        let Some((entry, child)) = found else {
+            bail!("{name} could not be found where its links lead within the workspace root.");
+        };
+        let Some(entry) = entry.to_str() else {
+            bail!("{name} lies in a directory not named in UTF-8.");
+        };
+        names.push(entry.to_owned());
+        current = child;
+    }
+    Ok(names.join("/"))
 }
 
 /// The identities of `dir`, which `configured` names through `root`, and of each directory
@@ -260,6 +305,7 @@ mod tests {
         std::fs::create_dir_all(root.path().join("data/real")).unwrap();
         std::os::unix::fs::symlink("data/real", root.path().join("alias")).unwrap();
         let [notes] = resolve(root.path(), [("notes", "alias/notes")]).unwrap();
+        assert_eq!(notes.relative, "data/real/notes");
         std::fs::remove_file(root.path().join("alias")).unwrap();
         std::os::unix::fs::symlink(outside.path(), root.path().join("alias")).unwrap();
         notes.dir.write("held.yaml", b"held").unwrap();
@@ -315,6 +361,29 @@ mod tests {
             "{message}"
         );
         resolve(root.path(), [("linked", "alias"), ("other", "elsewhere")]).unwrap();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn directories_whose_resolved_places_differ_only_in_case_overlap() {
+        let root = tempfile::tempdir().unwrap();
+        std::fs::create_dir_all(root.path().join("Data/notes")).unwrap();
+        if root.path().join("data").exists() {
+            // A file system that folds case holds the two as one, which the identities show.
+            return;
+        }
+        std::fs::create_dir_all(root.path().join("data/notes")).unwrap();
+        std::os::unix::fs::symlink("Data", root.path().join("alias")).unwrap();
+        let error = resolve(
+            root.path(),
+            [("linked", "alias/notes"), ("direct", "data/notes")],
+        )
+        .unwrap_err();
+        let message = error.to_string();
+        assert!(
+            message.contains("linked") && message.contains("direct"),
+            "{message}"
+        );
     }
 
     #[cfg(unix)]

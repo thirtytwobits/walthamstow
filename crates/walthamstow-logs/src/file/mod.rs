@@ -523,15 +523,22 @@ impl FileLogStore {
     }
 
     /// Makes `document`'s head and log files and its directory's entries durable. A file that is
-    /// absent has nothing to make durable.
+    /// absent has nothing to make durable; anything there but a regular file is refused
+    /// unopened.
     fn make_durable(&self, document: &DocumentId) -> KernelResult<()> {
         let files = self.files_of(document.entity())?;
         let Some(dir) = self.layout.document_dir(document)? else {
             return Ok(());
         };
+        let mut present = Vec::new();
+        for name in [files.log(), files.head()] {
+            if regular(&dir.dir, name).map_err(|fault| fault.error(document))? {
+                present.push(name);
+            }
+        }
         let path = self.layout.root().join(&dir.relative);
         let syncing = || -> std::io::Result<()> {
-            for name in [files.log(), files.head()] {
+            for name in present {
                 let mut options = cap_std::fs::OpenOptions::new();
                 options.read(true);
                 // Windows flushes a file only through a handle with write access.

@@ -930,6 +930,27 @@ mod files {
     }
 
     #[test]
+    fn a_retry_refuses_a_file_that_is_not_regular_unopened() {
+        let setup = Setup::new();
+        let (document, base) = with_records(&setup, "a");
+        let lease = setup.lease(&document);
+        let commit = LogCommit {
+            id: WriteId::new("replaced"),
+            head: None,
+            records: vec![record(3)],
+        };
+        setup.store.commit(&lease, &base, &commit).unwrap();
+        let log = setup.path(&document, LOG);
+        std::fs::remove_file(&log).unwrap();
+        std::fs::create_dir(&log).unwrap();
+        let refused = setup.store.commit(&lease, &base, &commit).unwrap_err();
+        assert_eq!(
+            LogFault::of(&refused).map(|fault| fault.kind()),
+            Some(FaultKind::Inaccessible)
+        );
+    }
+
+    #[test]
     fn an_unsettled_stamp_is_hashed_and_a_settled_one_is_trusted() {
         let setup = Setup::new();
         let (document, revision) = with_records(&setup, "a");

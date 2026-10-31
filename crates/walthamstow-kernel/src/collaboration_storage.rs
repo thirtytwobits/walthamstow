@@ -12,20 +12,28 @@
 //! `audit.ndjson` and quarantined evidence under `quarantine/`, are kept where
 //! the adapter is told to keep them: beside the envelopes unless another place
 //! is given.
+//!
+//! Each operation opens the collaboration root and the records directory as
+//! `cap-std` directories, and reaches every file under them through those
+//! handles: a path or a link that would leave a root fails. An entity directory and the
+//! quarantine directory are opened without following a link, so a link there
+//! is refused.
 
 use crate::clock::WallClock;
 use crate::durability::WriteDurability;
 use crate::hashing::sha256_hex;
 use anyhow::{anyhow, Context, Result as AnyhowResult};
+use cap_fs_ext::DirExt;
+use cap_std::fs::{Dir, Metadata};
 use clerkenwell_store::{
     CollaborationAuditQuery, CollaborationAuditRecord, CollaborationDocumentId,
     CollaborationStoragePort, PeerKey, StoreError, StoreResult, StoredEnvelope, ENVELOPE_VERSION,
     PEER_KEY_MIN_BYTES,
 };
 use fs2::FileExt;
-use std::fs::OpenOptions;
 use std::io::{Read, Seek, SeekFrom, Write};
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 const AUDIT_FILE: &str = "audit.ndjson";
@@ -46,13 +54,209 @@ const SETTLED_METADATA_AGE: Duration = Duration::from_secs(2);
 /// another.
 #[derive(Debug, Clone)]
 pub struct FileCollaborationStorage {
-    root: PathBuf,
+    root: Arc<Root>,
     /// Where the audit stream and quarantined evidence go.
-    records: PathBuf,
+    records: Arc<Root>,
     /// How far each write goes before the store relies on it.
     durability: WriteDurability,
     /// Where evidence names and metadata stamps read the time.
     clock: WallClock,
+}
+
+/// A directory the store keeps state under. Each operation opens it as a `cap-std` directory
+/// and reaches everything under it through that handle; it is opened afresh each time, since
+/// preparing a cache replaces the directory under a store that may outlive it.
+#[derive(Debug)]
+struct Root {
+    path: PathBuf,
+}
+
+impl Root {
+    fn new(path: &Path) -> Self {
+        Self {
+            path: path.to_path_buf(),
+        }
+    }
+
+    /// The root, or `None` while it does not exist.
+    fn open(&self) -> StoreResult<Option<Place>> {
+        match crate::files::open_dir(&self.path) {
+            Ok(dir) => Ok(Some(Place {
+                dir,
+                path: self.path.clone(),
+            })),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(None),
+            Err(error) => Err(inspecting(&self.path, error)),
+        }
+    }
+
+    /// The root, created with every missing ancestor when it does not exist.
+    fn create(&self, durability: WriteDurability) -> StoreResult<Place> {
+        if let Some(place) = self.open()? {
+            return Ok(place);
+        }
+        crate::durability::create_dir_all_synced(durability, &self.path).map_err(|error| {
+            StoreError::internal(format!(
+                "Could not create collaboration storage directory {}: {error}",
+                self.path.display()
+            ))
+        })?;
+        self.open()?.ok_or_else(|| {
+            StoreError::internal(format!(
+                "The collaboration storage directory {} was removed as it was made.",
+                self.path.display()
+            ))
+        })
+    }
+}
+
+/// A directory of the store's, open, and where it lies.
+struct Place {
+    dir: Dir,
+    path: PathBuf,
+}
+
+fn inspecting(path: &Path, error: impl std::fmt::Display) -> StoreError {
+    StoreError::internal(format!(
+        "Could not inspect collaboration state {}: {error}",
+        path.display()
+    ))
+}
+
+impl Place {
+    fn file(&self, name: &str) -> PathBuf {
+        self.path.join(name)
+    }
+
+    /// The directory `name` here, or `None` when there is none. A link there is refused
+    /// unfollowed.
+    fn child(&self, name: &str) -> StoreResult<Option<Place>> {
+        let path = self.file(name);
+        match self.dir.open_dir_nofollow(name) {
+            Ok(dir) => Ok(Some(Place { dir, path })),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(None),
+            Err(error) => Err(StoreError::internal(format!(
+                "The collaboration directory {} is not a directory the store opens; a link is \
+                 not followed: {error}",
+                path.display()
+            ))),
+        }
+    }
+
+    /// The directory `name` here, created with its entry durable when it does not exist. A
+    /// link there is refused unfollowed.
+    fn create_child(&self, durability: WriteDurability, name: &str) -> StoreResult<Place> {
+        crate::durability::create_dir_all_in(durability, &self.dir, Path::new(name)).map_err(
+            |error| {
+                StoreError::internal(format!(
+                    "Could not create collaboration storage directory {}: {error}",
+                    self.file(name).display()
+                ))
+            },
+        )?;
+        self.child(name)?.ok_or_else(|| {
+            StoreError::internal(format!(
+                "The collaboration storage directory {} was removed as it was made.",
+                self.file(name).display()
+            ))
+        })
+    }
+
+    /// Refuses `name` when something other than a regular file is there: a link, which the
+    /// store does not follow, or a special file, which could block the open.
+    fn refuse_irregular(&self, name: &str) -> StoreResult<()> {
+        match self.dir.symlink_metadata(name) {
+            Ok(metadata) if !metadata.is_file() => Err(StoreError::internal(format!(
+                "Collaboration state {} is not a regular file; the store does not follow or open it.",
+                self.file(name).display()
+            ))),
+            Ok(_) => Ok(()),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
+            Err(error) => Err(inspecting(&self.file(name), error)),
+        }
+    }
+
+    /// The bytes of `name`, or `None` when there is no file. Anything but a regular file is
+    /// refused.
+    fn read_optional(&self, name: &str) -> StoreResult<Option<Vec<u8>>> {
+        self.refuse_irregular(name)?;
+        match self.dir.read(name) {
+            Ok(bytes) => Ok(Some(bytes)),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(None),
+            Err(error) => Err(StoreError::internal(format!(
+                "Could not read collaboration state {}: {error}",
+                self.file(name).display()
+            ))),
+        }
+    }
+
+    /// Writes `bytes` to `name` durably, by a rename.
+    fn write(&self, durability: WriteDurability, name: &str, bytes: &[u8]) -> StoreResult<()> {
+        crate::durability::write_synced_in(durability, &self.dir, Path::new(name), bytes).map_err(
+            |error| {
+                StoreError::internal(format!(
+                    "Could not write collaboration state {}: {error}",
+                    self.file(name).display()
+                ))
+            },
+        )
+    }
+
+    fn remove_file_if_exists(&self, name: &str) -> StoreResult<()> {
+        match self.dir.remove_file(name) {
+            Ok(()) => Ok(()),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
+            Err(error) => Err(StoreError::internal(format!(
+                "Could not remove collaboration state {}: {error}",
+                self.file(name).display()
+            ))),
+        }
+    }
+
+    /// Makes this directory's entries durable, recording what `doing` changed there.
+    fn sync(&self, durability: WriteDurability, doing: &str) -> StoreResult<()> {
+        durability.sync_dir(&self.dir).map_err(|error| {
+            StoreError::internal(format!(
+                "Could not record {doing} in {}: {error}",
+                self.path.display()
+            ))
+        })
+    }
+
+    /// The regular file `name` here, opened to read and write and created when absent.
+    fn open_state(&self, name: &str) -> StoreResult<std::fs::File> {
+        self.refuse_irregular(name)?;
+        let mut options = cap_std::fs::OpenOptions::new();
+        options.create(true).truncate(false).read(true).write(true);
+        self.dir
+            .open_with(name, &options)
+            .map(cap_std::fs::File::into_std)
+            .map_err(|error| {
+                StoreError::internal(format!(
+                    "Could not open collaboration state {}: {error}",
+                    self.file(name).display()
+                ))
+            })
+    }
+
+    /// Runs `operation` while holding the lock file `name` here, which names `what` it guards.
+    fn with_lock<T>(
+        &self,
+        name: &str,
+        what: &str,
+        operation: impl FnOnce() -> StoreResult<T>,
+    ) -> StoreResult<T> {
+        let lock = self.open_state(name)?;
+        lock.lock_exclusive()
+            .map_err(|error| StoreError::internal(format!("Could not lock {what}: {error}")))?;
+        let result = operation();
+        let unlocked = FileExt::unlock(&lock)
+            .map_err(|error| StoreError::internal(format!("Could not unlock {what}: {error}")));
+        match (result, unlocked) {
+            (Err(error), _) | (Ok(_), Err(error)) => Err(error),
+            (Ok(value), Ok(())) => Ok(value),
+        }
+    }
 }
 
 impl FileCollaborationStorage {
@@ -66,9 +270,10 @@ impl FileCollaborationStorage {
                 root.display()
             ));
         }
+        let root = Arc::new(Root::new(root));
         Ok(Self {
-            root: root.to_path_buf(),
-            records: root.to_path_buf(),
+            records: root.clone(),
+            root,
             durability,
             clock,
         })
@@ -85,16 +290,12 @@ impl FileCollaborationStorage {
                 records.display()
             ));
         }
-        self.records = records.to_path_buf();
+        self.records = Arc::new(Root::new(records));
         Ok(self)
     }
 
-    fn entity_dir(&self, entity: &str) -> PathBuf {
-        self.root.join(safe_entity_name(entity))
-    }
-
-    /// Refuses `entity` when its directory is a link, which the store does not follow.
-    fn refuse_linked_entity_dir(&self, entity: &str) -> StoreResult<()> {
+    /// The name of `entity`'s directory, refused when the store reserves it or Windows does.
+    fn entity_name(entity: &str) -> StoreResult<String> {
         let name = safe_entity_name(entity);
         if [QUARANTINE_DIR, FORMAT_MARKER_FILE].contains(&name.as_str()) {
             return Err(StoreError::internal(format!(
@@ -106,263 +307,127 @@ impl FileCollaborationStorage {
                 "The entity \"{entity}\" maps to {name}, a device name Windows reserves."
             )));
         }
-        let directory = self.entity_dir(entity);
-        match std::fs::symlink_metadata(&directory) {
-            Ok(metadata) if metadata.file_type().is_symlink() => {
-                Err(StoreError::internal(format!(
-                    "The collaboration directory {} is a link, which the store does not follow.",
-                    directory.display()
-                )))
-            }
-            Ok(_) => Ok(()),
-            Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
-            Err(error) => Err(StoreError::internal(format!(
-                "Could not inspect collaboration directory {}: {error}",
-                directory.display()
-            ))),
-        }
+        Ok(name)
     }
 
-    /// Refuses `entity` when its directory is a link or names another entity.
-    fn check_entity(&self, entity: &str) -> StoreResult<()> {
-        self.refuse_linked_entity_dir(entity)?;
-        let marker = self.entity_dir(entity).join(ENTITY_FILE);
-        match read_optional(&marker)? {
+    /// Refuses `entity` when its directory names another entity.
+    fn verify_entity(directory: &Place, entity: &str) -> StoreResult<()> {
+        match directory.read_optional(ENTITY_FILE)? {
             Some(held) if held != entity.as_bytes() => Err(StoreError::internal(format!(
                 "The collaboration directory {} holds the entity \"{}\", not \"{entity}\".",
-                self.entity_dir(entity).display(),
+                directory.path.display(),
                 String::from_utf8_lossy(&held)
             ))),
             _ => Ok(()),
         }
     }
 
-    /// Names `entity` as the one its directory holds before anything is written
-    /// there, or refuses it when the directory names another.
-    fn claim_entity(&self, entity: &str) -> StoreResult<()> {
-        self.refuse_linked_entity_dir(entity)?;
-        let directory = self.entity_dir(entity);
-        let marker = directory.join(ENTITY_FILE);
-        if read_optional(&marker)?.is_some() {
-            return self.check_entity(entity);
+    /// `entity`'s directory, or `None` when there is none, refused when it is a link or names
+    /// another entity.
+    fn entity_dir(&self, entity: &str) -> StoreResult<Option<Place>> {
+        let name = Self::entity_name(entity)?;
+        let Some(root) = self.root.open()? else {
+            return Ok(None);
+        };
+        let Some(directory) = root.child(&name)? else {
+            return Ok(None);
+        };
+        Self::verify_entity(&directory, entity)?;
+        Ok(Some(directory))
+    }
+
+    /// `entity`'s directory, created when absent, with `entity` named as the one it holds
+    /// before anything else is written there; refused when it is a link or names another.
+    fn claim_entity(&self, entity: &str) -> StoreResult<Place> {
+        let name = Self::entity_name(entity)?;
+        let directory = self
+            .root
+            .create(self.durability)?
+            .create_child(self.durability, &name)?;
+        if directory.read_optional(ENTITY_FILE)?.is_none() {
+            directory.with_lock(ENTITY_LOCK_FILE, "the entity directory", || match directory
+                .read_optional(ENTITY_FILE)?
+            {
+                Some(_) => Ok(()),
+                None => directory.write(self.durability, ENTITY_FILE, entity.as_bytes()),
+            })?;
         }
-        with_lock(
-            self.durability,
-            &directory.join(ENTITY_LOCK_FILE),
-            "the entity directory",
-            || match read_optional(&marker)? {
-                Some(_) => self.check_entity(entity),
-                None => write_envelope(self.durability, &marker, entity.as_bytes()),
-            },
-        )
+        Self::verify_entity(&directory, entity)?;
+        Ok(directory)
     }
 
-    fn envelope_path(&self, document: &CollaborationDocumentId) -> PathBuf {
-        self.entity_dir(&document.entity).join(format!(
-            "{}.json",
-            sha256_hex(document.resource_id.as_bytes())
-        ))
+    fn envelope_name(document: &CollaborationDocumentId) -> String {
+        format!("{}.json", sha256_hex(document.resource_id.as_bytes()))
     }
 
-    fn lock_path(&self, document: &CollaborationDocumentId) -> PathBuf {
-        self.entity_dir(&document.entity).join(format!(
-            "{}.lock",
-            sha256_hex(document.resource_id.as_bytes())
-        ))
+    fn lock_name(document: &CollaborationDocumentId) -> String {
+        format!("{}.lock", sha256_hex(document.resource_id.as_bytes()))
     }
 
-    /// Syncs the directory holding the envelope at `path`, so a removal there holds.
-    /// `source` as a path, when it names a file in an entity directory under the root and that
-    /// directory is not a link; refused otherwise, so nothing outside the root is read.
-    fn envelope_source<'a>(&self, source: &'a str) -> StoreResult<&'a Path> {
-        let path = Path::new(source);
-        let named = path.strip_prefix(&self.root).is_ok_and(|relative| {
-            let mut names = relative.components().map(|component| match component {
-                std::path::Component::Normal(name) => name.to_str(),
-                _ => None,
+    /// The entity directory and envelope file `source` names, resolved under the root:
+    /// refused unless it names an envelope file in an entity directory directly under the
+    /// root, so nothing outside the root is read. The directory is `None` when it does not
+    /// exist, and refused when it is a link.
+    fn envelope_source<'a>(&self, source: &'a str) -> StoreResult<(Option<Place>, &'a str)> {
+        let names = Path::new(source)
+            .strip_prefix(&self.root.path)
+            .ok()
+            .and_then(|relative| {
+                let mut names = relative.components().map(|component| match component {
+                    std::path::Component::Normal(name) => name.to_str(),
+                    _ => None,
+                });
+                match (names.next(), names.next(), names.next()) {
+                    (Some(Some(directory)), Some(Some(file)), None)
+                        if is_entity_directory(directory) && is_envelope_file(file) =>
+                    {
+                        Some((directory, file))
+                    }
+                    _ => None,
+                }
             });
-            matches!(
-                (names.next(), names.next(), names.next()),
-                (Some(Some(directory)), Some(Some(file)), None)
-                    if is_entity_directory(directory) && is_envelope_file(file)
-            )
-        });
-        let directory = path.parent().filter(|_| named).ok_or_else(|| {
+        let (directory, file) = names.ok_or_else(|| {
             StoreError::internal(format!(
                 "{source} is not an envelope under {}.",
-                self.root.display()
+                self.root.path.display()
             ))
         })?;
-        refuse_link(directory)?;
-        Ok(path)
+        let Some(root) = self.root.open()? else {
+            return Ok((None, file));
+        };
+        Ok((root.child(directory)?, file))
     }
 
-    fn sync_entity_dir(&self, path: &Path) -> StoreResult<()> {
-        let directory = path
-            .parent()
-            .expect("an envelope lies in its entity's directory");
-        self.durability.sync_directory(directory).map_err(|error| {
-            StoreError::internal(format!(
-                "Could not record the removal of {}: {error}",
-                path.display()
-            ))
-        })
-    }
-
-    fn with_document_lock<T>(
+    fn with_audit_lock<T>(
         &self,
-        document: &CollaborationDocumentId,
+        records: &Place,
         operation: impl FnOnce() -> StoreResult<T>,
     ) -> StoreResult<T> {
-        with_lock(
-            self.durability,
-            &self.lock_path(document),
-            &format!("{}/{}", document.entity, document.resource_id),
-            operation,
-        )
+        records.with_lock(AUDIT_LOCK_FILE, "the audit stream", operation)
     }
 
-    fn with_audit_lock<T>(&self, operation: impl FnOnce() -> StoreResult<T>) -> StoreResult<T> {
-        with_lock(
-            self.durability,
-            &self.records.join(AUDIT_LOCK_FILE),
-            "the audit stream",
-            operation,
-        )
-    }
-
-    /// Every audit record the stream holds. A final line without its newline is
+    /// Every audit record the stream in `records` holds. A final line without its newline is
     /// an append that did not finish, and is not a record.
-    fn audit_records(&self) -> StoreResult<Vec<CollaborationAuditRecord>> {
-        match read_optional(&self.records.join(AUDIT_FILE)) {
-            Ok(Some(bytes)) => {
-                let complete = bytes
-                    .iter()
-                    .rposition(|byte| *byte == b'\n')
-                    .map_or(&bytes[..0], |end| &bytes[..=end]);
-                std::str::from_utf8(complete)
-                    .map_err(|error| {
-                        StoreError::internal(format!("Invalid collaboration audit stream: {error}"))
-                    })?
-                    .lines()
-                    .filter(|line| !line.trim().is_empty())
-                    .map(|line| {
-                        serde_json::from_str(line).map_err(|error| {
-                            StoreError::internal(format!(
-                                "Invalid collaboration audit record: {error}"
-                            ))
-                        })
-                    })
-                    .collect()
-            }
-            Ok(None) => Ok(Vec::new()),
-            Err(error) => Err(error),
-        }
-    }
-}
-
-fn with_lock<T>(
-    durability: WriteDurability,
-    lock_path: &Path,
-    what: &str,
-    operation: impl FnOnce() -> StoreResult<T>,
-) -> StoreResult<T> {
-    if let Some(parent) = lock_path.parent() {
-        crate::durability::create_dir_all_synced(durability, parent).map_err(|error| {
-            StoreError::internal(format!(
-                "Could not create collaboration storage directory {}: {error}",
-                parent.display()
-            ))
-        })?;
-    }
-    refuse_irregular(lock_path)?;
-    let lock = OpenOptions::new()
-        .create(true)
-        .truncate(false)
-        .read(true)
-        .write(true)
-        .open(lock_path)
-        .map_err(|error| {
-            StoreError::internal(format!(
-                "Could not open collaboration lock {}: {error}",
-                lock_path.display()
-            ))
-        })?;
-    lock.lock_exclusive()
-        .map_err(|error| StoreError::internal(format!("Could not lock {what}: {error}")))?;
-    let result = operation();
-    let unlocked = FileExt::unlock(&lock)
-        .map_err(|error| StoreError::internal(format!("Could not unlock {what}: {error}")));
-    match (result, unlocked) {
-        (Err(error), _) | (Ok(_), Err(error)) => Err(error),
-        (Ok(value), Ok(())) => Ok(value),
-    }
-}
-
-fn write_envelope(durability: WriteDurability, path: &Path, bytes: &[u8]) -> StoreResult<()> {
-    crate::durability::write_synced(durability, path, bytes).map_err(|error| {
-        StoreError::internal(format!(
-            "Could not write collaboration state {}: {error}",
-            path.display()
-        ))
-    })
-}
-
-/// Refuses `path` when it is a link, which the store does not follow.
-fn refuse_link(path: &Path) -> StoreResult<()> {
-    match std::fs::symlink_metadata(path) {
-        Ok(metadata) if metadata.file_type().is_symlink() => Err(StoreError::internal(format!(
-            "Collaboration state {} is a link, which the store does not follow.",
-            path.display()
-        ))),
-        Ok(_) => Ok(()),
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
-        Err(error) => Err(StoreError::internal(format!(
-            "Could not inspect collaboration state {}: {error}",
-            path.display()
-        ))),
-    }
-}
-
-/// Refuses `path` when something other than a regular file is there: a link, which the
-/// store does not follow, or a special file, which could block the open.
-fn refuse_irregular(path: &Path) -> StoreResult<()> {
-    match std::fs::symlink_metadata(path) {
-        Ok(metadata) if !metadata.file_type().is_file() => Err(StoreError::internal(format!(
-            "Collaboration state {} is not a regular file; the store does not follow or open it.",
-            path.display()
-        ))),
-        Ok(_) => Ok(()),
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
-        Err(error) => Err(StoreError::internal(format!(
-            "Could not inspect collaboration state {}: {error}",
-            path.display()
-        ))),
-    }
-}
-
-/// The bytes at `path`, or `None` when there is no file. Anything but a regular file is
-/// refused.
-fn read_optional(path: &Path) -> StoreResult<Option<Vec<u8>>> {
-    refuse_irregular(path)?;
-    match std::fs::read(path) {
-        Ok(bytes) => Ok(Some(bytes)),
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(None),
-        Err(error) => Err(StoreError::internal(format!(
-            "Could not read collaboration state {}: {error}",
-            path.display()
-        ))),
-    }
-}
-
-fn remove_file_if_exists(path: &Path) -> StoreResult<()> {
-    match std::fs::remove_file(path) {
-        Ok(()) => Ok(()),
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
-        Err(error) => Err(StoreError::internal(format!(
-            "Could not remove collaboration state {}: {error}",
-            path.display()
-        ))),
+    fn audit_records(records: &Place) -> StoreResult<Vec<CollaborationAuditRecord>> {
+        let Some(bytes) = records.read_optional(AUDIT_FILE)? else {
+            return Ok(Vec::new());
+        };
+        let complete = bytes
+            .iter()
+            .rposition(|byte| *byte == b'\n')
+            .map_or(&bytes[..0], |end| &bytes[..=end]);
+        std::str::from_utf8(complete)
+            .map_err(|error| {
+                StoreError::internal(format!("Invalid collaboration audit stream: {error}"))
+            })?
+            .lines()
+            .filter(|line| !line.trim().is_empty())
+            .map(|line| {
+                serde_json::from_str(line).map_err(|error| {
+                    StoreError::internal(format!("Invalid collaboration audit record: {error}"))
+                })
+            })
+            .collect()
     }
 }
 
@@ -466,8 +531,8 @@ fn complete_length(file: &mut std::fs::File) -> std::io::Result<u64> {
 /// earlier one was taken at least [`SETTLED_METADATA_AGE`] after the file last
 /// changed.
 #[cfg(unix)]
-fn metadata_stamp(metadata: &std::fs::Metadata) -> Option<(SystemTime, String)> {
-    use std::os::unix::fs::MetadataExt;
+fn metadata_stamp(metadata: &Metadata) -> Option<(SystemTime, String)> {
+    use cap_std::fs::MetadataExt;
     let changed = UNIX_EPOCH.checked_add(Duration::new(
         u64::try_from(metadata.ctime()).ok()?,
         u32::try_from(metadata.ctime_nsec()).ok()?,
@@ -486,8 +551,8 @@ fn metadata_stamp(metadata: &std::fs::Metadata) -> Option<(SystemTime, String)> 
 }
 
 #[cfg(not(unix))]
-fn metadata_stamp(metadata: &std::fs::Metadata) -> Option<(SystemTime, String)> {
-    let modified = metadata.modified().ok()?;
+fn metadata_stamp(metadata: &Metadata) -> Option<(SystemTime, String)> {
+    let modified = metadata.modified().ok()?.into_std();
     let since_epoch = modified.duration_since(UNIX_EPOCH).ok()?;
     Some((
         modified,
@@ -497,32 +562,28 @@ fn metadata_stamp(metadata: &std::fs::Metadata) -> Option<(SystemTime, String)> 
 
 impl CollaborationStoragePort for FileCollaborationStorage {
     fn source(&self, document: &CollaborationDocumentId) -> String {
-        self.envelope_path(document).display().to_string()
+        self.root
+            .path
+            .join(safe_entity_name(&document.entity))
+            .join(Self::envelope_name(document))
+            .display()
+            .to_string()
     }
 
     fn sources(&self, entity: &str) -> StoreResult<Vec<String>> {
-        self.check_entity(entity)?;
-        let directory = self.entity_dir(entity);
-        let entries = match std::fs::read_dir(&directory) {
-            Ok(entries) => entries,
-            Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
-            Err(error) => {
-                return Err(StoreError::internal(format!(
-                    "Could not list collaboration state {}: {error}",
-                    directory.display()
-                )))
-            }
+        let Some(directory) = self.entity_dir(entity)? else {
+            return Ok(Vec::new());
+        };
+        let listing = |error: std::io::Error| {
+            StoreError::internal(format!(
+                "Could not list collaboration state {}: {error}",
+                directory.path.display()
+            ))
         };
         let mut sources = Vec::new();
-        for entry in entries {
-            let listing = |error: std::io::Error| {
-                StoreError::internal(format!(
-                    "Could not list collaboration state {}: {error}",
-                    directory.display()
-                ))
-            };
+        for entry in directory.dir.entries().map_err(listing)? {
             let entry = entry.map_err(listing)?;
-            let path = entry.path();
+            let path = directory.path.join(entry.file_name());
             if path.extension().and_then(|value| value.to_str()) != Some("json") {
                 continue;
             }
@@ -539,23 +600,23 @@ impl CollaborationStoragePort for FileCollaborationStorage {
     }
 
     fn read(&self, source: &str) -> StoreResult<Option<StoredEnvelope>> {
-        Ok(
-            read_optional(self.envelope_source(source)?)?.map(|bytes| StoredEnvelope {
-                version: sha256_hex(&bytes),
-                bytes,
-            }),
-        )
+        let (Some(directory), file) = self.envelope_source(source)? else {
+            return Ok(None);
+        };
+        Ok(directory.read_optional(file)?.map(|bytes| StoredEnvelope {
+            version: sha256_hex(&bytes),
+            bytes,
+        }))
     }
 
     fn stamp(&self, source: &str) -> StoreResult<Option<String>> {
-        let metadata = match std::fs::symlink_metadata(self.envelope_source(source)?) {
+        let (Some(directory), file) = self.envelope_source(source)? else {
+            return Ok(None);
+        };
+        let metadata = match directory.dir.symlink_metadata(file) {
             Ok(metadata) => metadata,
             Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
-            Err(error) => {
-                return Err(StoreError::internal(format!(
-                    "Could not inspect collaboration state {source}: {error}"
-                )))
-            }
+            Err(error) => return Err(inspecting(&directory.file(file), error)),
         };
         Ok(metadata_stamp(&metadata).and_then(|(changed, stamp)| {
             self.clock
@@ -572,17 +633,18 @@ impl CollaborationStoragePort for FileCollaborationStorage {
         expected: Option<&str>,
         bytes: &[u8],
     ) -> StoreResult<Option<String>> {
-        self.claim_entity(&document.entity)?;
-        let path = self.envelope_path(document);
-        self.with_document_lock(document, || {
-            let current = read_optional(&path)?;
+        let directory = self.claim_entity(&document.entity)?;
+        let name = Self::envelope_name(document);
+        let what = format!("{}/{}", document.entity, document.resource_id);
+        directory.with_lock(&Self::lock_name(document), &what, || {
+            let current = directory.read_optional(&name)?;
             if current.as_deref().map(sha256_hex).as_deref() != expected {
                 // What is there may be a write that returned an error after its rename landed;
                 // it is settled before the mismatch is reported.
-                self.sync_entity_dir(&path)?;
+                directory.sync(self.durability, "the envelope")?;
                 return Ok(None);
             }
-            write_envelope(self.durability, &path, bytes)?;
+            directory.write(self.durability, &name, bytes)?;
             Ok(Some(sha256_hex(bytes)))
         })
     }
@@ -592,20 +654,23 @@ impl CollaborationStoragePort for FileCollaborationStorage {
         document: &CollaborationDocumentId,
         expected: &str,
     ) -> StoreResult<bool> {
-        self.check_entity(&document.entity)?;
-        let path = self.envelope_path(document);
-        self.with_document_lock(document, || {
-            let current = read_optional(&path)?;
+        let Some(directory) = self.entity_dir(&document.entity)? else {
+            return Ok(false);
+        };
+        let name = Self::envelope_name(document);
+        let what = format!("{}/{}", document.entity, document.resource_id);
+        directory.with_lock(&Self::lock_name(document), &what, || {
+            let current = directory.read_optional(&name)?;
             if current.is_none() {
                 // An earlier removal may have unlinked it without syncing its directory.
-                self.sync_entity_dir(&path)?;
+                directory.sync(self.durability, "the removal")?;
                 return Ok(false);
             }
             if current.as_deref().map(sha256_hex).as_deref() != Some(expected) {
                 return Ok(false);
             }
-            remove_file_if_exists(&path)?;
-            self.sync_entity_dir(&path)?;
+            directory.remove_file_if_exists(&name)?;
+            directory.sync(self.durability, "the removal")?;
             Ok(true)
         })
     }
@@ -616,37 +681,29 @@ impl CollaborationStoragePort for FileCollaborationStorage {
         label: &str,
         bytes: &[u8],
     ) -> StoreResult<String> {
-        refuse_link(&self.records.join(QUARANTINE_DIR))?;
-        let destination = self.records.join(QUARANTINE_DIR).join(format!(
+        let quarantine = self
+            .records
+            .create(self.durability)?
+            .create_child(self.durability, QUARANTINE_DIR)?;
+        let name = format!(
             "{}-{}-{}-{}-{}.json",
             safe_entity_name(&document.entity),
             sha256_hex(document.resource_id.as_bytes()),
             self.clock.utc().format("%Y%m%dT%H%M%S%.3fZ"),
             path_component(label),
             uuid::Uuid::new_v4().simple()
-        ));
-        write_envelope(self.durability, &destination, bytes)?;
-        Ok(destination.display().to_string())
+        );
+        quarantine.write(self.durability, &name, bytes)?;
+        Ok(quarantine.file(&name).display().to_string())
     }
 
     fn append_audit(&self, record: &CollaborationAuditRecord) -> StoreResult<()> {
-        self.with_audit_lock(|| {
+        let records = self.records.create(self.durability)?;
+        self.with_audit_lock(&records, || {
             let mut line = serde_json::to_vec(record)
                 .map_err(|error| StoreError::internal(error.to_string()))?;
             line.push(b'\n');
-            let path = self.records.join(AUDIT_FILE);
-            refuse_irregular(&path)?;
-            let mut audit = OpenOptions::new()
-                .create(true)
-                .truncate(false)
-                .read(true)
-                .write(true)
-                .open(&path)
-                .map_err(|error| {
-                    StoreError::internal(format!(
-                        "Could not open the collaboration audit stream: {error}"
-                    ))
-                })?;
+            let mut audit = records.open_state(AUDIT_FILE)?;
             // An append that did not finish was never acknowledged: it goes, and so
             // does this one if it does not finish.
             let complete = complete_length(&mut audit).map_err(|error| {
@@ -659,7 +716,7 @@ impl CollaborationStoragePort for FileCollaborationStorage {
                 complete,
                 &line,
                 |file| self.durability.sync(file),
-                || self.durability.sync_directory(&self.records),
+                || self.durability.sync_dir(&records.dir),
             )
             .map_err(|error| {
                 StoreError::internal(format!(
@@ -671,41 +728,30 @@ impl CollaborationStoragePort for FileCollaborationStorage {
 
     fn audit(&self, query: &CollaborationAuditQuery) -> StoreResult<Vec<CollaborationAuditRecord>> {
         // A read makes nothing: no records directory means no record.
-        let held = self.records.try_exists().map_err(|error| {
-            StoreError::internal(format!(
-                "Could not inspect the collaboration records {}: {error}",
-                self.records.display()
-            ))
-        })?;
-        if !held {
+        let Some(records) = self.records.open()? else {
             return Ok(Vec::new());
-        }
+        };
         // Read under the lock appends hold, so an append that fails is never seen.
         Ok(self
-            .with_audit_lock(|| self.audit_records())?
+            .with_audit_lock(&records, || Self::audit_records(&records))?
             .into_iter()
             .filter(|record| query.selects(record))
             .collect())
     }
 
     fn discard_audit_before(&self, unix_ms: u128) -> StoreResult<usize> {
-        self.with_audit_lock(|| {
-            let records = self.audit_records()?;
-            let kept: Vec<&CollaborationAuditRecord> = records
+        let records = self.records.create(self.durability)?;
+        self.with_audit_lock(&records, || {
+            let held = Self::audit_records(&records)?;
+            let kept: Vec<&CollaborationAuditRecord> = held
                 .iter()
                 .filter(|record| record.timestamp_unix_ms >= unix_ms)
                 .collect();
-            let discarded = records.len() - kept.len();
+            let discarded = held.len() - kept.len();
             if discarded == 0 {
                 // An earlier discard may have replaced the stream without syncing it.
-                if self.records.join(AUDIT_FILE).try_exists().unwrap_or(false) {
-                    self.durability
-                        .sync_directory(&self.records)
-                        .map_err(|error| {
-                            StoreError::internal(format!(
-                                "Could not settle the collaboration audit stream: {error}"
-                            ))
-                        })?;
+                if records.dir.symlink_metadata(AUDIT_FILE).is_ok() {
+                    records.sync(self.durability, "the audit stream")?;
                 }
                 return Ok(0);
             }
@@ -715,7 +761,7 @@ impl CollaborationStoragePort for FileCollaborationStorage {
                     .map_err(|error| StoreError::internal(error.to_string()))?;
                 bytes.push(b'\n');
             }
-            write_envelope(self.durability, &self.records.join(AUDIT_FILE), &bytes)?;
+            records.write(self.durability, AUDIT_FILE, &bytes)?;
             Ok(discarded)
         })
     }
@@ -744,36 +790,38 @@ pub fn declared_envelope_format(bytes: &[u8]) -> Option<u32> {
 /// or `None` when it reads every envelope there, or there are none. An
 /// envelope declaring no format is reported as format 0.
 pub fn foreign_envelope_format(root: &Path) -> AnyhowResult<Option<u32>> {
-    let entities = match std::fs::read_dir(root) {
-        Ok(entries) => entries,
+    let dir = match crate::files::open_dir(root) {
+        Ok(dir) => dir,
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
         Err(error) => return Err(anyhow!("Could not list {}: {error}", root.display())),
     };
-    for entity in entities {
+    for entity in dir.entries()? {
         let entity = entity?;
         let kind = entity.file_type()?;
-        let entity = entity.path();
+        let name = entity.file_name();
+        let path = root.join(&name);
         if kind.is_symlink() {
-            bail_link(&entity)?;
+            bail_link(&path)?;
         }
-        if !kind.is_dir()
-            || entity
-                .file_name()
-                .is_some_and(|name| name == QUARANTINE_DIR)
-        {
+        if !kind.is_dir() || name == QUARANTINE_DIR {
             continue;
         }
-        for envelope in std::fs::read_dir(&entity)? {
+        let entity = dir.open_dir_nofollow(&name)?;
+        for envelope in entity.entries()? {
             let envelope = envelope?;
             let kind = envelope.file_type()?;
-            let envelope = envelope.path();
-            if envelope.extension().and_then(|value| value.to_str()) != Some("json") {
+            let file = envelope.file_name();
+            if Path::new(&file)
+                .extension()
+                .and_then(|value| value.to_str())
+                != Some("json")
+            {
                 continue;
             }
             if !kind.is_file() {
-                bail_link(&envelope)?;
+                bail_link(&path.join(&file))?;
             }
-            let format = declared_envelope_format(&std::fs::read(&envelope)?).unwrap_or(0);
+            let format = declared_envelope_format(&entity.read(&file)?).unwrap_or(0);
             if format != ENVELOPE_VERSION {
                 return Ok(Some(format));
             }
@@ -793,14 +841,15 @@ pub fn prepare_cache_root(root: &Path, durability: WriteDurability) -> AnyhowRes
             root.display()
         ));
     }
-    let marker = root.join(FORMAT_MARKER_FILE);
     let current = ENVELOPE_VERSION.to_string();
     if root.try_exists()? {
+        let dir = crate::files::open_dir(root)?;
         // A marker that is not a regular file marks no format.
-        let format = std::fs::symlink_metadata(&marker)
+        let format = dir
+            .symlink_metadata(FORMAT_MARKER_FILE)
             .ok()
-            .filter(|metadata| metadata.file_type().is_file())
-            .and_then(|_| std::fs::read_to_string(&marker).ok());
+            .filter(Metadata::is_file)
+            .and_then(|_| dir.read_to_string(FORMAT_MARKER_FILE).ok());
         if format.as_deref().map(str::trim) == Some(current.as_str())
             && foreign_envelope_format(root)?.is_none()
         {
@@ -811,12 +860,18 @@ pub fn prepare_cache_root(root: &Path, durability: WriteDurability) -> AnyhowRes
             format = format.as_deref().map(str::trim).unwrap_or("none"),
             "Removing the collaboration cache; this build keeps envelope format {current}."
         );
+        drop(dir);
         std::fs::remove_dir_all(root)
             .with_context(|| format!("removing the collaboration cache {}", root.display()))?;
     }
     std::fs::create_dir_all(root)?;
-    crate::durability::write_synced(durability, &marker, format!("{current}\n").as_bytes())
-        .with_context(|| format!("marking the collaboration cache {}", root.display()))
+    crate::durability::write_synced_in(
+        durability,
+        &crate::files::open_dir(root)?,
+        Path::new(FORMAT_MARKER_FILE),
+        format!("{current}\n").as_bytes(),
+    )
+    .with_context(|| format!("marking the collaboration cache {}", root.display()))
 }
 
 /// The peer key kept under `data_dir`, made on first use. The key names which
@@ -824,16 +879,17 @@ pub fn prepare_cache_root(root: &Path, durability: WriteDurability) -> AnyhowRes
 /// recorded binding as it was and makes unsent drafts unverifiable.
 pub fn peer_key(data_dir: &Path, durability: WriteDurability) -> AnyhowResult<PeerKey> {
     let path = data_dir.join(PEER_KEY_FILE);
-    let secret = match read_secret(data_dir, &path, durability)? {
+    crate::durability::create_dir_all_synced(durability, data_dir)?;
+    let data = crate::files::open_dir(data_dir)?;
+    let secret = match read_secret(&data, &path, durability)? {
         Some(secret) => secret,
         None => {
             let secret = generate_peer_secret();
-            crate::durability::create_dir_all_synced(durability, data_dir)?;
-            match install_secret(durability, &path, &secret) {
+            match install_secret(durability, &data, &secret) {
                 Ok(()) => secret,
                 // Another start made the key first; it is the one to read.
                 Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => {
-                    read_secret(data_dir, &path, durability)?.ok_or_else(|| {
+                    read_secret(&data, &path, durability)?.ok_or_else(|| {
                         anyhow!("{} was made and removed while starting.", path.display())
                     })?
                 }
@@ -847,16 +903,16 @@ pub fn peer_key(data_dir: &Path, durability: WriteDurability) -> AnyhowResult<Pe
     PeerKey::new(&secret).map_err(|error| anyhow!("{}: {}", path.display(), error.message))
 }
 
-/// The key kept at `path`, or `None` when there is none. A link or other entry that is not a
-/// regular file is refused. A key read back has its directory synced, since the start that
-/// installed it may have stopped before syncing its entry.
+/// The key kept in the data directory `data`, at `path`, or `None` when there is none. A link
+/// or other entry that is not a regular file is refused. A key read back has its directory
+/// synced, since the start that installed it may have stopped before syncing its entry.
 fn read_secret(
-    data_dir: &Path,
+    data: &Dir,
     path: &Path,
     durability: WriteDurability,
 ) -> AnyhowResult<Option<Vec<u8>>> {
-    match std::fs::symlink_metadata(path) {
-        Ok(metadata) if !metadata.file_type().is_file() => {
+    match data.symlink_metadata(PEER_KEY_FILE) {
+        Ok(metadata) if !metadata.is_file() => {
             return Err(anyhow!(
                 "{} is not a regular file; the peer key is not read through a link.",
                 path.display()
@@ -866,7 +922,8 @@ fn read_secret(
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
         Err(error) => return Err(anyhow!("Could not inspect {}: {error}", path.display())),
     }
-    let text = std::fs::read_to_string(path)
+    let text = data
+        .read_to_string(PEER_KEY_FILE)
         .map_err(|error| anyhow!("Could not read {}: {error}", path.display()))?;
     let secret = decode_hex(text.trim())
         .filter(|bytes| bytes.len() >= PEER_KEY_MIN_BYTES)
@@ -877,7 +934,7 @@ fn read_secret(
             )
         })?;
     durability
-        .sync_directory(data_dir)
+        .sync_dir(data)
         .with_context(|| format!("syncing the peer key {}", path.display()))?;
     Ok(Some(secret))
 }
@@ -889,27 +946,33 @@ fn generate_peer_secret() -> Vec<u8> {
     secret
 }
 
-/// Installs `secret` at `path` whole, or not at all: it is written and synced under a
-/// temporary name, then linked into place, which fails when a key is already there.
-fn install_secret(durability: WriteDurability, path: &Path, secret: &[u8]) -> std::io::Result<()> {
-    let staged = path.with_extension(format!("{}.tmp", uuid::Uuid::new_v4()));
-    let installed =
-        write_secret(durability, &staged, secret).and_then(|()| std::fs::hard_link(&staged, path));
-    let removed = std::fs::remove_file(&staged);
+/// Installs `secret` as the peer key in the data directory `data` whole, or not at all: it is
+/// written and synced under a temporary name, then linked into place, which fails when a key is
+/// already there.
+fn install_secret(durability: WriteDurability, data: &Dir, secret: &[u8]) -> std::io::Result<()> {
+    let staged = Path::new(PEER_KEY_FILE).with_extension(format!("{}.tmp", uuid::Uuid::new_v4()));
+    let installed = write_secret(durability, data, &staged, secret)
+        .and_then(|()| data.hard_link(&staged, data, PEER_KEY_FILE));
+    let removed = data.remove_file(&staged);
     installed?;
     removed?;
-    durability.sync_directory(path.parent().expect("the key lies in the data directory"))
+    durability.sync_dir(data)
 }
 
-fn write_secret(durability: WriteDurability, path: &Path, secret: &[u8]) -> std::io::Result<()> {
-    let mut options = OpenOptions::new();
+fn write_secret(
+    durability: WriteDurability,
+    data: &Dir,
+    name: &Path,
+    secret: &[u8],
+) -> std::io::Result<()> {
+    let mut options = cap_std::fs::OpenOptions::new();
     options.write(true).create_new(true);
     #[cfg(unix)]
     {
-        use std::os::unix::fs::OpenOptionsExt;
+        use cap_std::fs::OpenOptionsExt;
         options.mode(0o600);
     }
-    let mut file = options.open(path)?;
+    let mut file = data.open_with(name, &options)?.into_std();
     file.write_all(format!("{}\n", encode_hex(secret)).as_bytes())?;
     durability.sync(&file)
 }
@@ -933,6 +996,7 @@ mod tests {
     use super::*;
     use clerkenwell_events::{ActorKind, Principal};
     use clerkenwell_store::{CollaborationAuditEvent, CollaborationRecoveryAction};
+    use std::fs::OpenOptions;
 
     fn document(resource_id: &str) -> CollaborationDocumentId {
         CollaborationDocumentId::new("Note", resource_id)
@@ -1851,6 +1915,35 @@ mod tests {
             assert!(storage.read(&source).is_err(), "{source}");
             assert!(storage.stamp(&source).is_err(), "{source}");
         }
+    }
+
+    #[test]
+    fn a_source_that_names_an_envelope_outside_the_root_is_refused() {
+        let root = tempfile::tempdir().unwrap();
+        let outside = tempfile::tempdir().unwrap();
+        let storage =
+            FileCollaborationStorage::new(root.path(), WriteDurability::System, clock()).unwrap();
+        storage
+            .compare_and_swap(&document("inside"), None, b"inside")
+            .unwrap();
+        let elsewhere =
+            FileCollaborationStorage::new(outside.path(), WriteDurability::System, clock())
+                .unwrap();
+        elsewhere
+            .compare_and_swap(&document("outside"), None, b"outside")
+            .unwrap();
+        let source = elsewhere.source(&document("outside"));
+        assert!(std::path::Path::new(&source).is_file());
+        assert!(storage.read(&source).is_err());
+        assert!(storage.stamp(&source).is_err());
+        assert_eq!(
+            storage
+                .read(&storage.source(&document("inside")))
+                .unwrap()
+                .unwrap()
+                .bytes,
+            b"inside"
+        );
     }
 
     #[test]

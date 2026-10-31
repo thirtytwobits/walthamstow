@@ -273,8 +273,10 @@ The files are the record:
 - A write that finds the files at a revision other than its base is refused with `log_stale`, so
   an edit, a `git checkout` or a copy made since the writer read the document is never written
   over.
-- A write is remembered for a retry before its head file lands, and forgotten when it fails
-  without landing.
+- A write is remembered for a retry before its head file lands. A commit that fails without
+  landing is forgotten. A journalled write left unfinished stays remembered until the next write
+  to the document settles it: kept when its publication is finished, forgotten when it is
+  discarded.
 
 Opening the store recovers. It finishes each publication a record authorises, discards one whose
 file changed after it was authorised, keeping the change, and discards staging no record

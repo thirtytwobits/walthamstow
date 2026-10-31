@@ -120,7 +120,7 @@ pub struct FileLogStore {
     last: Mutex<HashMap<DocumentId, LastWrite>>,
     /// The operation each document's last publication left unfinished, which the next write to
     /// it finishes first.
-    pending: Mutex<HashMap<DocumentId, String>>,
+    pending: Mutex<HashMap<DocumentId, Pending>>,
     /// How many times a log file has been read whole.
     #[cfg(test)]
     log_reads: std::sync::atomic::AtomicUsize,
@@ -144,6 +144,14 @@ struct LastWrite {
     id: WriteId,
     base: Option<Revision>,
     given: Option<Revision>,
+}
+
+/// An operation a write authorised and did not see through: its id, and, while its publication
+/// is unresolved, the last write to put back should the publication be discarded. The write that
+/// authorised it stays remembered meanwhile, since it lands when the publication is finished.
+struct Pending {
+    operation: String,
+    restore: Option<Option<LastWrite>>,
 }
 
 /// How much of a document a read takes in.
@@ -463,15 +471,34 @@ impl FileLogStore {
         })
     }
 
-    /// Finishes the publication to `document` that a write authorised and could not finish.
+    /// Sees through the operation a write to `document` authorised and did not: finishes its
+    /// publication while a record authorises it, putting back the last write when the
+    /// publication is discarded, then retires it.
     fn settle(&self, document: &DocumentId) -> KernelResult<()> {
-        let Some(id) = locked(&self.pending).get(document).cloned() else {
+        let Some(mut pending) = locked(&self.pending).remove(document) else {
             return Ok(());
         };
-        self.operations.publish(&self.layout, &id, false)?;
-        self.operations.retire(&id)?;
-        locked(&self.pending).remove(document);
-        Ok(())
+        let settled = (|| {
+            if pending.restore.is_some() {
+                // A publication no record authorises any longer is never finished.
+                let published = if self.operations.authorised(&pending.operation)? {
+                    self.operations
+                        .publish(&self.layout, &pending.operation, false)?
+                        .1
+                } else {
+                    Published::Stale
+                };
+                if let (Published::Stale, Some(previous)) = (published, pending.restore.take()) {
+                    self.restore(document, previous);
+                }
+                pending.restore = None;
+            }
+            self.operations.retire(&pending.operation)
+        })();
+        if settled.is_err() {
+            locked(&self.pending).insert(document.clone(), pending);
+        }
+        settled
     }
 
     /// What the last write gave, when a write of `id` over `base` under `lease` repeats it.
@@ -542,9 +569,8 @@ impl FileLogStore {
     }
 
     /// Publishes `changes` to `document` through a journalled operation, remembering it as the
-    /// write of `id` over `base` under `lease` that gave `given`. `head` is what the head file
-    /// holds once the write lands, or none for a removal.
-    #[allow(clippy::too_many_arguments)]
+    /// write of `id` over `base` under `lease` that gave `given`. An operation the write does not
+    /// see through is left pending, for the next write to the document to settle.
     fn journalled(
         &self,
         lease: &Lease,
@@ -553,27 +579,33 @@ impl FileLogStore {
         given: Option<Revision>,
         changes: &[Change],
         remove_directory: bool,
-        head: Option<&[u8]>,
     ) -> KernelResult<()> {
         let document = lease.document();
         let operation = self
             .operations
             .authorise(document, changes, remove_directory)?;
         let previous = self.remember(lease, id, base, given);
+        let leave = |restore| {
+            let pending = Pending {
+                operation: operation.clone(),
+                restore,
+            };
+            locked(&self.pending).insert(document.clone(), pending);
+        };
         match self.operations.publish(&self.layout, &operation, true) {
-            Ok((_, Published::Done)) => self.operations.retire(&operation).inspect_err(|_| {
-                locked(&self.pending).insert(document.clone(), operation.clone());
-            }),
+            Ok((_, Published::Done)) => self
+                .operations
+                .retire(&operation)
+                .inspect_err(|_| leave(None)),
             Ok((_, Published::Stale)) => {
                 self.restore(document, previous);
-                self.operations.retire(&operation)?;
+                self.operations
+                    .retire(&operation)
+                    .inspect_err(|_| leave(None))?;
                 Err(changed(document))
             }
             Err(error) => {
-                locked(&self.pending).insert(document.clone(), operation);
-                if !self.landed(document, head) {
-                    self.restore(document, previous);
-                }
+                leave(Some(previous));
                 Err(error)
             }
         }
@@ -639,7 +671,6 @@ impl FileLogStore {
             Some(revision.clone()),
             &changes,
             false,
-            Some(&head_bytes),
         )?;
         Ok(revision)
     }
@@ -691,7 +722,6 @@ impl LogStore for FileLogStore {
                 Some(revision.clone()),
                 &changes,
                 false,
-                Some(&head_bytes),
             )?;
             Ok(revision)
         })
@@ -824,7 +854,7 @@ impl LogStore for FileLogStore {
                 },
             ];
             drop(found);
-            self.journalled(lease, id, Some(base), None, &changes, true, None)?;
+            self.journalled(lease, id, Some(base), None, &changes, true)?;
             self.stamps.forget(document);
             Ok(())
         })

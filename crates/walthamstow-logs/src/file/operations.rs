@@ -121,6 +121,11 @@ impl Operations {
         Ok(record)
     }
 
+    /// Whether a record authorises `id`.
+    pub fn authorised(&self, id: &str) -> KernelResult<bool> {
+        Ok(self.local.get(&Self::key(id)?)?.is_some())
+    }
+
     /// Stages `changes` to `document` and authorises publishing them, then removing the
     /// document's directory when `remove_directory`. Returns the operation's id.
     pub fn authorise(

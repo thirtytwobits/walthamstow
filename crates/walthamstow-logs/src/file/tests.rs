@@ -515,13 +515,13 @@ mod files {
     }
 
     /// Builds the files `write` leaves on `document`, puts the files it found back, and
-    /// authorises publishing the ones it left, as an interrupted write leaves them. Returns
-    /// what the write left.
+    /// authorises publishing the ones it left, as an interrupted write leaves them. Returns the
+    /// write's revision, what it left, and the operation authorising it.
     fn interrupted(
         setup: &Setup,
         document: &DocumentId,
         write: impl FnOnce(&Setup) -> Revision,
-    ) -> (Revision, [Vec<u8>; 2]) {
+    ) -> (Revision, [Vec<u8>; 2], String) {
         let read = |file| std::fs::read(setup.path(document, file)).unwrap();
         let found = [read(HEAD), read(LOG)];
         let revision = write(setup);
@@ -536,12 +536,12 @@ mod files {
                 target: Some(target.clone()),
             },
         );
-        setup
+        let operation = setup
             .store
             .operations
             .authorise(document, &changes, false)
             .unwrap();
-        (revision, left)
+        (revision, left, operation)
     }
 
     fn rewind(setup: &Setup, document: &DocumentId, base: &Revision) -> Revision {
@@ -565,7 +565,7 @@ mod files {
         for published in [0, 1] {
             let mut setup = Setup::new();
             let (document, revision) = with_records(&setup, "a");
-            let (rewound, left) = interrupted(&setup, &document, |setup| {
+            let (rewound, left, _) = interrupted(&setup, &document, |setup| {
                 rewind(setup, &document, &revision)
             });
             if published == 1 {
@@ -639,6 +639,102 @@ mod files {
         assert_eq!(recovery.finished, std::slice::from_ref(&document));
         assert!(!setup.path(&document, HEAD).parent().unwrap().exists());
         assert_eq!(setup.store.head(&document).unwrap(), None);
+    }
+
+    /// Leaves `operation` pending on `document`, as a write that did not see it through does,
+    /// with `restore` to put back should its publication be discarded.
+    fn leave_pending(
+        setup: &Setup,
+        document: &DocumentId,
+        operation: String,
+        restore: Option<Option<LastWrite>>,
+    ) {
+        locked(&setup.store.pending).insert(document.clone(), Pending { operation, restore });
+    }
+
+    /// A rewind of `document` from position 1 over `base`, appending 7, as the write `id`.
+    fn rewind_as(
+        setup: &Setup,
+        document: &DocumentId,
+        base: &Revision,
+        id: &str,
+    ) -> KernelResult<Revision> {
+        setup.store.rewind(
+            &setup.lease(document),
+            base,
+            Position::new(1),
+            &LogCommit {
+                id: WriteId::new(id),
+                head: None,
+                records: vec![record(7)],
+            },
+        )
+    }
+
+    #[test]
+    fn a_retry_of_a_write_whose_publication_a_later_write_finishes_is_given_its_revision() {
+        let setup = Setup::new();
+        let (document, base) = with_records(&setup, "a");
+        let (rewound, _, operation) = interrupted(&setup, &document, |setup| {
+            rewind_as(setup, &document, &base, "rewind").unwrap()
+        });
+        leave_pending(&setup, &document, operation, Some(None));
+        assert_eq!(
+            rewind_as(&setup, &document, &base, "rewind").unwrap(),
+            rewound
+        );
+        assert_eq!(setup.payloads(&document), payloads(&[1, 7]));
+        assert!(locked(&setup.store.pending).is_empty());
+    }
+
+    #[test]
+    fn a_retry_of_a_write_whose_publication_is_discarded_is_judged_by_its_base() {
+        let setup = Setup::new();
+        let (document, base) = with_records(&setup, "a");
+        let (_, _, operation) = interrupted(&setup, &document, |setup| {
+            rewind_as(setup, &document, &base, "rewind").unwrap()
+        });
+        leave_pending(&setup, &document, operation, Some(None));
+        let log = setup.path(&document, LOG);
+        let edited = std::fs::read_to_string(&log)
+            .unwrap()
+            .replace(r#""payload":2"#, r#""payload":5"#);
+        std::fs::write(&log, &edited).unwrap();
+        assert_eq!(
+            rewind_as(&setup, &document, &base, "rewind")
+                .unwrap_err()
+                .reason_code(),
+            Some(reason_codes::LOG_STALE)
+        );
+        assert_eq!(std::fs::read_to_string(&log).unwrap(), edited);
+        assert!(locked(&setup.store.pending).is_empty());
+    }
+
+    #[test]
+    fn a_write_retires_a_pending_operation_whose_record_is_gone() {
+        for restore in [None, Some(None)] {
+            let setup = Setup::new();
+            let (document, base) = with_records(&setup, "a");
+            let (_, _, operation) = interrupted(&setup, &document, |setup| {
+                rewind_as(setup, &document, &base, "rewind").unwrap()
+            });
+            let key = walthamstow_kernel::local_store::JournalKey::new(
+                super::operations::JOURNAL,
+                [operation.as_str()],
+            )
+            .unwrap();
+            let (_, tag) = setup.local.get(&key).unwrap().unwrap();
+            setup.local.remove(&key, &tag).unwrap();
+            let staged = super::operations::STAGING
+                .root(&locked(&setup.harness.current).1)
+                .join(&operation);
+            assert!(staged.exists());
+            leave_pending(&setup, &document, operation, restore);
+            setup.commit(&document, &base, &[3]).unwrap();
+            assert!(!staged.exists());
+            assert!(locked(&setup.store.pending).is_empty());
+            assert_eq!(setup.payloads(&document), payloads(&[1, 2, 3]));
+        }
     }
 
     #[test]

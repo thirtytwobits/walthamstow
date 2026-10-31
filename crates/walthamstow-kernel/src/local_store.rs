@@ -450,11 +450,15 @@ impl LocalStore for FileLocalStore {
         let _writing = self.listing.read().unwrap_or_else(PoisonError::into_inner);
         let lock = self.lock(&name);
         let _held = lock.lock().unwrap_or_else(PoisonError::into_inner);
-        let journal = match self.directory(key.journal)? {
-            Some(journal) => journal,
-            // No record is held, so a swap over one is refused without creating anything.
-            None if expected.is_some() => return Ok(None),
-            None => self.created_directory(key.journal)?,
+        let journal = if expected.is_some() {
+            // A record is written only once its journal's creation is durable, and where there is
+            // no journal there is no record to swap over.
+            match self.directory(key.journal)? {
+                Some(journal) => journal,
+                None => return Ok(None),
+            }
+        } else {
+            self.created_directory(key.journal)?
         };
         let held = self
             .read(key, &journal, &name)?

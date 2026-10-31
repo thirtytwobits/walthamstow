@@ -135,8 +135,9 @@ fn create_dir(path: &Path, _access: Access) -> io::Result<()> {
     std::fs::create_dir(path)
 }
 
-/// Held by each directory creation; see [`create_dir_all_with`].
-static CREATING: std::sync::Mutex<()> = std::sync::Mutex::new(());
+/// Held by each directory creation from its check to its sync, so none relies on a directory
+/// another is still settling; see [`create_dir_all_with`].
+pub(crate) static CREATING: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
 /// Creates `directory` and every missing ancestor, reachable as `access` says, calling `sync`
 /// on the directory holding each one it creates. When creating or syncing fails, what it

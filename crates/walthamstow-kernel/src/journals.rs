@@ -142,7 +142,9 @@ fn open_level(dir: &Dir, name: &str) -> io::Result<Option<Dir>> {
 }
 
 /// The directory `parent/name` in `data`, each level created when it does not exist and
-/// reachable as `access` says. A link at either level is refused unfollowed.
+/// reachable as `access` says. A link at either level is refused unfollowed. The kernel's
+/// directory creations are held out from the first check to the last sync, so a level found
+/// existing has a durable entry.
 fn create_unlinked(
     durability: WriteDurability,
     data: &Dir,
@@ -150,6 +152,9 @@ fn create_unlinked(
     name: &str,
     access: Access,
 ) -> io::Result<Dir> {
+    let _creating = crate::durability::CREATING
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
     let parent = create_level(durability, data, parent, access)?;
     create_level(durability, &parent, name, access)
 }
@@ -238,6 +243,7 @@ mod tests {
     }
 
     /// The data directory at `path`, held as a `Dir`.
+    #[cfg(unix)]
     fn data(path: &Path) -> Dir {
         crate::files::open_dir(path).unwrap()
     }

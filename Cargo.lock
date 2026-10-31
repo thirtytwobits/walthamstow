@@ -497,7 +497,7 @@ version = "0.12.0"
 source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.12.0#0a3bf3f0cedfcf4bdb7d83a0bdad6feacf80ded6"
 dependencies = [
  "axum",
- "clerkenwell-events",
+ "clerkenwell-events 0.12.0",
  "clerkenwell-session",
  "futures-util",
  "schemars",
@@ -508,15 +508,37 @@ dependencies = [
 
 [[package]]
 name = "clerkenwell-doc"
-version = "0.12.0"
-source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.12.0#0a3bf3f0cedfcf4bdb7d83a0bdad6feacf80ded6"
+version = "0.11.0"
+source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.11.0#2e083aaacb1a7e5f8c3602872b5919f6f0f489c9"
 dependencies = [
  "base64 0.23.1",
- "clerkenwell-schema",
+ "clerkenwell-schema 0.11.0",
  "loro",
  "serde_json",
  "similar",
  "thiserror 2.0.21",
+]
+
+[[package]]
+name = "clerkenwell-doc"
+version = "0.12.0"
+source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.12.0#0a3bf3f0cedfcf4bdb7d83a0bdad6feacf80ded6"
+dependencies = [
+ "base64 0.23.1",
+ "clerkenwell-schema 0.12.0",
+ "loro",
+ "serde_json",
+ "similar",
+ "thiserror 2.0.21",
+]
+
+[[package]]
+name = "clerkenwell-events"
+version = "0.11.0"
+source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.11.0#2e083aaacb1a7e5f8c3602872b5919f6f0f489c9"
+dependencies = [
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -536,8 +558,8 @@ dependencies = [
  "base64 0.23.1",
  "clapham",
  "clerkenwell-axum",
- "clerkenwell-events",
- "clerkenwell-schema",
+ "clerkenwell-events 0.12.0",
+ "clerkenwell-schema 0.12.0",
  "clerkenwell-session",
  "clerkenwell-store",
  "futures-util",
@@ -548,10 +570,21 @@ dependencies = [
 
 [[package]]
 name = "clerkenwell-schema"
+version = "0.11.0"
+source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.11.0#2e083aaacb1a7e5f8c3602872b5919f6f0f489c9"
+dependencies = [
+ "clerkenwell-events 0.11.0",
+ "schemars",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "clerkenwell-schema"
 version = "0.12.0"
 source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.12.0#0a3bf3f0cedfcf4bdb7d83a0bdad6feacf80ded6"
 dependencies = [
- "clerkenwell-events",
+ "clerkenwell-events 0.12.0",
  "schemars",
  "serde",
  "serde_json",
@@ -562,8 +595,8 @@ name = "clerkenwell-session"
 version = "0.12.0"
 source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.12.0#0a3bf3f0cedfcf4bdb7d83a0bdad6feacf80ded6"
 dependencies = [
- "clerkenwell-events",
- "clerkenwell-schema",
+ "clerkenwell-events 0.12.0",
+ "clerkenwell-schema 0.12.0",
  "clerkenwell-store",
  "schemars",
  "serde",
@@ -578,9 +611,9 @@ source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.12.0#0a3bf3f0c
 dependencies = [
  "base64 0.23.1",
  "chrono",
- "clerkenwell-doc",
- "clerkenwell-events",
- "clerkenwell-schema",
+ "clerkenwell-doc 0.12.0",
+ "clerkenwell-events 0.12.0",
+ "clerkenwell-schema 0.12.0",
  "hmac",
  "serde",
  "serde_json",
@@ -846,7 +879,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
 dependencies = [
  "libc",
- "windows-sys 0.61.2",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -2251,7 +2284,7 @@ dependencies = [
  "once_cell",
  "socket2",
  "tracing",
- "windows-sys 0.61.2",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -2577,7 +2610,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys",
- "windows-sys 0.61.2",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -3041,7 +3074,7 @@ dependencies = [
  "getrandom 0.4.3",
  "once_cell",
  "rustix",
- "windows-sys 0.61.2",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -3425,7 +3458,7 @@ dependencies = [
  "cap-fs-ext",
  "cap-std",
  "chrono",
- "clerkenwell-events",
+ "clerkenwell-events 0.12.0",
  "clerkenwell-store",
  "fs2",
  "rand 0.9.5",
@@ -3447,7 +3480,7 @@ version = "0.6.0"
 dependencies = [
  "cap-std",
  "chrono",
- "clerkenwell-events",
+ "clerkenwell-events 0.12.0",
  "percent-encoding",
  "rand 0.9.5",
  "serde",
@@ -3484,7 +3517,7 @@ dependencies = [
  "clapham-cli",
  "clapham-conformance",
  "clapham-mcp-server",
- "clerkenwell-events",
+ "clerkenwell-events 0.12.0",
  "clerkenwell-ops",
  "clerkenwell-session",
  "clerkenwell-store",
@@ -3514,9 +3547,9 @@ dependencies = [
  "anyhow",
  "cap-fs-ext",
  "cap-std",
- "clerkenwell-doc",
- "clerkenwell-events",
- "clerkenwell-schema",
+ "clerkenwell-doc 0.11.0",
+ "clerkenwell-events 0.12.0",
+ "clerkenwell-schema 0.12.0",
  "clerkenwell-store",
  "jsonschema 0.30.0",
  "serde",

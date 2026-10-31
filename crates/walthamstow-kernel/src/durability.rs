@@ -276,6 +276,17 @@ pub fn write_synced_in(
     path: &Path,
     bytes: &[u8],
 ) -> anyhow::Result<()> {
+    write_synced_in_as(durability, dir, path, bytes, Access::Inherited)
+}
+
+/// [`write_synced_in`], with the file it writes reachable as `access` says.
+pub(crate) fn write_synced_in_as(
+    durability: WriteDurability,
+    dir: &Dir,
+    path: &Path,
+    bytes: &[u8],
+    access: Access,
+) -> anyhow::Result<()> {
     use std::io::Write;
     let name = path
         .file_name()
@@ -293,10 +304,18 @@ pub fn write_synced_in(
     let tmp = Path::new(name).with_extension(format!("{}.tmp", uuid::Uuid::new_v4()));
     let mut options = cap_std::fs::OpenOptions::new();
     options.write(true).create_new(true);
+    #[cfg(unix)]
+    if access == Access::Owner {
+        use cap_std::fs::OpenOptionsExt;
+        options.mode(0o600);
+    }
     let file = holder.open_with(&tmp, &options)?;
     let staged = (|| -> io::Result<()> {
         match holder.metadata(name) {
-            Ok(replaced) => file.set_permissions(replaced.permissions())?,
+            Ok(replaced) if access == Access::Inherited => {
+                file.set_permissions(replaced.permissions())?
+            }
+            Ok(_) => {}
             Err(error) if error.kind() == io::ErrorKind::NotFound => {}
             Err(error) => return Err(error),
         }

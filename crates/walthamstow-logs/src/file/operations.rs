@@ -15,9 +15,7 @@ use cap_std::fs::Dir;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
-use walthamstow_kernel::durability::{
-    create_dir_all_in, create_dir_all_synced, write_synced_in, WriteDurability,
-};
+use walthamstow_kernel::durability::{create_dir_all_in, write_synced_in, WriteDurability};
 use walthamstow_kernel::hashing::sha256_hex;
 use walthamstow_kernel::journals::{Journal, Staging};
 use walthamstow_kernel::local_store::{JournalKey, LocalStore};
@@ -77,7 +75,8 @@ pub struct LogRecovery {
 #[derive(Debug)]
 pub(super) struct Operations {
     local: Arc<dyn LocalStore>,
-    data_dir: PathBuf,
+    /// The engine's data directory, through which the staging is reached.
+    data: Dir,
     durability: WriteDurability,
 }
 
@@ -86,25 +85,32 @@ fn internal(id: &str, error: impl std::fmt::Display) -> KernelError {
 }
 
 impl Operations {
-    pub fn new(local: Arc<dyn LocalStore>, data_dir: PathBuf, durability: WriteDurability) -> Self {
-        Self {
+    /// The operations kept in `local`, staged under the data directory at `data_dir`.
+    pub fn new(
+        local: Arc<dyn LocalStore>,
+        data_dir: &Path,
+        durability: WriteDurability,
+    ) -> KernelResult<Self> {
+        let data = walthamstow_kernel::files::open_dir(data_dir)
+            .map_err(|error| internal("the data directory", error))?;
+        Ok(Self {
             local,
-            data_dir,
+            data,
             durability,
-        }
+        })
     }
 
-    fn staging(&self) -> KernelResult<PathBuf> {
+    /// The staging of every operation, or `None` when there is none.
+    fn staging(&self) -> KernelResult<Option<Dir>> {
         STAGING
-            .unlinked_root(&self.data_dir)
+            .dir(&self.data)
             .map_err(|error| internal("staging", error))
     }
 
-    /// The staging of every operation, created when absent, held as a `Dir`.
+    /// The staging of every operation, created when absent.
     fn staging_root(&self) -> KernelResult<Dir> {
-        let root = self.staging()?;
-        create_dir_all_synced(self.durability, &root)
-            .and_then(|()| walthamstow_kernel::files::open_dir(&root))
+        STAGING
+            .create_dir(self.durability, &self.data)
             .map_err(|error| internal("staging", error))
     }
 
@@ -240,7 +246,9 @@ impl Operations {
         if let Some((_, tag)) = self.local.get(&key)? {
             self.local.remove(&key, &tag)?;
         }
-        remove_staging(&self.staging()?.join(id)).map_err(|error| internal(id, error))?;
+        if let Some(staging) = self.staging()? {
+            remove_staging(&staging, id).map_err(|error| internal(id, error))?;
+        }
         Ok(())
     }
 
@@ -264,12 +272,12 @@ impl Operations {
                 Published::Stale => recovery.stale.push(document),
             }
         }
-        let staging = self.staging()?;
-        let entries = match std::fs::read_dir(&staging) {
-            Ok(entries) => entries,
-            Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(recovery),
-            Err(error) => return Err(internal("staging", error)),
+        let Some(staging) = self.staging()? else {
+            return Ok(recovery);
         };
+        let entries = staging
+            .entries()
+            .map_err(|error| internal("staging", error))?;
         let mut discarded = Vec::new();
         for entry in entries {
             let entry = entry.map_err(|error| internal("staging", error))?;
@@ -277,7 +285,7 @@ impl Operations {
             let Some(id) = name.to_str() else {
                 return Err(internal(
                     "staging",
-                    format!("{} is not named in UTF-8", entry.path().display()),
+                    format!("{} is not named in UTF-8", name.to_string_lossy()),
                 ));
             };
             if authorised.contains(id) {
@@ -293,7 +301,7 @@ impl Operations {
                     "its staging is not a directory; recovery does not follow or open it",
                 ));
             }
-            remove_staging(&entry.path()).map_err(|error| internal(id, error))?;
+            remove_staging(&staging, id).map_err(|error| internal(id, error))?;
             discarded.push(id.to_owned());
         }
         discarded.sort();
@@ -302,9 +310,9 @@ impl Operations {
     }
 }
 
-/// Removes the staging directory `work`. One already gone is left so.
-fn remove_staging(work: &Path) -> std::io::Result<()> {
-    match std::fs::remove_dir_all(work) {
+/// Removes the staging of `id` from `staging`. One already gone is left so.
+fn remove_staging(staging: &Dir, id: &str) -> std::io::Result<()> {
+    match staging.remove_dir_all(id) {
         Err(error) if error.kind() != std::io::ErrorKind::NotFound => Err(error),
         _ => Ok(()),
     }

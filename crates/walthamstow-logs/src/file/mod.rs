@@ -98,7 +98,7 @@ pub struct FileLogConfig {
     pub clock: WallClock,
     /// The engine's local records, which keep the `log-operations` and `log-stamps` journals.
     pub local: Arc<dyn LocalStore>,
-    /// The engine's data directory, which holds the `log-operations` staging.
+    /// The engine's data directory, which holds the `log-operations` staging. It must exist.
     pub data_dir: PathBuf,
     /// How long after a log file last changed a stamp of it vouches for it. The product sets it
     /// at or above the resolution of the file system's clock.
@@ -262,7 +262,7 @@ impl FileLogStore {
         }
         let store = Self {
             stamps: Stamps::new(config.local.clone(), config.settled),
-            operations: Operations::new(config.local, config.data_dir, config.durability),
+            operations: Operations::new(config.local, &config.data_dir, config.durability)?,
             layout: config.layout,
             files: config.files,
             durability: config.durability,

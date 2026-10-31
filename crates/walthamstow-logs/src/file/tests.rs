@@ -33,6 +33,7 @@ impl FileHarness {
         let next = tempfile::tempdir_in(self.scratch.path()).unwrap().keep();
         let dirs = (next.join("root"), next.join("data"));
         std::fs::create_dir_all(&dirs.0).unwrap();
+        std::fs::create_dir_all(&dirs.1).unwrap();
         *locked(&self.current) = dirs.clone();
         dirs
     }

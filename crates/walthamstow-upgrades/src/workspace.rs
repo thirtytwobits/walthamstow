@@ -40,6 +40,13 @@ pub struct Operation {
     target_hashes: BTreeMap<PathBuf, String>,
 }
 
+/// Where the journal's directory lies under `data_dir`, refused when `journals/` or the journal is
+/// a link.
+fn journal_root(data_dir: &Path) -> Result<PathBuf> {
+    JOURNAL.dir(&open(data_dir)?)?;
+    Ok(JOURNAL.root(data_dir))
+}
+
 /// The directory an upgrade works in, named by `operation_id`, which is where its originals
 /// are found. An id holds only lowercase ASCII letters, digits, `-` and `_`, so no two ids name
 /// one directory on a case-insensitive file system; any other id is refused.
@@ -54,7 +61,7 @@ pub fn work_dir(data_dir: &Path, operation_id: &str) -> Result<PathBuf> {
     if walthamstow_kernel::files::is_windows_device_name(operation_id) {
         bail!("{operation_id} names a Windows device, which no directory can be named.");
     }
-    let work = JOURNAL.unlinked_root(data_dir)?.join(operation_id);
+    let work = journal_root(data_dir)?.join(operation_id);
     match std::fs::symlink_metadata(&work) {
         Ok(metadata) if !metadata.is_dir() => bail!(
             "{} is not a directory; an upgrade does not work through a link.",
@@ -225,7 +232,7 @@ type Found = (String, PathBuf, Option<Operation>);
 /// Each upgrade's directory under `data_dir`, in id order. Anything there but a directory, a
 /// directory whose name is not UTF-8, and a journal that cannot be read are refused.
 fn operations(data_dir: &Path) -> Result<Vec<Found>> {
-    let entries = match std::fs::read_dir(JOURNAL.unlinked_root(data_dir)?) {
+    let entries = match std::fs::read_dir(journal_root(data_dir)?) {
         Ok(entries) => entries,
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
         Err(error) => return Err(error.into()),

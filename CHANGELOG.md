@@ -12,6 +12,12 @@
   `Dir`. `Replacement::target_hash` is an `Option`, and `None` removes the live file. The kernel refuses with `publication_stale` and `publication_paths_collide`;
   `walthamstow-upgrades` names them `upgrade_stale` and `upgrade_paths_collide`, and
   `workspace::check_paths` checks an upgrade's paths.
+- `journals::Journal` and `journals::Staging` resolve their directories through the data
+  directory held as a `cap_std::fs::Dir`: `dir` opens one and `create_dir` creates it, and each
+  refuses a link at `journals/`, `staging/` or the directory itself. `unlinked_root` is removed;
+  `root` names where the directory lies. `files::identity` takes a `Dir`. `FileLocalStore` reaches
+  every journal and record through the data directory's handle, and takes the directory's
+  identity from it.
 
 ### Added
 

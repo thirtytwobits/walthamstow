@@ -56,9 +56,10 @@ pub const fn is_windows_device_name(name: &str) -> bool {
     named(&stem, b"com") || named(&stem, b"lpt")
 }
 
-/// What one file or directory is, however a path reaches it: through a link, or by a name in
-/// another case on a file system that folds case. Unix tells entries apart by device and inode,
-/// Windows by the path it resolves each to, every name in the case it is kept in.
+/// What one directory is, however a path reached it: through a link, or by a name in another
+/// case on a file system that folds case. It is taken from the directory's handle. Unix tells
+/// entries apart by device and inode, Windows by the path the handle resolves to, every name in
+/// the case it is kept in.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Identity {
     #[cfg(unix)]
@@ -67,12 +68,12 @@ pub struct Identity {
     entry: PathBuf,
 }
 
-/// The identity of the entry at `path`.
-pub fn identity(path: &Path) -> std::io::Result<Identity> {
+/// The identity of the directory `dir` holds.
+pub fn identity(dir: &Dir) -> std::io::Result<Identity> {
     #[cfg(unix)]
     {
-        use std::os::unix::fs::MetadataExt;
-        let metadata = std::fs::metadata(path)?;
+        use cap_std::fs::MetadataExt;
+        let metadata = dir.dir_metadata()?;
         Ok(Identity {
             entry: (metadata.dev(), metadata.ino()),
         })
@@ -80,7 +81,7 @@ pub fn identity(path: &Path) -> std::io::Result<Identity> {
     #[cfg(windows)]
     {
         Ok(Identity {
-            entry: path.canonicalize()?,
+            entry: winx::file::get_file_path(&dir.try_clone()?.into_std_file())?,
         })
     }
 }
@@ -195,24 +196,24 @@ mod tests {
     }
 
     #[test]
-    fn an_entry_reached_by_another_path_has_one_identity() {
+    fn a_directory_reached_by_another_path_has_one_identity() {
         let root = tempfile::tempdir().unwrap();
         let data = root.path().join("Data");
         std::fs::create_dir(&data).unwrap();
         std::fs::create_dir(root.path().join("other")).unwrap();
-        assert_eq!(
-            identity(&data).unwrap(),
-            identity(&root.path().join("other/../Data")).unwrap()
-        );
-        assert_ne!(
-            identity(&data).unwrap(),
-            identity(&root.path().join("other")).unwrap()
-        );
+        let of = |path: &Path| identity(&open_dir(path).unwrap()).unwrap();
+        assert_eq!(of(&data), of(&root.path().join("other/../Data")));
+        assert_ne!(of(&data), of(&root.path().join("other")));
         let folded = root.path().join("data");
         if folded.exists() {
-            assert_eq!(identity(&data).unwrap(), identity(&folded).unwrap());
+            assert_eq!(of(&data), of(&folded));
         }
-        assert!(identity(&root.path().join("absent")).is_err());
+        #[cfg(unix)]
+        {
+            let linked = root.path().join("linked");
+            std::os::unix::fs::symlink(&data, &linked).unwrap();
+            assert_eq!(of(&data), of(&linked));
+        }
     }
 
     #[test]

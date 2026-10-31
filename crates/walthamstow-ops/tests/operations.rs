@@ -781,3 +781,24 @@ fn a_document_in_a_directory_reached_through_a_link_is_named_where_it_lies_and_u
     );
     assert!(workspace.pending().unwrap().is_empty());
 }
+
+#[cfg(unix)]
+#[test]
+fn a_directory_reached_through_a_link_to_a_name_with_a_backslash_is_refused() {
+    let root = tempfile::tempdir().unwrap();
+    let data = tempfile::tempdir().unwrap();
+    std::fs::create_dir_all(root.path().join("a\\b")).unwrap();
+    std::fs::write(root.path().join("a\\b/note.json"), note(1, "old")).unwrap();
+    std::os::unix::fs::symlink("a\\b", root.path().join("alias")).unwrap();
+    let [notes] = walthamstow_workspace::paths::resolve_directories(
+        DURABILITY,
+        &walthamstow_kernel::files::open_dir(root.path()).unwrap(),
+        [("notes", "alias")],
+    )
+    .unwrap();
+    let workspace = FileWorkspace::new(root.path(), data.path(), DURABILITY)
+        .unwrap()
+        .directory("note", notes);
+    let error = workspace.documents("note").unwrap_err();
+    assert!(error.to_string().contains("backslash"), "{error}");
+}

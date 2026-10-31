@@ -115,8 +115,14 @@ impl FileWorkspace {
 
 /// The path relative to the workspace root of `file`, which lies at that path relative to the
 /// configured directory `directory`, its components joined by `/`. A component holding a
-/// backslash is refused, since joined it would name another file.
+/// backslash, the directory's or the file's, is refused, since joined it would name another
+/// file.
 fn document_path(directory: &str, file: &Path) -> anyhow::Result<String> {
+    if directory.contains('\\') {
+        anyhow::bail!(
+            "{directory} is named with a backslash, which names another directory on Windows."
+        );
+    }
     let mut components = vec![directory];
     for component in file.components() {
         let std::path::Component::Normal(name) = component else {

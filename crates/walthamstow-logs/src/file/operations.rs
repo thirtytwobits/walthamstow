@@ -175,14 +175,13 @@ impl Operations {
         let record = self.record(id)?;
         let document = DocumentId::new(&record.entity, &record.resource);
         let Some(live) = layout.document_dir(&document)? else {
-            // A removal that removed the directory is done; any other publication's directory
-            // was removed after it was authorised.
-            let published = if record.remove_directory {
-                Published::Done
-            } else {
-                Published::Stale
-            };
-            return Ok((document, published));
+            // A removal that removed the directory may not have made the removal durable; any
+            // other publication's directory was removed after it was authorised.
+            if !record.remove_directory {
+                return Ok((document, Published::Stale));
+            }
+            layout.remove_document_dir(self.durability, &document)?;
+            return Ok((document, Published::Done));
         };
         let work = self.staging()?.join(id);
         create_dir_all_synced(self.durability, &work).map_err(|error| internal(id, error))?;

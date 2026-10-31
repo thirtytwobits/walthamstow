@@ -737,6 +737,91 @@ mod files {
         }
     }
 
+    #[cfg(unix)]
+    #[test]
+    fn a_linked_document_directory_is_listed_and_verified_and_one_leaving_the_root_is_broken() {
+        let setup = Setup::new();
+        let (document, revision) = with_records(&setup, "a");
+        let entity = setup
+            .path(&document, HEAD)
+            .parent()
+            .unwrap()
+            .parent()
+            .unwrap()
+            .to_path_buf();
+        std::os::unix::fs::symlink("a", entity.join("b")).unwrap();
+        let outside = tempfile::tempdir().unwrap();
+        std::os::unix::fs::symlink(outside.path(), entity.join("c")).unwrap();
+        let states = |listed: Vec<Listed>| -> Vec<(String, Result<Revision, FaultKind>)> {
+            listed
+                .into_iter()
+                .map(|listed| {
+                    (
+                        listed.document.resource().to_owned(),
+                        listed.state.map_err(|fault| fault.kind()),
+                    )
+                })
+                .collect()
+        };
+        let expected = vec![
+            ("a".to_owned(), Ok(revision.clone())),
+            ("b".to_owned(), Ok(revision)),
+            ("c".to_owned(), Err(FaultKind::Inaccessible)),
+        ];
+        assert_eq!(states(setup.store.list("Log", None, 10).unwrap()), expected);
+        assert_eq!(states(setup.store.verify("Log").unwrap()), expected);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_document_directory_storage_refuses_is_inaccessible() {
+        let setup = Setup::new();
+        let (document, revision) = with_records(&setup, "a");
+        let entity = setup
+            .path(&document, HEAD)
+            .parent()
+            .unwrap()
+            .parent()
+            .unwrap()
+            .to_path_buf();
+        std::fs::remove_dir_all(&entity).unwrap();
+        std::fs::write(&entity, b"not a directory").unwrap();
+        assert_eq!(fault(&setup, &document).kind(), FaultKind::Inaccessible);
+        let records = setup
+            .store
+            .records(&document, &revision, Position::FIRST, 10)
+            .unwrap_err();
+        assert_eq!(
+            LogFault::of(&records).map(|fault| fault.kind()),
+            Some(FaultKind::Inaccessible)
+        );
+        let unnamed = setup.store.head(&DocumentId::new("Log", "")).unwrap_err();
+        assert_eq!(unnamed.code, "invalid_request");
+    }
+
+    #[test]
+    fn a_removal_whose_directory_is_already_gone_is_finished_by_recovery() {
+        let mut setup = Setup::new();
+        let (document, _) = with_records(&setup, "a");
+        let changes = [HEAD, LOG].map(|file| Change {
+            name: file.to_owned(),
+            source: Some(sha256_hex(
+                &std::fs::read(setup.path(&document, file)).unwrap(),
+            )),
+            target: None,
+        });
+        setup
+            .store
+            .operations
+            .authorise(&document, &changes, true)
+            .unwrap();
+        std::fs::remove_dir_all(setup.path(&document, HEAD).parent().unwrap()).unwrap();
+        let recovery = setup.reopen();
+        assert_eq!(recovery.finished, std::slice::from_ref(&document));
+        assert_eq!(setup.store.head(&document).unwrap(), None);
+        assert_eq!(setup.reopen(), LogRecovery::default());
+    }
+
     #[test]
     fn an_unsettled_stamp_is_hashed_and_a_settled_one_is_trusted() {
         let setup = Setup::new();

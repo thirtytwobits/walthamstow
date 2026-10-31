@@ -315,8 +315,17 @@ impl FileLogStore {
         let Some(files) = self.files.get(document.entity()) else {
             return Ok(Held::Absent);
         };
-        let Some(dir) = self.layout.document_dir(document)? else {
-            return Ok(Held::Absent);
+        // A resource that cannot name a directory is refused; storage that refuses the directory
+        // is the document's fault.
+        self.layout.document_path(document)?;
+        let dir = match self.layout.document_dir(document) {
+            Ok(Some(dir)) => dir,
+            Ok(None) => return Ok(Held::Absent),
+            Err(error) => {
+                return Ok(Held::Broken(LogFault::Inaccessible {
+                    detail: error.message,
+                }))
+            }
         };
         let present = regular(&dir.dir, files.head())
             .and_then(|head| Ok((head, regular(&dir.dir, files.log())?)));
@@ -430,25 +439,27 @@ impl FileLogStore {
     }
 
     /// The resource of each directory in `entity`'s directory whose name the layout writes, in
-    /// resource order.
+    /// resource order. A link is resolved through the layout's root, as every other operation
+    /// resolves it; one the root cannot resolve is kept, for its read to report.
     fn resources(&self, entity: &str) -> KernelResult<Vec<String>> {
         let Some((dir, relative)) = self.layout.entity_dir(entity)? else {
             return Ok(Vec::new());
         };
-        let path = self.layout.root().join(relative);
+        let path = self.layout.root().join(&relative);
         let mut resources = Vec::new();
         for entry in dir.entries().map_err(|error| internal(&path, error))? {
             let entry = entry.map_err(|error| internal(&path, error))?;
-            let directory = entry
-                .file_type()
-                .map_err(|error| internal(&path, error))?
-                .is_dir();
-            let resource = entry
-                .file_name()
-                .to_str()
-                .filter(|_| directory)
-                .and_then(crate::layout::resource_of);
-            resources.extend(resource);
+            let name = entry.file_name();
+            let Some(resource) = name.to_str().and_then(crate::layout::resource_of) else {
+                continue;
+            };
+            let kind = entry.file_type().map_err(|error| internal(&path, error))?;
+            let directory = kind.is_dir()
+                || (kind.is_symlink()
+                    && !matches!(self.layout.open_dir(&relative.join(&name)), Ok(None)));
+            if directory {
+                resources.push(resource);
+            }
         }
         resources.sort();
         Ok(resources)

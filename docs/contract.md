@@ -252,7 +252,10 @@ The layout registers both for the entity.
   holding one of the two is `log_missing`, naming the absent file. Every other entry in the
   directory is the product's, which the store neither reads nor changes, except that removing a
   document removes its directory whole, its blobs with it.
-- A head or log file that is not a regular file is refused unopened, with `log_inaccessible`.
+- A head or log file that is not a regular file is refused unopened, with `log_inaccessible`, and
+  so is a document whose directory storage refuses. `list` and `verify` resolve a document
+  directory reached through a link as the layout does; one that leaves the root is listed with
+  `log_inaccessible`.
 
 A revision is the head file's incarnation, tagged with the SHA-256 of the head file's digest and
 the chain. The chain is the SHA-256, over the committed lines in order, of the previous chain

@@ -165,14 +165,21 @@ fn create_level(
     if let Some(opened) = open_level(dir, name)? {
         return Ok(opened);
     }
-    let mut builder = DirBuilder::new();
     #[cfg(unix)]
-    if access == Access::Owner {
+    let builder = {
         use cap_std::fs::DirBuilderExt;
-        builder.mode(0o700);
-    }
+        let mut builder = DirBuilder::new();
+        if access == Access::Owner {
+            builder.mode(0o700);
+        }
+        builder
+    };
+    // Elsewhere a new directory has what its parent grants.
     #[cfg(not(unix))]
-    let _ = access;
+    let builder = {
+        let _ = access;
+        DirBuilder::new()
+    };
     let created = match dir.create_dir_with(name, &builder) {
         Ok(()) => true,
         // Another caller made it meanwhile, and may not have synced its entry yet.

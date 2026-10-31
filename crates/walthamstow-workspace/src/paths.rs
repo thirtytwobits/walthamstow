@@ -138,7 +138,8 @@ fn open_or_create(
 
 /// Where the directory whose identity and its ancestors' are `chain`, nearest first, lies
 /// beneath `root`, as the names of the directories it lies in: at each level, the directory, not
-/// a link, whose identity is the next in the chain.
+/// a link, whose identity is the next in the chain. A directory beside it that cannot be opened
+/// or identified is not it, and is passed over.
 fn resolved_path(root: &Dir, name: &str, chain: &[Identity]) -> Result<String> {
     let mut names = Vec::with_capacity(chain.len());
     let mut current = root
@@ -158,10 +159,10 @@ fn resolved_path(root: &Dir, name: &str, chain: &[Identity]) -> Result<String> {
             {
                 continue;
             }
-            let child = current
-                .open_dir_nofollow(entry.file_name())
-                .with_context(|| format!("Failed to resolve {name}."))?;
-            if &identity(&child).with_context(|| format!("Failed to identify {name}."))? == wanted {
+            let Ok(child) = current.open_dir_nofollow(entry.file_name()) else {
+                continue;
+            };
+            if identity(&child).is_ok_and(|candidate| &candidate == wanted) {
                 found = Some((entry.file_name(), child));
                 break;
             }
@@ -384,6 +385,22 @@ mod tests {
             message.contains("linked") && message.contains("direct"),
             "{message}"
         );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_directory_beside_one_reached_through_a_link_need_not_be_readable() {
+        use std::os::unix::fs::PermissionsExt;
+        let root = tempfile::tempdir().unwrap();
+        std::fs::create_dir_all(root.path().join("data/notes")).unwrap();
+        std::fs::create_dir_all(root.path().join("closed/inner")).unwrap();
+        std::os::unix::fs::symlink("data/notes", root.path().join("alias")).unwrap();
+        let closed = root.path().join("closed");
+        std::fs::set_permissions(&closed, std::fs::Permissions::from_mode(0o000)).unwrap();
+        let resolved = resolve(root.path(), [("notes", "alias")]);
+        std::fs::set_permissions(&closed, std::fs::Permissions::from_mode(0o755)).unwrap();
+        let [notes] = resolved.unwrap();
+        assert_eq!(notes.relative, "data/notes");
     }
 
     #[cfg(unix)]

@@ -276,15 +276,16 @@ The files are the record:
 - A write that finds the files at a revision other than its base is refused with `log_stale`, so
   an edit, a `git checkout` or a copy made since the writer read the document is never written
   over.
-- A write is remembered for a retry before its head file lands. A commit that fails without
-  landing is forgotten. A journalled write left unfinished stays remembered until the next write
-  to the document settles it: kept when its publication is finished, forgotten when it is
-  discarded. A retry given a revision first makes the document's files durable, since the write
-  may have landed and failed before it made them so.
+- A commit is remembered for a retry before its head file lands, and forgotten when it fails
+  without landing. Any other write is remembered once its publication is finished. A retry given
+  a revision first makes the document's files durable, since the write may have landed and
+  failed before it made them so.
 
 Opening the store recovers. It finishes each publication a record authorises, discards one whose
 file changed after it was authorised, keeping the change, and discards staging no record
-authorises. A publication a write could not finish is finished by the next write to the document.
+authorises. A write that leaves its publication authorised stops the document: every later write
+to it is refused until the store is opened again and recovery finishes or discards the
+publication. Reads go on.
 
 The store learns a revision through the stamp cache, the `log-stamps` journal of the engine's
 local records. Per document, it records a stamp of the log file, the head's next position and

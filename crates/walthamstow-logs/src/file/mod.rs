@@ -33,7 +33,7 @@ use cap_std::fs::Dir;
 use format::{Committed, HeadFile};
 use operations::{Change, Operations, Published};
 use stamps::{Stamp, Stamps};
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fmt;
 use std::io::{Read, Seek, SeekFrom, Write};
 use std::path::{Path, PathBuf};
@@ -118,9 +118,9 @@ pub struct FileLogStore {
     locks: Mutex<HashMap<DocumentId, Arc<RwLock<()>>>>,
     /// The last write to each document, which a retry under the same lease repeats.
     last: Mutex<HashMap<DocumentId, LastWrite>>,
-    /// The operation each document's last publication left unfinished, which the next write to
-    /// it finishes first.
-    pending: Mutex<HashMap<DocumentId, Pending>>,
+    /// The documents a write left a publication authorised for, which refuse writes until the
+    /// store is opened again and recovery finishes or discards the publication.
+    stopped: Mutex<HashSet<DocumentId>>,
     /// How many times a log file has been read whole.
     #[cfg(test)]
     log_reads: std::sync::atomic::AtomicUsize,
@@ -144,14 +144,6 @@ struct LastWrite {
     id: WriteId,
     base: Option<Revision>,
     given: Option<Revision>,
-}
-
-/// An operation a write authorised and did not see through: its id, and, while its publication
-/// is unresolved, the last write to put back should the publication be discarded. The write that
-/// authorised it stays remembered meanwhile, since it lands when the publication is finished.
-struct Pending {
-    operation: String,
-    restore: Option<Option<LastWrite>>,
 }
 
 /// How much of a document a read takes in.
@@ -269,7 +261,7 @@ impl FileLogStore {
             clock: config.clock,
             locks: Mutex::new(HashMap::new()),
             last: Mutex::new(HashMap::new()),
-            pending: Mutex::new(HashMap::new()),
+            stopped: Mutex::new(HashSet::new()),
             #[cfg(test)]
             log_reads: std::sync::atomic::AtomicUsize::new(0),
         };
@@ -466,8 +458,8 @@ impl FileLogStore {
     }
 
     /// Runs `write` on the lease's document while the lease stands, holding the document against
-    /// every other read and write in this store, once any publication left unfinished is
-    /// finished.
+    /// every other read and write in this store. A document a write left a publication authorised
+    /// for is refused.
     fn fenced<T>(
         &self,
         lease: &Lease,
@@ -477,39 +469,14 @@ impl FileLogStore {
             let document = lease.document();
             let lock = self.lock(document);
             let _writing = lock.write().unwrap_or_else(PoisonError::into_inner);
-            self.settle(document)?;
+            if locked(&self.stopped).contains(document) {
+                return Err(KernelError::internal(format!(
+                    "A write to the log document {document} left a publication authorised. Open \
+                     the store again to recover it."
+                )));
+            }
             write(document)
         })
-    }
-
-    /// Sees through the operation a write to `document` authorised and did not: finishes its
-    /// publication while a record authorises it, putting back the last write when the
-    /// publication is discarded, then retires it.
-    fn settle(&self, document: &DocumentId) -> KernelResult<()> {
-        let Some(mut pending) = locked(&self.pending).remove(document) else {
-            return Ok(());
-        };
-        let settled = (|| {
-            if pending.restore.is_some() {
-                // A publication no record authorises any longer is never finished.
-                let published = if self.operations.authorised(&pending.operation)? {
-                    self.operations
-                        .publish(&self.layout, &pending.operation, false)?
-                        .1
-                } else {
-                    Published::Stale
-                };
-                if let (Published::Stale, Some(previous)) = (published, pending.restore.take()) {
-                    self.restore(document, previous);
-                }
-                pending.restore = None;
-            }
-            self.operations.retire(&pending.operation)
-        })();
-        if settled.is_err() {
-            locked(&self.pending).insert(document.clone(), pending);
-        }
-        settled
     }
 
     /// What the last write gave, when a write of `id` over `base` under `lease` repeats it.
@@ -619,9 +586,9 @@ impl FileLogStore {
         })
     }
 
-    /// Publishes `changes` to `document` through a journalled operation, remembering it as the
-    /// write of `id` over `base` under `lease` that gave `given`. An operation the write does not
-    /// see through is left pending, for the next write to the document to settle.
+    /// Publishes `changes` to `document` through a journalled operation, and once it is published
+    /// remembers it as the write of `id` over `base` under `lease` that gave `given`. An operation
+    /// the write does not see through stops the document, until recovery sees it through.
     fn journalled(
         &self,
         lease: &Lease,
@@ -635,28 +602,20 @@ impl FileLogStore {
         let operation = self
             .operations
             .authorise(document, changes, remove_directory)?;
-        let previous = self.remember(lease, id, base, given);
-        let leave = |restore| {
-            let pending = Pending {
-                operation: operation.clone(),
-                restore,
-            };
-            locked(&self.pending).insert(document.clone(), pending);
+        let stop = |_: &KernelError| {
+            locked(&self.stopped).insert(document.clone());
         };
         match self.operations.publish(&self.layout, &operation, true) {
-            Ok((_, Published::Done)) => self
-                .operations
-                .retire(&operation)
-                .inspect_err(|_| leave(None)),
+            Ok((_, Published::Done)) => {
+                self.remember(lease, id, base, given);
+                self.operations.retire(&operation).inspect_err(stop)
+            }
             Ok((_, Published::Stale)) => {
-                self.restore(document, previous);
-                self.operations
-                    .retire(&operation)
-                    .inspect_err(|_| leave(None))?;
+                self.operations.retire(&operation).inspect_err(stop)?;
                 Err(changed(document))
             }
             Err(error) => {
-                leave(Some(previous));
+                stop(&error);
                 Err(error)
             }
         }

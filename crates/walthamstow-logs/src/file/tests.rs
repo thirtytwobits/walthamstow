@@ -641,17 +641,6 @@ mod files {
         assert_eq!(setup.store.head(&document).unwrap(), None);
     }
 
-    /// Leaves `operation` pending on `document`, as a write that did not see it through does,
-    /// with `restore` to put back should its publication be discarded.
-    fn leave_pending(
-        setup: &Setup,
-        document: &DocumentId,
-        operation: String,
-        restore: Option<Option<LastWrite>>,
-    ) {
-        locked(&setup.store.pending).insert(document.clone(), Pending { operation, restore });
-    }
-
     /// A rewind of `document` from position 1 over `base`, appending 7, as the write `id`.
     fn rewind_as(
         setup: &Setup,
@@ -672,69 +661,23 @@ mod files {
     }
 
     #[test]
-    fn a_retry_of_a_write_whose_publication_a_later_write_finishes_is_given_its_revision() {
-        let setup = Setup::new();
+    fn a_write_that_leaves_a_publication_authorised_stops_the_document_until_recovery() {
+        let mut setup = Setup::new();
         let (document, base) = with_records(&setup, "a");
-        let (rewound, _, operation) = interrupted(&setup, &document, |setup| {
+        let (rewound, _, _) = interrupted(&setup, &document, |setup| {
             rewind_as(setup, &document, &base, "rewind").unwrap()
         });
-        leave_pending(&setup, &document, operation, Some(None));
-        assert_eq!(
-            rewind_as(&setup, &document, &base, "rewind").unwrap(),
-            rewound
-        );
-        assert_eq!(setup.payloads(&document), payloads(&[1, 7]));
-        assert!(locked(&setup.store.pending).is_empty());
-    }
-
-    #[test]
-    fn a_retry_of_a_write_whose_publication_is_discarded_is_judged_by_its_base() {
-        let setup = Setup::new();
-        let (document, base) = with_records(&setup, "a");
-        let (_, _, operation) = interrupted(&setup, &document, |setup| {
-            rewind_as(setup, &document, &base, "rewind").unwrap()
-        });
-        leave_pending(&setup, &document, operation, Some(None));
-        let log = setup.path(&document, LOG);
-        let edited = std::fs::read_to_string(&log)
-            .unwrap()
-            .replace(r#""payload":2"#, r#""payload":5"#);
-        std::fs::write(&log, &edited).unwrap();
-        assert_eq!(
-            rewind_as(&setup, &document, &base, "rewind")
-                .unwrap_err()
-                .reason_code(),
-            Some(reason_codes::LOG_STALE)
-        );
-        assert_eq!(std::fs::read_to_string(&log).unwrap(), edited);
-        assert!(locked(&setup.store.pending).is_empty());
-    }
-
-    #[test]
-    fn a_write_retires_a_pending_operation_whose_record_is_gone() {
-        for restore in [None, Some(None)] {
-            let setup = Setup::new();
-            let (document, base) = with_records(&setup, "a");
-            let (_, _, operation) = interrupted(&setup, &document, |setup| {
-                rewind_as(setup, &document, &base, "rewind").unwrap()
-            });
-            let key = walthamstow_kernel::local_store::JournalKey::new(
-                super::operations::JOURNAL,
-                [operation.as_str()],
-            )
-            .unwrap();
-            let (_, tag) = setup.local.get(&key).unwrap().unwrap();
-            setup.local.remove(&key, &tag).unwrap();
-            let staged = super::operations::STAGING
-                .root(&locked(&setup.harness.current).1)
-                .join(&operation);
-            assert!(staged.exists());
-            leave_pending(&setup, &document, operation, restore);
-            setup.commit(&document, &base, &[3]).unwrap();
-            assert!(!staged.exists());
-            assert!(locked(&setup.store.pending).is_empty());
-            assert_eq!(setup.payloads(&document), payloads(&[1, 2, 3]));
-        }
+        locked(&setup.store.stopped).insert(document.clone());
+        let refused = setup.commit(&document, &base, &[3]).unwrap_err();
+        assert_eq!(refused.code, "internal_error");
+        assert_eq!(setup.revision(&document), base, "reads go on");
+        let (other, other_base) = with_records(&setup, "b");
+        setup.commit(&other, &other_base, &[3]).unwrap();
+        let recovery = setup.reopen();
+        assert_eq!(recovery.finished, std::slice::from_ref(&document));
+        assert_eq!(setup.revision(&document), rewound);
+        setup.commit(&document, &rewound, &[3]).unwrap();
+        assert_eq!(setup.payloads(&document), payloads(&[1, 7, 3]));
     }
 
     #[cfg(unix)]

@@ -17,8 +17,8 @@ attaches no files. `release.json` records the version and repository. Its `steps
   workflow instead.
 - The push to `main` builds the release files once. The tag workflow and publication build
   nothing.
-- `tools/release.py` and `.github/workflows/release.yml` are sent from thirtytwobits/london;
-  change them there.
+- `tools/release.py`, `.github/workflows/release.yml` and `.github/workflows/verify.yml` are sent
+  from thirtytwobits/london; change them there.
 
 ## Procedure
 
@@ -39,8 +39,11 @@ build keeps.
    it fails, rerun it for the existing tag; never move a pushed tag. If the main build's files have
    expired, rerun that build, then the Draft release workflow.
 6. Review the draft's tag, commit, notes and files in GitHub, then publish it by hand.
-7. Run `python3 tools/release.py verify --issue NUMBER` to record the evidence on the release
-   issue, then close the issue.
+7. Publication runs the Verify release workflow, whose run is the release's evidence. It runs
+   `python3 tools/release.py verify`, which checks the release and its Draft release run, takes
+   the release in a new consumer with `cargo add --tag` and `cargo check` on Rust
+   1.88, and runs the verify steps. Run the workflow by hand with the tag to check
+   a release again.
 
 CI runs on Rust 1.99.0; the libraries support Rust 1.88 and later.
 

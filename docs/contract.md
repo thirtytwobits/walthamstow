@@ -47,7 +47,13 @@ against it.
 Configured paths are used as given, links in them included. On macOS, `/var` and `/tmp` are
 links.
 
-Walthamstow refuses a link wherever it names an entry itself:
+Each root Walthamstow owns, the data directory, the workspace root, the collaboration root and its
+records directory, and each mount, is opened as a `cap-std` directory, and everything under it is
+reached through that handle. A path or a link that would leave the root fails by construction.
+Within a root, a link whose target is relative and stays within it is followed; a link whose
+target is absolute leads out of the root, whatever it names.
+
+Where the contract refuses a link outright, Walthamstow opens the entry without following one:
 
 - `journals/`, each journal, and every entry in a journal
 - `staging/` and each staging directory
@@ -59,16 +65,23 @@ Walthamstow refuses a link wherever it names an entry itself:
 A file Walthamstow reads as state must be a regular file. A link, FIFO, socket or device found
 there is refused unopened.
 
-A configured workspace directory must meet all of these:
+A configured workspace directory is resolved through the workspace root's handle, created when it
+does not exist, and held open, so a link changed later does not move it. Its documents are named
+by where it lies relative to the root, with every link resolved. The handle refuses one
+that would leave the root, or where a part of it that exists is not a directory. Walthamstow
+checks the names:
 
 - it is a normalised relative path in ASCII
 - every component is a name Windows allows: no reserved character or device name, no trailing
   dot or space
-- it stays within the root, with in-root links resolved at resolution
-- it overlaps no other configured directory, compared case-folded
-- every part of it that exists is a directory
+- it overlaps no other configured directory, compared case-folded and by where links within the
+  root lead
 
-Discovery refuses a link or special file wherever it would find a directory or a document.
+A mount-relative path is resolved through the mount's handle and refused when it names a parent,
+a root or a prefix, or leads out of the mount through a link.
+
+Discovery walks a configured directory's handle and never follows a link. It refuses a link to a
+document, to a directory or out of the directory, and a document that is not a regular file.
 
 Every path Walthamstow turns into text is UTF-8: the collaboration root, its records directory,
 and each workspace-relative path. Anything else is refused, so text always names the file it

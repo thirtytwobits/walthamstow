@@ -2323,7 +2323,7 @@ pub const walthamstow_ops::operations::WORKSPACE_READ: &str
 pub mod walthamstow_ops::workspace
 pub struct walthamstow_ops::workspace::FileWorkspace
 impl walthamstow_ops::workspace::FileWorkspace
-pub fn walthamstow_ops::workspace::FileWorkspace::directory(self, entity: impl core::convert::Into<alloc::string::String>, directory: impl core::convert::Into<std::path::PathBuf>) -> Self
+pub fn walthamstow_ops::workspace::FileWorkspace::directory(self, entity: impl core::convert::Into<alloc::string::String>, directory: walthamstow_workspace::paths::ConfiguredDirectory) -> Self
 pub fn walthamstow_ops::workspace::FileWorkspace::new(root: impl core::convert::Into<std::path::PathBuf>, data_dir: impl core::convert::AsRef<std::path::Path>, durability: walthamstow_kernel::durability::WriteDurability) -> anyhow::Result<Self>
 impl core::fmt::Debug for walthamstow_ops::workspace::FileWorkspace
 pub fn walthamstow_ops::workspace::FileWorkspace::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
@@ -3051,7 +3051,7 @@ impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_ops::operations::Entity wh
 pub fn walthamstow_ops::operations::Entity::vzip(self) -> V
 pub struct walthamstow_ops::FileWorkspace
 impl walthamstow_ops::workspace::FileWorkspace
-pub fn walthamstow_ops::workspace::FileWorkspace::directory(self, entity: impl core::convert::Into<alloc::string::String>, directory: impl core::convert::Into<std::path::PathBuf>) -> Self
+pub fn walthamstow_ops::workspace::FileWorkspace::directory(self, entity: impl core::convert::Into<alloc::string::String>, directory: walthamstow_workspace::paths::ConfiguredDirectory) -> Self
 pub fn walthamstow_ops::workspace::FileWorkspace::new(root: impl core::convert::Into<std::path::PathBuf>, data_dir: impl core::convert::AsRef<std::path::Path>, durability: walthamstow_kernel::durability::WriteDurability) -> anyhow::Result<Self>
 impl core::fmt::Debug for walthamstow_ops::workspace::FileWorkspace
 pub fn walthamstow_ops::workspace::FileWorkspace::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result

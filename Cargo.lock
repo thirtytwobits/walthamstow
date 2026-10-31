@@ -3512,6 +3512,8 @@ name = "walthamstow-workspace"
 version = "0.6.0"
 dependencies = [
  "anyhow",
+ "cap-fs-ext",
+ "cap-std",
  "clerkenwell-doc",
  "clerkenwell-events",
  "clerkenwell-schema",

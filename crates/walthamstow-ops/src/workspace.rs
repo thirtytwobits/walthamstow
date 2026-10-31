@@ -16,6 +16,7 @@ use walthamstow_kernel::publication::{check_relative_path, read_regular};
 use walthamstow_kernel::KernelError;
 use walthamstow_upgrades::workspace::{self as upgrades, Recovery};
 use walthamstow_workspace::documents::{list_documents, supported_document};
+use walthamstow_workspace::paths::ConfiguredDirectory;
 
 /// The documents a workspace keeps, and the upgrades that replace them.
 pub trait Workspace: Send + Sync {
@@ -66,7 +67,7 @@ pub struct FileWorkspace {
     data: Dir,
     durability: WriteDurability,
     /// Each entity's directory, resolved.
-    directories: BTreeMap<String, PathBuf>,
+    directories: BTreeMap<String, ConfiguredDirectory>,
 }
 
 impl FileWorkspace {
@@ -92,8 +93,8 @@ impl FileWorkspace {
 
     /// Keeps `entity`'s documents in `directory`, which the product resolved with
     /// [`resolve_directories`](walthamstow_workspace::paths::resolve_directories).
-    pub fn directory(mut self, entity: impl Into<String>, directory: impl Into<PathBuf>) -> Self {
-        self.directories.insert(entity.into(), directory.into());
+    pub fn directory(mut self, entity: impl Into<String>, directory: ConfiguredDirectory) -> Self {
+        self.directories.insert(entity.into(), directory);
         self
     }
 
@@ -112,14 +113,20 @@ impl FileWorkspace {
     }
 }
 
-/// The path of `file` relative to `root`, its components joined by `/`. A component holding a
-/// backslash is refused, since joined it would name another file.
-fn document_path(root: &Path, file: &Path) -> anyhow::Result<String> {
-    let relative = file.strip_prefix(root)?;
-    let mut components = Vec::new();
-    for component in relative.components() {
+/// The path relative to the workspace root of `file`, which lies at that path relative to the
+/// configured directory `directory`, its components joined by `/`. A component holding a
+/// backslash, the directory's or the file's, is refused, since joined it would name another
+/// file.
+fn document_path(directory: &str, file: &Path) -> anyhow::Result<String> {
+    if directory.contains('\\') {
+        anyhow::bail!(
+            "{directory} is named with a backslash, which names another directory on Windows."
+        );
+    }
+    let mut components = vec![directory];
+    for component in file.components() {
         let std::path::Component::Normal(name) = component else {
-            anyhow::bail!("{} does not lie within {}.", file.display(), root.display());
+            anyhow::bail!("{} does not lie within {directory}.", file.display());
         };
         let Some(name) = name.to_str() else {
             anyhow::bail!("{} is not named in UTF-8.", file.display());
@@ -157,11 +164,11 @@ impl Workspace for FileWorkspace {
             .directories
             .get(entity)
             .ok_or_else(|| anyhow::anyhow!("The workspace keeps no directory for {entity}."))?;
-        list_documents(directory)?
+        list_documents(&directory.dir)?
             .into_iter()
             .map(|file| {
-                let path = document_path(&self.root, &file)?;
-                let bytes = read_regular(&self.root_dir, Path::new(&path))?;
+                let path = document_path(&directory.relative, &file)?;
+                let bytes = read_regular(&directory.dir, &file)?;
                 Ok((path, bytes))
             })
             .collect()

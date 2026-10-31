@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.7.0
 
 ### Breaking
 
@@ -9,9 +9,10 @@
 - `walthamstow_upgrades::publication` is the kernel's `publication` module, over `cap-std`, which
   the kernel now depends on. `publish` and `publish_first` take the live and staged roots as
   `cap_std::fs::Dir`, and resolve every file through them; `file_hash` and `read_regular` take a
-  `Dir`. `Replacement::target_hash` is an `Option`, and `None` removes the live file. The kernel refuses with `publication_stale` and `publication_paths_collide`;
-  `walthamstow-upgrades` names them `upgrade_stale` and `upgrade_paths_collide`, and
-  `workspace::check_paths` checks an upgrade's paths.
+  `Dir`. `Replacement::target_hash` is an `Option`, and `None` removes the live file. The kernel
+  refuses with `publication_stale` and `publication_paths_collide`; `walthamstow-upgrades` names
+  them `upgrade_stale` and `upgrade_paths_collide`, and `workspace::check_paths` checks an
+  upgrade's paths.
 - `journals::Journal` and `journals::Staging` resolve their directories through the data
   directory held as a `cap_std::fs::Dir`: `dir` opens one and `create_dir` creates it, and each
   refuses a link at `journals/`, `staging/` or the directory itself. `unlinked_root` is removed;
@@ -28,11 +29,11 @@
 - `walthamstow-workspace` resolves through `cap_std::fs::Dir` handles. `paths::resolve_directories`
   takes the workspace root's handle and a durability, creates each configured directory that does
   not exist, and returns a `ConfiguredDirectory`, the directory held open with where it lies
-  relative to the root, every link resolved; overlap is compared case-folded where it lies. `documents::list_documents`
-  walks a `Dir` and returns paths relative to it, and refuses a link out of the directory.
-  `mounts::open_mount` opens a mount, and `mounts::resolve_mount_path` takes its handle and returns
-  the mount-relative path to open through it. `walthamstow-ops`' `FileWorkspace::directory` takes a
-  `ConfiguredDirectory`.
+  relative to the root, every link resolved; overlap is compared case-folded where it lies.
+  `documents::list_documents` walks a `Dir` and returns paths relative to it, and refuses a link
+  out of the directory. `mounts::open_mount` opens a mount, and `mounts::resolve_mount_path` takes
+  its handle and returns the mount-relative path to open through it. `walthamstow-ops`'
+  `FileWorkspace::directory` takes a `ConfiguredDirectory`.
 
 ### Added
 

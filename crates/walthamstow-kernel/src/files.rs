@@ -4,6 +4,7 @@
 //! one safely.
 
 use anyhow::{bail, Result};
+use cap_fs_ext::DirExt;
 use cap_std::fs::Dir;
 use std::collections::BTreeMap;
 use std::path::{Component, Path, PathBuf};
@@ -100,37 +101,29 @@ pub fn windows_allows(component: &str) -> bool {
         && !is_windows_device_name(stem)
 }
 
-/// Every file under `dir`, by its path relative to `dir`. A symlink or any other entry
-/// that is neither a file nor a directory is refused.
-pub fn read_files(dir: &Path) -> Result<BTreeMap<PathBuf, Vec<u8>>> {
-    fn visit(base: &Path, dir: &Path, files: &mut BTreeMap<PathBuf, Vec<u8>>) -> Result<()> {
-        for entry in std::fs::read_dir(dir)? {
+/// Every file under `dir`, by its path relative to `dir`. A link or any other entry that is
+/// neither a file nor a directory is refused unfollowed.
+pub fn read_files(dir: &Dir) -> Result<BTreeMap<PathBuf, Vec<u8>>> {
+    fn visit(dir: &Dir, prefix: &Path, files: &mut BTreeMap<PathBuf, Vec<u8>>) -> Result<()> {
+        for entry in dir.entries()? {
             let entry = entry?;
             let kind = entry.file_type()?;
-            if kind.is_symlink() {
-                bail!(
-                    "{} is a symlink, which is not read as a file.",
-                    entry.path().display()
-                );
-            }
+            let name = entry.file_name();
+            let path = prefix.join(&name);
             if kind.is_dir() {
-                visit(base, &entry.path(), files)?;
+                visit(&dir.open_dir_nofollow(&name)?, &path, files)?;
             } else if kind.is_file() {
-                files.insert(
-                    entry.path().strip_prefix(base)?.to_owned(),
-                    std::fs::read(entry.path())?,
-                );
+                files.insert(path, dir.read(&name)?);
+            } else if kind.is_symlink() {
+                bail!("{} is a link, which is not read as a file.", path.display());
             } else {
-                bail!(
-                    "{} is neither a file nor a directory.",
-                    entry.path().display()
-                );
+                bail!("{} is neither a file nor a directory.", path.display());
             }
         }
         Ok(())
     }
     let mut files = BTreeMap::new();
-    visit(dir, dir, &mut files)?;
+    visit(dir, Path::new(""), &mut files)?;
     Ok(files)
 }
 
@@ -247,14 +240,14 @@ mod tests {
     }
 
     #[test]
-    fn a_directory_reads_as_its_files_by_relative_path_and_refuses_a_symlink() {
+    fn a_directory_reads_as_its_files_by_relative_path_and_refuses_a_link() {
         let dir = tempfile::tempdir().unwrap();
         let nested = Path::new("nested/record.json");
         let top = Path::new("top.txt");
         std::fs::create_dir_all(dir.path().join("nested")).unwrap();
         std::fs::write(dir.path().join(nested), b"nested").unwrap();
         std::fs::write(dir.path().join(top), b"top").unwrap();
-        let files = read_files(dir.path()).unwrap();
+        let files = read_files(&open_dir(dir.path()).unwrap()).unwrap();
         assert_eq!(files.len(), 2);
         assert_eq!(files[nested], b"nested");
         assert_eq!(files[top], b"top");
@@ -262,7 +255,7 @@ mod tests {
         #[cfg(unix)]
         {
             std::os::unix::fs::symlink(dir.path().join(top), dir.path().join("link")).unwrap();
-            assert!(read_files(dir.path()).is_err());
+            assert!(read_files(&open_dir(dir.path()).unwrap()).is_err());
         }
     }
 

@@ -508,10 +508,10 @@ mod tests {
                 assert_eq!(std::fs::read(root.join(path)).unwrap(), targets[index]);
             }
             assert!(!prepared_dir(&work).exists());
-            let before = read_files(root).unwrap();
+            let before = read_files(&dir(root)).unwrap();
             let again = recover(&dir(root), &dir(data.path()), DURABILITY).unwrap();
             assert_eq!(again, Recovery::default());
-            assert_eq!(read_files(root).unwrap(), before);
+            assert_eq!(read_files(&dir(root)).unwrap(), before);
         }
     }
 
@@ -529,10 +529,10 @@ mod tests {
         };
         journal_at(&work, &operation);
         std::fs::write(workspace.path().join("authored.json"), b"authored").unwrap();
-        let before = read_files(workspace.path()).unwrap();
+        let before = read_files(&dir(workspace.path())).unwrap();
         let recovery = recover(&dir(workspace.path()), &dir(data.path()), DURABILITY).unwrap();
         assert_eq!(recovery, Recovery::default());
-        assert_eq!(read_files(workspace.path()).unwrap(), before);
+        assert_eq!(read_files(&dir(workspace.path())).unwrap(), before);
     }
 
     #[test]

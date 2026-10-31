@@ -51,7 +51,8 @@ Walthamstow refuses a link wherever it names an entry itself:
 
 - `journals/`, each journal, and every entry in a journal
 - `staging/` and each staging directory
-- the collaboration cache root that `prepare_cache_root` is given, and each entity directory
+- the collaboration cache root that `prepare_cache_root` is given, each entity directory, and the
+  quarantine directory
 - publication marks
 - each upgrade's operation directory
 
@@ -318,8 +319,14 @@ An envelope is kept at `<root>/<entity directory>/<sha-256 of the resource id>.j
 - The records are `audit.ndjson` and `quarantine/`. They are kept beside the envelopes, or under
   the records directory when one is given.
 
+Each operation opens the root and the records directory as `cap-std` directories and reaches
+every file under them through those handles, so a path or a link that would leave either fails.
+Within them, the store refuses a link outright at each entity directory and at `quarantine/`, which
+it opens without following one, and every state file it reads, writes or locks must be a regular
+file.
+
 A source is the envelope's full path as text. `read` and `stamp` accept only a source that names
-an envelope this layout generates.
+an envelope this layout generates, and resolve it to its entity directory and file under the root.
 
 `compare_and_swap` writes only when the stored version equals the expected one. On a mismatch it
 returns `None`, after syncing the entity directory. `compare_and_remove` removes only when the

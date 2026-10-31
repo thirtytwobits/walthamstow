@@ -602,6 +602,26 @@ mod tests {
     }
 
     #[test]
+    fn each_durability_syncs_a_directory_through_its_handle() {
+        for durability in [WriteDurability::Device, WriteDurability::System] {
+            let root = tempfile::tempdir().expect("tempdir");
+            let held = dir(root.path());
+            super::create_dir_all_in(durability, &held, std::path::Path::new("a/b"))
+                .expect("create");
+            std::fs::write(root.path().join("a/b/kept"), b"kept").expect("write");
+            durability.sync_dir(&held).expect("sync the root");
+            let nested = held.open_dir("a/b").expect("open through the root");
+            durability
+                .sync_dir(&nested)
+                .expect("sync a directory opened through the root");
+            assert_eq!(
+                std::fs::read(root.path().join("a/b/kept")).expect("read"),
+                b"kept"
+            );
+        }
+    }
+
+    #[test]
     fn a_write_within_a_dir_creates_its_directories_and_replaces_the_file() {
         for durability in [WriteDurability::Device, WriteDurability::System] {
             let root = tempfile::tempdir().expect("tempdir");

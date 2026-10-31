@@ -25,7 +25,7 @@ use walthamstow_kernel::{DocumentId, KernelError, KernelResult};
 pub struct DocumentLayout {
     /// The root, through which every operation goes.
     root: Dir,
-    /// The path the root was opened at, for messages and for syncing directories.
+    /// The path the root was opened at, for messages.
     path: PathBuf,
     /// By entity name.
     entities: BTreeMap<String, Entity>,
@@ -217,14 +217,19 @@ impl DocumentLayout {
         Ok(())
     }
 
-    /// Makes the entries of the directory at `relative` under the root durable. A directory
-    /// that does not exist has no entries to make durable.
+    /// Makes the entries of the directory at `relative` under the root durable, through the
+    /// root's handle. A directory that does not exist has no entries to make durable.
     pub(crate) fn sync(&self, durability: WriteDurability, relative: &Path) -> KernelResult<()> {
-        let path = self.path.join(relative);
-        match durability.sync_directory(&path) {
-            Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
-            result => result.map_err(|error| internal(&path, error)),
-        }
+        let synced = if relative.as_os_str().is_empty() {
+            durability.sync_dir(&self.root)
+        } else {
+            match self.root.open_dir(relative) {
+                Ok(dir) => durability.sync_dir(&dir),
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(()),
+                Err(error) => Err(error),
+            }
+        };
+        synced.map_err(|error| internal(&self.path.join(relative), error))
     }
 }
 

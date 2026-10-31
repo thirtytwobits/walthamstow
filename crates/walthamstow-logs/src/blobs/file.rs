@@ -134,7 +134,9 @@ impl FileBlobStore {
             .sync(&opened)
             .map_err(|error| internal(&path, error))?;
         drop(opened);
-        self.layout.sync(self.durability, &dir.relative)
+        self.durability
+            .sync_dir(&dir.dir)
+            .map_err(|error| internal(&self.layout.root().join(&dir.relative), error))
     }
 
     /// The bytes `blob` names in `document`, or the fault that stands in their place.
@@ -179,7 +181,9 @@ impl FileBlobStore {
             let _ = dir.dir.remove_file(&staged);
             return Err(internal(&path(file), error));
         }
-        self.layout.sync(self.durability, &dir.relative)
+        self.durability
+            .sync_dir(&dir.dir)
+            .map_err(|error| internal(&self.layout.root().join(&dir.relative), error))
     }
 
     /// Every blob of `kind` in `document`, in digest order. An entry the store did not write is

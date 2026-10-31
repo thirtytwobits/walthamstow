@@ -39,7 +39,8 @@
 - `durability::write_synced_in` writes a file durably within a `cap_std::fs::Dir`, and
   `create_dir_all_in` creates directories durably within one. `WriteDurability::sync_dir` syncs the
   directory a `Dir` holds. `files::open_dir` opens a directory as a `Dir`, sharing deletion on
-  Windows so that it opens a workspace root an engine holds.
+  Windows so that it opens a workspace root an engine holds, and `files::open_dir_to_read` opens
+  one without asking for write access.
 - `walthamstow-logs` keeps log documents: a head, a format and an ordered log of records, written
   by one lease holder at a time. `LogStore` creates, commits to, rewinds, replaces and removes a
   document under its lease and over the revision its writer read, retries a write by its id under

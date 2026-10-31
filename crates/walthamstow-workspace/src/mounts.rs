@@ -35,10 +35,10 @@ pub fn join_mount_path(parent: &str, child: &str) -> String {
     }
 }
 
-/// The mount at `root`, opened as a `cap-std` directory through which every path in it is
-/// resolved. A mount root that cannot be opened is an internal failure.
+/// The mount at `root`, opened to read as a `cap-std` directory through which every path in it
+/// is resolved. A mount root that cannot be opened is an internal failure.
 pub fn open_mount(root: &Path) -> KernelResult<Dir> {
-    walthamstow_kernel::files::open_dir(root).map_err(|error| {
+    walthamstow_kernel::files::open_dir_to_read(root).map_err(|error| {
         KernelError::internal(format!(
             "Could not open the mount {}: {error}",
             root.display()

@@ -4,11 +4,9 @@
 //! held open through the root's handle.
 
 use anyhow::{bail, Context, Result};
-use cap_fs_ext::DirExt;
 use cap_std::fs::Dir;
 use std::path::{Component, Path, PathBuf};
 use walthamstow_kernel::durability::{create_dir_all_in, WriteDurability};
-use walthamstow_kernel::files::{identity, Identity};
 
 /// A configured directory, held open. A link within the root changed later does not move it.
 #[derive(Debug)]
@@ -19,9 +17,8 @@ pub struct ConfiguredDirectory {
     pub relative: String,
 }
 
-/// How many levels a configured directory may lie beneath the root, links on the way to it
-/// included.
-const MAX_DEPTH: usize = 256;
+/// How many links the way to a configured directory may pass through.
+const MAX_LINKS: usize = 40;
 
 /// Resolves each `(name, configured)` directory through the workspace root `root`, creating each
 /// that does not exist as durably as `durability` asks, and gives where each lies with every link
@@ -43,12 +40,10 @@ pub fn resolve_directories<const N: usize>(
     refuse_overlap(&configured, |left, right| {
         folded[left].starts_with(&folded[right]) || folded[right].starts_with(&folded[left])
     })?;
-    let root_identity = identity(root).context("Failed to identify the workspace root.")?;
     let mut held = Vec::with_capacity(N);
     for (name, value) in configured {
         let dir = open_or_create(durability, root, name, value)?;
-        let chain = ancestry(root, &root_identity, name, value, &dir)?;
-        let relative = resolved_path(root, name, &chain)?;
+        let relative = resolved_path(root, name, value)?;
         held.push(ConfiguredDirectory { dir, relative });
     }
     let folded = held
@@ -136,76 +131,59 @@ fn open_or_create(
     root.open_dir(configured).map_err(refused)
 }
 
-/// Where the directory whose identity and its ancestors' are `chain`, nearest first, lies
-/// beneath `root`, as the names of the directories it lies in: at each level, the directory, not
-/// a link, whose identity is the next in the chain. A directory beside it that cannot be opened
-/// or identified is not it, and is passed over.
-fn resolved_path(root: &Dir, name: &str, chain: &[Identity]) -> Result<String> {
-    let mut names = Vec::with_capacity(chain.len());
-    let mut current = root
-        .try_clone()
-        .with_context(|| format!("Failed to resolve {name}."))?;
-    for wanted in chain.iter().rev() {
-        let mut found = None;
-        for entry in current
-            .entries()
-            .with_context(|| format!("Failed to resolve {name}."))?
-        {
-            let entry = entry.with_context(|| format!("Failed to resolve {name}."))?;
-            if !entry
-                .file_type()
-                .with_context(|| format!("Failed to resolve {name}."))?
-                .is_dir()
-            {
+/// Where `configured` lies beneath `root` with every link on the way resolved, read through the
+/// root's handle a component at a time: a link is replaced by its target, which a handle follows
+/// only when it is relative, and `..` in a target leaves the directory before it. Each component
+/// needs only to be searchable, not listable.
+fn resolved_path(root: &Dir, name: &str, configured: &str) -> Result<String> {
+    let mut resolved: Vec<String> = Vec::new();
+    let mut pending: std::collections::VecDeque<String> =
+        configured.split('/').map(str::to_owned).collect();
+    let mut links = 0;
+    while let Some(component) = pending.pop_front() {
+        match component.as_str() {
+            "" | "." => continue,
+            ".." => {
+                if resolved.pop().is_none() {
+                    bail!("{name} must stay within the workspace root.");
+                }
                 continue;
             }
-            let Ok(child) = current.open_dir_nofollow(entry.file_name()) else {
-                continue;
-            };
-            if identity(&child).is_ok_and(|candidate| &candidate == wanted) {
-                found = Some((entry.file_name(), child));
-                break;
-            }
+            _ => {}
         }
-        let Some((entry, child)) = found else {
-            bail!("{name} could not be found where its links lead within the workspace root.");
-        };
-        let Some(entry) = entry.to_str() else {
-            bail!("{name} lies in a directory not named in UTF-8.");
-        };
-        names.push(entry.to_owned());
-        current = child;
+        let here = resolved
+            .iter()
+            .chain(std::iter::once(&component))
+            .collect::<PathBuf>();
+        let metadata = root
+            .symlink_metadata(&here)
+            .with_context(|| format!("Failed to resolve {name}."))?;
+        if !metadata.is_symlink() {
+            resolved.push(component);
+            continue;
+        }
+        links += 1;
+        if links > MAX_LINKS {
+            bail!("{name} passes through more than {MAX_LINKS} links.");
+        }
+        let target = root
+            .read_link(&here)
+            .with_context(|| format!("{name} must stay within the workspace root."))?;
+        let mut followed = Vec::new();
+        for part in target.components() {
+            let part = part.as_os_str().to_str().ok_or_else(|| {
+                anyhow::anyhow!("{name} passes through a link not named in UTF-8.")
+            })?;
+            followed.push(part.to_owned());
+        }
+        for part in followed.into_iter().rev() {
+            pending.push_front(part);
+        }
     }
-    Ok(names.join("/"))
-}
-
-/// The identities of `dir`, which `configured` names through `root`, and of each directory
-/// holding it up to the root, nearest first. A directory reached through a link is held by where
-/// the link leads, so its parents are those of the link's target.
-fn ancestry(
-    root: &Dir,
-    root_identity: &Identity,
-    name: &str,
-    configured: &str,
-    dir: &Dir,
-) -> Result<Vec<Identity>> {
-    let mut chain = vec![identity(dir).with_context(|| format!("Failed to identify {name}."))?];
-    if &chain[0] == root_identity {
+    if resolved.is_empty() {
         bail!("{name} must lie beneath the workspace root, not be it.");
     }
-    let mut up = PathBuf::from(configured);
-    for _ in 0..MAX_DEPTH {
-        up.push("..");
-        let parent = root
-            .open_dir(&up)
-            .with_context(|| format!("Failed to resolve the directories holding {name}."))?;
-        let parent = identity(&parent).with_context(|| format!("Failed to identify {name}."))?;
-        if &parent == root_identity {
-            return Ok(chain);
-        }
-        chain.push(parent);
-    }
-    bail!("{name} lies more than {MAX_DEPTH} directories beneath the workspace root.")
+    Ok(resolved.join("/"))
 }
 
 #[cfg(test)]
@@ -401,6 +379,23 @@ mod tests {
         std::fs::set_permissions(&closed, std::fs::Permissions::from_mode(0o755)).unwrap();
         let [notes] = resolved.unwrap();
         assert_eq!(notes.relative, "data/notes");
+    }
+
+    // Linux resolves through a directory it may only search; macOS opens each directory on the
+    // way, which needs it to be readable.
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn a_directory_beneath_one_that_can_be_searched_but_not_listed_resolves() {
+        use std::os::unix::fs::PermissionsExt;
+        let root = tempfile::tempdir().unwrap();
+        std::fs::create_dir_all(root.path().join("data/real/notes")).unwrap();
+        std::os::unix::fs::symlink("real", root.path().join("data/alias")).unwrap();
+        let data = root.path().join("data");
+        std::fs::set_permissions(&data, std::fs::Permissions::from_mode(0o111)).unwrap();
+        let resolved = resolve(root.path(), [("notes", "data/alias/notes")]);
+        std::fs::set_permissions(&data, std::fs::Permissions::from_mode(0o755)).unwrap();
+        let [notes] = resolved.unwrap();
+        assert_eq!(notes.relative, "data/real/notes");
     }
 
     #[cfg(unix)]

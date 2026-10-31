@@ -54,7 +54,7 @@ Walthamstow refuses a link wherever it names an entry itself:
 - the collaboration cache root that `prepare_cache_root` is given, each entity directory, and the
   quarantine directory
 - publication marks
-- each upgrade's operation directory
+- each upgrade's operation directory, its `prepared/` and its `original/`
 
 A file Walthamstow reads as state must be a regular file. A link, FIFO, socket or device found
 there is refused unopened.
@@ -376,8 +376,9 @@ upgrade works in `journals/workspace-upgrades/<operation id>/`:
 - `operation.json` authorises publication
 
 An upgrade publishes its files from `prepared/` into the workspace root as a
-[publication](#publication), and reaches its originals and staged files through its operation
-directory. An upgrade names a publication's refusals as its own: two files that differ only in
+[publication](#publication). It reaches every directory and file through the data directory and
+the workspace root held as `cap-std` directories, and opens its operation directory, `prepared/`
+and `original/` without following a link. An upgrade names a publication's refusals as its own: two files that differ only in
 case are refused with the reason `upgrade_paths_collide`, and a stale file with `upgrade_stale`.
 Recovery publishes again, so it accepts a file already at its target.
 

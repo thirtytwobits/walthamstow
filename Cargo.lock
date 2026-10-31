@@ -3462,6 +3462,7 @@ name = "walthamstow-ops"
 version = "0.6.0"
 dependencies = [
  "anyhow",
+ "cap-std",
  "clapham",
  "schemars",
  "serde",
@@ -3498,6 +3499,7 @@ name = "walthamstow-upgrades"
 version = "0.6.0"
 dependencies = [
  "anyhow",
+ "cap-fs-ext",
  "cap-std",
  "serde",
  "serde_json",

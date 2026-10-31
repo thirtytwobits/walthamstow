@@ -235,13 +235,13 @@ impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusi
 impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_upgrades::workspace::Recovery where V: ppv_lite86::types::MultiLane<T>
 pub fn walthamstow_upgrades::workspace::Recovery::vzip(self) -> V
 pub const walthamstow_upgrades::workspace::JOURNAL: walthamstow_kernel::journals::Journal
-pub fn walthamstow_upgrades::workspace::abandon(durability: walthamstow_kernel::durability::WriteDurability, work: &std::path::Path) -> anyhow::Result<()>
-pub fn walthamstow_upgrades::workspace::authorise(durability: walthamstow_kernel::durability::WriteDurability, work: &std::path::Path, operation_id: &str, sources: &alloc::collections::btree::map::BTreeMap<std::path::PathBuf, alloc::vec::Vec<u8>>, changes: &alloc::collections::btree::map::BTreeMap<std::path::PathBuf, alloc::vec::Vec<u8>>) -> anyhow::Result<walthamstow_upgrades::workspace::Operation>
+pub fn walthamstow_upgrades::workspace::abandon(durability: walthamstow_kernel::durability::WriteDurability, data: &cap_std::fs::dir::Dir, operation_id: &str) -> anyhow::Result<()>
+pub fn walthamstow_upgrades::workspace::authorise(durability: walthamstow_kernel::durability::WriteDurability, data: &cap_std::fs::dir::Dir, operation_id: &str, sources: &alloc::collections::btree::map::BTreeMap<std::path::PathBuf, alloc::vec::Vec<u8>>, changes: &alloc::collections::btree::map::BTreeMap<std::path::PathBuf, alloc::vec::Vec<u8>>) -> anyhow::Result<walthamstow_upgrades::workspace::Operation>
+pub fn walthamstow_upgrades::workspace::check_operation_id(operation_id: &str) -> anyhow::Result<()>
 pub fn walthamstow_upgrades::workspace::check_paths<'a>(paths: impl core::iter::traits::collect::IntoIterator<Item = &'a std::path::Path>) -> anyhow::Result<()>
-pub fn walthamstow_upgrades::workspace::finish(durability: walthamstow_kernel::durability::WriteDurability, root: &std::path::Path, work: &std::path::Path, operation: &mut walthamstow_upgrades::workspace::Operation) -> anyhow::Result<()>
-pub fn walthamstow_upgrades::workspace::finish_first(durability: walthamstow_kernel::durability::WriteDurability, root: &std::path::Path, work: &std::path::Path, operation: &mut walthamstow_upgrades::workspace::Operation) -> anyhow::Result<()>
-pub fn walthamstow_upgrades::workspace::pending(data_dir: &std::path::Path) -> anyhow::Result<alloc::vec::Vec<alloc::string::String>>
-pub fn walthamstow_upgrades::workspace::prepared_dir(work: &std::path::Path) -> std::path::PathBuf
-pub fn walthamstow_upgrades::workspace::recover(root: &std::path::Path, data_dir: &std::path::Path, durability: walthamstow_kernel::durability::WriteDurability) -> anyhow::Result<walthamstow_upgrades::workspace::Recovery>
-pub fn walthamstow_upgrades::workspace::retire(work: &std::path::Path) -> anyhow::Result<bool>
-pub fn walthamstow_upgrades::workspace::work_dir(data_dir: &std::path::Path, operation_id: &str) -> anyhow::Result<std::path::PathBuf>
+pub fn walthamstow_upgrades::workspace::finish(durability: walthamstow_kernel::durability::WriteDurability, root: &cap_std::fs::dir::Dir, data: &cap_std::fs::dir::Dir, operation: &mut walthamstow_upgrades::workspace::Operation) -> anyhow::Result<()>
+pub fn walthamstow_upgrades::workspace::finish_first(durability: walthamstow_kernel::durability::WriteDurability, root: &cap_std::fs::dir::Dir, data: &cap_std::fs::dir::Dir, operation: &mut walthamstow_upgrades::workspace::Operation) -> anyhow::Result<()>
+pub fn walthamstow_upgrades::workspace::pending(data: &cap_std::fs::dir::Dir) -> anyhow::Result<alloc::vec::Vec<alloc::string::String>>
+pub fn walthamstow_upgrades::workspace::recover(root: &cap_std::fs::dir::Dir, data: &cap_std::fs::dir::Dir, durability: walthamstow_kernel::durability::WriteDurability) -> anyhow::Result<walthamstow_upgrades::workspace::Recovery>
+pub fn walthamstow_upgrades::workspace::retire(data: &cap_std::fs::dir::Dir, operation_id: &str) -> anyhow::Result<bool>
+pub fn walthamstow_upgrades::workspace::stage(durability: walthamstow_kernel::durability::WriteDurability, data: &cap_std::fs::dir::Dir, operation_id: &str, changes: &alloc::collections::btree::map::BTreeMap<std::path::PathBuf, alloc::vec::Vec<u8>>) -> anyhow::Result<()>

@@ -18,6 +18,13 @@
   `root` names where the directory lies. `files::identity` takes a `Dir`. `FileLocalStore` reaches
   every journal and record through the data directory's handle, and takes the directory's
   identity from it.
+- `walthamstow_upgrades::workspace` works through the workspace root and the data directory held
+  as `cap_std::fs::Dir`: `stage`, `authorise`, `finish`, `finish_first`, `pending`, `recover`,
+  `retire` and `abandon` take them, and an operation id in place of a work directory's path.
+  `stage` writes an upgrade's prepared files, and `check_operation_id` checks an id; `work_dir`
+  and `prepared_dir` are removed. `retire` returns whether the id is free to start an upgrade
+  under. `walthamstow-ops`' `FileWorkspace::new` opens the workspace root and the data directory
+  once, and returns a `Result`.
 
 ### Added
 

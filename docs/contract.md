@@ -98,16 +98,18 @@ is any text but the empty text. A write replaces or removes a record only over t
 by its tag. A successful write is durable when it returns; a write that fails may still have taken
 effect. Reading never creates, repairs or upgrades a record.
 
-`FileLocalStore` owns each journal's directory, `journals/<journal>/`. It keeps each record in a
-file named by the SHA-256 of its key's names, holding those names on its first line and then the
+`FileLocalStore` owns each journal's directory, `journals/<journal>/`. It holds the data
+directory as a `cap-std` directory and reaches every journal and record through it. It keeps each
+record in a file named by the SHA-256 of its key's names, holding those names on its first line and then the
 record's bytes, so a key never becomes a path. A record's tag is the SHA-256 of its bytes. Within
 one engine process, every operation on a record holds that record's lock, and a listing holds out
 every write, so it sees the records as they were at one moment. A write stages a file beside the
 record and renames it into place, and a read settles what it finds, a record or none. Any other
 entry in a journal's directory is refused, including what an earlier release left there: that
 release finishes it. On Unix, each record a write leaves, and each directory a write creates, is
-readable and writable by its owner alone. Every open of one data directory shares one store, whatever path reaches
-the directory: a link, or a name in another case on a file system that folds case.
+readable and writable by its owner alone. Every open of one data directory shares one store,
+whatever path reaches the directory: a link, or a name in another case on a file system that folds
+case. The directory's identity is taken from its handle.
 
 ## Leases
 

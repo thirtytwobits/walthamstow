@@ -6,8 +6,14 @@
 //! content goes in a configured workspace path.
 //!
 //! The kernel lays journals and staging out; the part of the engine that keeps
-//! one names it.
+//! one names it. Each is reached through the data directory held as a
+//! `cap-std` directory, and a link at `journals/`, `staging/` or the directory
+//! itself is refused unfollowed.
 
+use crate::durability::{Access, WriteDurability};
+use cap_fs_ext::DirExt;
+use cap_std::fs::{Dir, DirBuilder};
+use std::io;
 use std::path::{Path, PathBuf};
 
 /// Whether `name` can name a journal or staging directory: one or more lowercase ASCII
@@ -47,17 +53,38 @@ impl Journal {
         self.0
     }
 
-    /// The journal's directory under the engine data directory `data_dir`.
+    /// Where the journal's directory lies under the engine data directory `data_dir`.
     pub fn root(self, data_dir: &Path) -> PathBuf {
-        data_dir.join("journals").join(self.0)
+        data_dir.join(JOURNALS).join(self.0)
     }
 
-    /// The journal's directory, refused when it or the `journals` directory holding it is a
-    /// link, so what is read from it and written to it stays under `data_dir`.
-    pub fn unlinked_root(self, data_dir: &Path) -> std::io::Result<PathBuf> {
-        unlinked(&data_dir.join("journals"), self.0)
+    /// The journal's directory in the data directory `data`, or `None` when it does not exist.
+    pub fn dir(self, data: &Dir) -> io::Result<Option<Dir>> {
+        open_unlinked(data, JOURNALS, self.0)
+    }
+
+    /// The journal's directory in the data directory `data`, created with every missing level
+    /// when it does not exist, each new entry durable as `durability` asks.
+    pub fn create_dir(self, durability: WriteDurability, data: &Dir) -> io::Result<Dir> {
+        self.create_dir_as(durability, data, Access::Inherited)
+    }
+
+    /// [`Journal::create_dir`], with each directory it creates reachable as `access` says.
+    pub(crate) fn create_dir_as(
+        self,
+        durability: WriteDurability,
+        data: &Dir,
+        access: Access,
+    ) -> io::Result<Dir> {
+        create_unlinked(durability, data, JOURNALS, self.0, access)
     }
 }
+
+/// The directory holding every journal.
+const JOURNALS: &str = "journals";
+
+/// The directory holding every staging directory.
+const STAGING: &str = "staging";
 
 /// Where an operation stages what it promotes into place by rename, and parks
 /// what it replaces, named by the part of the engine that runs it. Staging
@@ -78,30 +105,99 @@ impl Staging {
         Self(name)
     }
 
-    /// The staging directory under the engine data directory `data_dir`.
+    /// Where the staging directory lies under the engine data directory `data_dir`.
     pub fn root(self, data_dir: &Path) -> PathBuf {
-        data_dir.join("staging").join(self.0)
+        data_dir.join(STAGING).join(self.0)
     }
 
-    /// The staging directory, refused when it or the `staging` directory holding it is a link,
-    /// so what is staged, promoted or cleaned there stays under `data_dir`.
-    pub fn unlinked_root(self, data_dir: &Path) -> std::io::Result<PathBuf> {
-        unlinked(&data_dir.join("staging"), self.0)
+    /// The staging directory in the data directory `data`, or `None` when it does not exist.
+    pub fn dir(self, data: &Dir) -> io::Result<Option<Dir>> {
+        open_unlinked(data, STAGING, self.0)
+    }
+
+    /// The staging directory in the data directory `data`, created with every missing level
+    /// when it does not exist, each new entry durable as `durability` asks.
+    pub fn create_dir(self, durability: WriteDurability, data: &Dir) -> io::Result<Dir> {
+        create_unlinked(durability, data, STAGING, self.0, Access::Inherited)
     }
 }
 
-/// `parent` joined with `name`, refused when either is a link.
-fn unlinked(parent: &Path, name: &str) -> std::io::Result<PathBuf> {
-    let root = parent.join(name);
-    for path in [parent, root.as_path()] {
-        if std::fs::symlink_metadata(path).is_ok_and(|metadata| metadata.file_type().is_symlink()) {
-            return Err(std::io::Error::other(format!(
-                "{} is a link, which the engine does not follow.",
-                path.display()
-            )));
-        }
+/// The directory `parent/name` in `data`, or `None` when either level does not exist. A link at
+/// either level is refused unfollowed.
+fn open_unlinked(data: &Dir, parent: &str, name: &str) -> io::Result<Option<Dir>> {
+    let Some(parent) = open_level(data, parent)? else {
+        return Ok(None);
+    };
+    open_level(&parent, name)
+}
+
+/// The directory `name` in `dir`, or `None` when it does not exist. A link there is refused
+/// unfollowed.
+fn open_level(dir: &Dir, name: &str) -> io::Result<Option<Dir>> {
+    match dir.open_dir_nofollow(name) {
+        Ok(opened) => Ok(Some(opened)),
+        Err(error) if error.kind() == io::ErrorKind::NotFound => Ok(None),
+        Err(error) => Err(error),
     }
-    Ok(root)
+}
+
+/// The directory `parent/name` in `data`, each level created when it does not exist and
+/// reachable as `access` says. A link at either level is refused unfollowed. The kernel's
+/// directory creations are held out from the first check to the last sync, so a level found
+/// existing has a durable entry.
+fn create_unlinked(
+    durability: WriteDurability,
+    data: &Dir,
+    parent: &str,
+    name: &str,
+    access: Access,
+) -> io::Result<Dir> {
+    let _creating = crate::durability::CREATING
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let parent = create_level(durability, data, parent, access)?;
+    create_level(durability, &parent, name, access)
+}
+
+/// The directory `name` in `dir`, created when it does not exist with its entry made durable.
+/// A creation whose sync fails is undone, so a directory found existing has a durable entry.
+fn create_level(
+    durability: WriteDurability,
+    dir: &Dir,
+    name: &str,
+    access: Access,
+) -> io::Result<Dir> {
+    if let Some(opened) = open_level(dir, name)? {
+        return Ok(opened);
+    }
+    #[cfg(unix)]
+    let builder = {
+        use cap_std::fs::DirBuilderExt;
+        let mut builder = DirBuilder::new();
+        if access == Access::Owner {
+            builder.mode(0o700);
+        }
+        builder
+    };
+    // Elsewhere a new directory has what its parent grants.
+    #[cfg(not(unix))]
+    let builder = {
+        let _ = access;
+        DirBuilder::new()
+    };
+    let created = match dir.create_dir_with(name, &builder) {
+        Ok(()) => true,
+        // Another caller made it meanwhile, and may not have synced its entry yet.
+        Err(error) if error.kind() == io::ErrorKind::AlreadyExists => false,
+        Err(error) => return Err(error),
+    };
+    if let Err(error) = durability.sync_dir(dir) {
+        if created {
+            let _ = dir.remove_dir(name);
+        }
+        return Err(error);
+    }
+    dir.open_dir_nofollow(name)
 }
 
 #[cfg(test)]
@@ -146,41 +242,55 @@ mod tests {
         Staging::new("session_imports");
     }
 
+    /// The data directory at `path`, held as a `Dir`.
     #[cfg(unix)]
-    #[test]
-    fn a_journal_reached_through_a_link_is_refused() {
-        let journal = Journal::new("an-operation");
-        let outside = tempfile::tempdir().unwrap();
-        for linked in ["journals", "journals/an-operation"] {
-            let data = tempfile::tempdir().unwrap();
-            let link = data.path().join(linked);
-            std::fs::create_dir_all(link.parent().unwrap()).unwrap();
-            std::os::unix::fs::symlink(outside.path(), &link).unwrap();
-            assert!(journal.unlinked_root(data.path()).is_err(), "{linked}");
-        }
-        let data = tempfile::tempdir().unwrap();
-        assert_eq!(
-            journal.unlinked_root(data.path()).unwrap(),
-            journal.root(data.path())
-        );
+    fn data(path: &Path) -> Dir {
+        crate::files::open_dir(path).unwrap()
     }
 
     #[cfg(unix)]
     #[test]
-    fn staging_reached_through_a_link_is_refused() {
-        let staging = Staging::new("an-operation");
+    fn a_journal_or_staging_reached_through_a_link_is_refused() {
         let outside = tempfile::tempdir().unwrap();
-        for linked in ["staging", "staging/an-operation"] {
-            let data = tempfile::tempdir().unwrap();
-            let link = data.path().join(linked);
-            std::fs::create_dir_all(link.parent().unwrap()).unwrap();
-            std::os::unix::fs::symlink(outside.path(), &link).unwrap();
-            assert!(staging.unlinked_root(data.path()).is_err(), "{linked}");
+        for (parent, name) in [("journals", "an-operation"), ("staging", "an-operation")] {
+            let open = |data: &Dir| {
+                if parent == "journals" {
+                    Journal::new(name).dir(data).map(|dir| dir.is_some())
+                } else {
+                    Staging::new(name).dir(data).map(|dir| dir.is_some())
+                }
+            };
+            let create = |data: &Dir| {
+                if parent == "journals" {
+                    Journal::new(name).create_dir(WriteDurability::System, data)
+                } else {
+                    Staging::new(name).create_dir(WriteDurability::System, data)
+                }
+            };
+            for linked in [parent.to_owned(), format!("{parent}/{name}")] {
+                for within in [false, true] {
+                    let root = tempfile::tempdir().unwrap();
+                    let target = if within {
+                        let target = root.path().join("elsewhere");
+                        std::fs::create_dir(&target).unwrap();
+                        target
+                    } else {
+                        outside.path().to_path_buf()
+                    };
+                    let link = root.path().join(&linked);
+                    std::fs::create_dir_all(link.parent().unwrap()).unwrap();
+                    std::os::unix::fs::symlink(&target, &link).unwrap();
+                    let data = data(root.path());
+                    assert!(open(&data).is_err(), "{linked} within {within}");
+                    assert!(create(&data).is_err(), "{linked} within {within}");
+                }
+            }
+            let root = tempfile::tempdir().unwrap();
+            let data = data(root.path());
+            assert!(!open(&data).unwrap());
+            create(&data).unwrap();
+            assert!(open(&data).unwrap());
+            assert!(root.path().join(parent).join(name).is_dir());
         }
-        let data = tempfile::tempdir().unwrap();
-        assert_eq!(
-            staging.unlinked_root(data.path()).unwrap(),
-            staging.root(data.path())
-        );
     }
 }

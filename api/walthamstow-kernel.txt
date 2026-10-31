@@ -1323,7 +1323,7 @@ pub fn walthamstow_kernel::files::Identity::yellow(&self) -> yansi::paint::Paint
 impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_kernel::files::Identity where T: ?core::marker::Sized
 impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_kernel::files::Identity where V: ppv_lite86::types::MultiLane<T>
 pub fn walthamstow_kernel::files::Identity::vzip(self) -> V
-pub fn walthamstow_kernel::files::identity(path: &std::path::Path) -> std::io::error::Result<walthamstow_kernel::files::Identity>
+pub fn walthamstow_kernel::files::identity(dir: &cap_std::fs::dir::Dir) -> std::io::error::Result<walthamstow_kernel::files::Identity>
 pub const fn walthamstow_kernel::files::is_windows_device_name(name: &str) -> bool
 pub fn walthamstow_kernel::files::open_dir(path: &std::path::Path) -> std::io::error::Result<cap_std::fs::dir::Dir>
 pub fn walthamstow_kernel::files::read_files(dir: &std::path::Path) -> anyhow::Result<alloc::collections::btree::map::BTreeMap<std::path::PathBuf, alloc::vec::Vec<u8>>>
@@ -1334,10 +1334,11 @@ pub fn walthamstow_kernel::hashing::sha256_hex(bytes: &[u8]) -> alloc::string::S
 pub mod walthamstow_kernel::journals
 pub struct walthamstow_kernel::journals::Journal(_)
 impl walthamstow_kernel::journals::Journal
+pub fn walthamstow_kernel::journals::Journal::create_dir(self, durability: walthamstow_kernel::durability::WriteDurability, data: &cap_std::fs::dir::Dir) -> std::io::error::Result<cap_std::fs::dir::Dir>
+pub fn walthamstow_kernel::journals::Journal::dir(self, data: &cap_std::fs::dir::Dir) -> std::io::error::Result<core::option::Option<cap_std::fs::dir::Dir>>
 pub const fn walthamstow_kernel::journals::Journal::name(self) -> &'static str
 pub const fn walthamstow_kernel::journals::Journal::new(name: &'static str) -> Self
 pub fn walthamstow_kernel::journals::Journal::root(self, data_dir: &std::path::Path) -> std::path::PathBuf
-pub fn walthamstow_kernel::journals::Journal::unlinked_root(self, data_dir: &std::path::Path) -> std::io::error::Result<std::path::PathBuf>
 impl core::clone::Clone for walthamstow_kernel::journals::Journal
 pub fn walthamstow_kernel::journals::Journal::clone(&self) -> walthamstow_kernel::journals::Journal
 impl core::cmp::Eq for walthamstow_kernel::journals::Journal
@@ -1461,9 +1462,10 @@ impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_kernel::journals::Journal 
 pub fn walthamstow_kernel::journals::Journal::vzip(self) -> V
 pub struct walthamstow_kernel::journals::Staging(_)
 impl walthamstow_kernel::journals::Staging
+pub fn walthamstow_kernel::journals::Staging::create_dir(self, durability: walthamstow_kernel::durability::WriteDurability, data: &cap_std::fs::dir::Dir) -> std::io::error::Result<cap_std::fs::dir::Dir>
+pub fn walthamstow_kernel::journals::Staging::dir(self, data: &cap_std::fs::dir::Dir) -> std::io::error::Result<core::option::Option<cap_std::fs::dir::Dir>>
 pub const fn walthamstow_kernel::journals::Staging::new(name: &'static str) -> Self
 pub fn walthamstow_kernel::journals::Staging::root(self, data_dir: &std::path::Path) -> std::path::PathBuf
-pub fn walthamstow_kernel::journals::Staging::unlinked_root(self, data_dir: &std::path::Path) -> std::io::error::Result<std::path::PathBuf>
 impl core::clone::Clone for walthamstow_kernel::journals::Staging
 pub fn walthamstow_kernel::journals::Staging::clone(&self) -> walthamstow_kernel::journals::Staging
 impl core::cmp::Eq for walthamstow_kernel::journals::Staging

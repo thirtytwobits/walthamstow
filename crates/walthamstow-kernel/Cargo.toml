@@ -10,6 +10,7 @@ publish = false
 
 [dependencies]
 anyhow.workspace = true
+cap-fs-ext.workspace = true
 cap-std.workspace = true
 chrono.workspace = true
 clerkenwell-events.workspace = true
@@ -28,7 +29,7 @@ uuid.workspace = true
 rustix.workspace = true
 
 [target.'cfg(windows)'.dependencies]
-cap-fs-ext.workspace = true
+winx.workspace = true
 
 [dev-dependencies]
 tempfile.workspace = true

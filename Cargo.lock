@@ -3438,6 +3438,7 @@ dependencies = [
  "tokio-util",
  "tracing",
  "uuid",
+ "winx",
 ]
 
 [[package]]

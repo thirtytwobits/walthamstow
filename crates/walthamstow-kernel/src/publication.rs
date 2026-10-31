@@ -266,7 +266,7 @@ mod tests {
     }
 
     fn contents(root: &Path) -> BTreeMap<PathBuf, Vec<u8>> {
-        crate::files::read_files(root).unwrap()
+        crate::files::read_files(&dir(root)).unwrap()
     }
 
     #[test]

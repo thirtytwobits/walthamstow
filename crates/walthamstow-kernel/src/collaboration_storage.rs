@@ -790,11 +790,15 @@ pub fn declared_envelope_format(bytes: &[u8]) -> Option<u32> {
 /// or `None` when it reads every envelope there, or there are none. An
 /// envelope declaring no format is reported as format 0.
 pub fn foreign_envelope_format(root: &Path) -> AnyhowResult<Option<u32>> {
-    let dir = match crate::files::open_dir(root) {
-        Ok(dir) => dir,
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
-        Err(error) => return Err(anyhow!("Could not list {}: {error}", root.display())),
-    };
+    match crate::files::open_dir(root) {
+        Ok(dir) => foreign_envelope_format_in(&dir, root),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(None),
+        Err(error) => Err(anyhow!("Could not list {}: {error}", root.display())),
+    }
+}
+
+/// [`foreign_envelope_format`] of the cache root `dir`, which lies at `root`.
+fn foreign_envelope_format_in(dir: &Dir, root: &Path) -> AnyhowResult<Option<u32>> {
     for entity in dir.entries()? {
         let entity = entity?;
         let kind = entity.file_type()?;
@@ -833,41 +837,70 @@ pub fn foreign_envelope_format(root: &Path) -> AnyhowResult<Option<u32>> {
 /// Makes `root` a cache of envelopes in this build's format. A root in
 /// another format, in none, or holding any envelope in another format is
 /// removed whole and made again; what it held is seeded again from the
-/// workspace files.
+/// workspace files. The root is reached through the handle of the directory
+/// holding it, which refuses a link at the root unfollowed, and is made
+/// durable as `durability` asks with every ancestor it creates.
 pub fn prepare_cache_root(root: &Path, durability: WriteDurability) -> AnyhowResult<()> {
-    if std::fs::symlink_metadata(root).is_ok_and(|metadata| metadata.file_type().is_symlink()) {
+    let (Some(parent), Some(name)) = (root.parent(), root.file_name()) else {
         return Err(anyhow!(
-            "The collaboration cache {} is a link, which is not followed.",
+            "The collaboration cache {} names no directory.",
             root.display()
         ));
-    }
+    };
+    let parent = if parent.as_os_str().is_empty() {
+        Path::new(".")
+    } else {
+        parent
+    };
+    crate::durability::create_dir_all_synced(durability, parent)?;
+    let holder = crate::files::open_dir(parent)?;
     let current = ENVELOPE_VERSION.to_string();
-    if root.try_exists()? {
-        let dir = crate::files::open_dir(root)?;
-        // A marker that is not a regular file marks no format.
-        let format = dir
-            .symlink_metadata(FORMAT_MARKER_FILE)
-            .ok()
-            .filter(Metadata::is_file)
-            .and_then(|_| dir.read_to_string(FORMAT_MARKER_FILE).ok());
-        if format.as_deref().map(str::trim) == Some(current.as_str())
-            && foreign_envelope_format(root)?.is_none()
-        {
-            return Ok(());
+    match holder.symlink_metadata(name) {
+        Ok(metadata) if metadata.is_symlink() => {
+            return Err(anyhow!(
+                "The collaboration cache {} is a link, which is not followed.",
+                root.display()
+            ))
         }
-        tracing::info!(
-            root = %root.display(),
-            format = format.as_deref().map(str::trim).unwrap_or("none"),
-            "Removing the collaboration cache; this build keeps envelope format {current}."
-        );
-        drop(dir);
-        std::fs::remove_dir_all(root)
-            .with_context(|| format!("removing the collaboration cache {}", root.display()))?;
+        Ok(metadata) if !metadata.is_dir() => {
+            return Err(anyhow!(
+                "The collaboration cache {} is not a directory.",
+                root.display()
+            ))
+        }
+        Ok(_) => {
+            let dir = holder.open_dir_nofollow(name)?;
+            // A marker that is not a regular file marks no format.
+            let format = dir
+                .symlink_metadata(FORMAT_MARKER_FILE)
+                .ok()
+                .filter(Metadata::is_file)
+                .and_then(|_| dir.read_to_string(FORMAT_MARKER_FILE).ok());
+            if format.as_deref().map(str::trim) == Some(current.as_str())
+                && foreign_envelope_format_in(&dir, root)?.is_none()
+            {
+                return Ok(());
+            }
+            tracing::info!(
+                root = %root.display(),
+                format = format.as_deref().map(str::trim).unwrap_or("none"),
+                "Removing the collaboration cache; this build keeps envelope format {current}."
+            );
+            drop(dir);
+            holder
+                .remove_dir_all(name)
+                .with_context(|| format!("removing the collaboration cache {}", root.display()))?;
+        }
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+        Err(error) => {
+            return Err(error)
+                .with_context(|| format!("inspecting the collaboration cache {}", root.display()))
+        }
     }
-    std::fs::create_dir_all(root)?;
+    crate::durability::create_dir_all_in(durability, &holder, Path::new(name))?;
     crate::durability::write_synced_in(
         durability,
-        &crate::files::open_dir(root)?,
+        &holder.open_dir_nofollow(name)?,
         Path::new(FORMAT_MARKER_FILE),
         format!("{current}\n").as_bytes(),
     )
@@ -1750,6 +1783,21 @@ mod tests {
             2,
             "the append and then its truncation are synced"
         );
+    }
+
+    #[test]
+    fn a_cache_root_is_made_with_its_ancestors_and_one_that_is_a_file_is_refused() {
+        let data = tempfile::tempdir().unwrap();
+        let root = data.path().join("below/collaboration");
+        prepare_cache_root(&root, WriteDurability::System).unwrap();
+        assert_eq!(
+            std::fs::read_to_string(root.join(FORMAT_MARKER_FILE)).unwrap(),
+            format!("{ENVELOPE_VERSION}\n")
+        );
+        let file = data.path().join("file");
+        std::fs::write(&file, b"kept").unwrap();
+        assert!(prepare_cache_root(&file, WriteDurability::System).is_err());
+        assert_eq!(std::fs::read(&file).unwrap(), b"kept");
     }
 
     #[cfg(unix)]

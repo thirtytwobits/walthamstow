@@ -34,6 +34,7 @@ UNRELEASED = "Unreleased"
 SUBSECTIONS = ("Breaking", "Added", "Fixed", "Documentation")
 CI_WORKFLOW = "ci.yml"
 RELEASE_WORKFLOW = "release.yml"
+VERIFY_WORKFLOW = "verify.yml"
 RELEASE_FILES = "release-files"
 STEPS = ("prepare", "gates", "verify")
 
@@ -484,7 +485,8 @@ def tag(arguments: argparse.Namespace) -> None:
     print(
         f"\nPushed {name}. The Draft release workflow attaches the main build's files to a draft:"
         f" {record.repository}/actions/workflows/{RELEASE_WORKFLOW}\n"
-        "Review the draft, publish it in GitHub, then run `python3 tools/release.py verify`."
+        "Review the draft and publish it in GitHub. The Verify release workflow then checks the release:"
+        f" {record.repository}/actions/workflows/{VERIFY_WORKFLOW}"
     )
 
 
@@ -556,7 +558,7 @@ def draft(arguments: argparse.Namespace) -> None:
 
 
 def verify(arguments: argparse.Namespace) -> None:
-    """After publishing the draft by hand: check the release, a Git consumer and the piece's verify steps."""
+    """After publication, in the verify workflow: check the release, a Git consumer and the piece's verify steps."""
     root = arguments.root
     _, record = load(root)
     name = f"v{record.version}"
@@ -614,14 +616,7 @@ def verify(arguments: argparse.Namespace) -> None:
             f"- Consumer: `cargo add {record.consumer} --git {record.repository} --tag {name}` and `cargo check` resolved `{commit}`."
         )
     run_steps(record, "verify", root, version=record.version, previous=record.version, tag=name)
-    text = f"Release {name} is published and verified.\n\n" + "\n".join(evidence) + "\n"
-    print(f"\n{text}")
-    for issue in arguments.issue:
-        repo, _, number = issue.rpartition("#")
-        run("gh", "issue", "comment", number, "--repo", repo or record.slug, "--body", text)
-    print(
-        "Recorded. Close the release issue." if arguments.issue else "Record this in the release issue, then close it."
-    )
+    print(f"\nRelease {name} is published and verified.\n\n" + "\n".join(evidence))
 
 
 def main() -> None:
@@ -641,13 +636,7 @@ def main() -> None:
     command(notes_command, "notes").add_argument("version")
     command(tag).add_argument("--yes", action="store_true", help="tag and push without asking")
     command(draft).add_argument("tag")
-    command(verify).add_argument(
-        "--issue",
-        action="append",
-        default=[],
-        metavar="[OWNER/REPO#]NUMBER",
-        help="comment the evidence on this issue; repeat for coordinating issues",
-    )
+    command(verify)
     arguments = parser.parse_args()
     try:
         arguments.run(arguments)

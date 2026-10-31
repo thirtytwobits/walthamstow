@@ -4,15 +4,18 @@
 //! directory under the engine's workspace-upgrade journals: `prepared/` holds the files it
 //! publishes, `original/` the files they replace, and `operation.json` the journal that
 //! authorises publication.
+//!
+//! Every directory and file is reached through the data directory and the workspace root held
+//! as `cap-std` directories. The operation directory, `prepared/` and `original/` are opened
+//! without following a link, so a link there is refused.
 
-use anyhow::{bail, Result};
+use anyhow::{anyhow, bail, Result};
+use cap_fs_ext::DirExt;
 use cap_std::fs::Dir;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
-use walthamstow_kernel::durability::{
-    create_dir_all_synced, write_synced, write_synced_in, WriteDurability,
-};
+use walthamstow_kernel::durability::{create_dir_all_in, write_synced_in, WriteDurability};
 use walthamstow_kernel::hashing::sha256_hex;
 use walthamstow_kernel::journals::Journal;
 use walthamstow_kernel::publication::{
@@ -28,6 +31,7 @@ const JOURNAL_FILE: &str = "operation.json";
 const COMMITTING: &str = "committing";
 const COMPLETE: &str = "complete";
 const PREPARED: &str = "prepared";
+const ORIGINAL: &str = "original";
 
 /// One workspace upgrade's journal.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -40,17 +44,10 @@ pub struct Operation {
     target_hashes: BTreeMap<PathBuf, String>,
 }
 
-/// Where the journal's directory lies under `data_dir`, refused when `journals/` or the journal is
-/// a link.
-fn journal_root(data_dir: &Path) -> Result<PathBuf> {
-    JOURNAL.dir(&open(data_dir)?)?;
-    Ok(JOURNAL.root(data_dir))
-}
-
-/// The directory an upgrade works in, named by `operation_id`, which is where its originals
-/// are found. An id holds only lowercase ASCII letters, digits, `-` and `_`, so no two ids name
-/// one directory on a case-insensitive file system; any other id is refused.
-pub fn work_dir(data_dir: &Path, operation_id: &str) -> Result<PathBuf> {
+/// Refuses `operation_id` unless it can name an upgrade's directory: lowercase ASCII letters,
+/// digits, `-` and `_`, so no two ids name one directory on a case-insensitive file system, and
+/// no device name Windows reserves.
+pub fn check_operation_id(operation_id: &str) -> Result<()> {
     walthamstow_kernel::files::safe_id(operation_id)?;
     if !operation_id
         .chars()
@@ -61,21 +58,7 @@ pub fn work_dir(data_dir: &Path, operation_id: &str) -> Result<PathBuf> {
     if walthamstow_kernel::files::is_windows_device_name(operation_id) {
         bail!("{operation_id} names a Windows device, which no directory can be named.");
     }
-    let work = journal_root(data_dir)?.join(operation_id);
-    match std::fs::symlink_metadata(&work) {
-        Ok(metadata) if !metadata.is_dir() => bail!(
-            "{} is not a directory; an upgrade does not work through a link.",
-            work.display()
-        ),
-        Ok(_) => Ok(work),
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(work),
-        Err(error) => Err(error.into()),
-    }
-}
-
-/// Where an upgrade stages the files it publishes.
-pub fn prepared_dir(work: &Path) -> PathBuf {
-    work.join(PREPARED)
+    Ok(())
 }
 
 /// Refuses `paths` unless each is relative, by normal components alone, and no two differ only
@@ -101,25 +84,84 @@ fn as_upgrade(error: anyhow::Error) -> anyhow::Error {
     refusal.clone().with_reason(reason).into()
 }
 
-/// The directory at `path`, held as a `Dir`.
-fn open(path: &Path) -> std::io::Result<Dir> {
-    walthamstow_kernel::files::open_dir(path)
+/// The directory `name` in `dir`, or `None` when there is none. Anything there but a directory,
+/// a link included, is refused unfollowed; `what` names it in the refusal.
+fn child(dir: &Dir, name: &str, what: &str) -> Result<Option<Dir>> {
+    match dir.symlink_metadata(name) {
+        Ok(metadata) if !metadata.is_dir() => {
+            bail!("{what} is not a directory; an upgrade does not work through a link.")
+        }
+        Ok(_) => Ok(Some(dir.open_dir_nofollow(name)?)),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(None),
+        Err(error) => Err(error.into()),
+    }
 }
 
-/// Authorises publishing `changes` over the workspace files they replace, which `sources`
-/// holds by path: keeps each replaced file under `original/` and writes the committing journal.
-/// A path that does not stay beneath the workspace, or two that differ only in case, refuse the
-/// upgrade before anything is written.
+/// The directory `name` in `dir`, created with its entry durable when it does not exist. The
+/// kernel's directory creation holds every creation from its check to its sync, so a directory
+/// another caller is still settling is not used before its entry is durable.
+fn create_child(durability: WriteDurability, dir: &Dir, name: &str, what: &str) -> Result<Dir> {
+    create_dir_all_in(durability, dir, Path::new(name))?;
+    child(dir, name, what)?.ok_or_else(|| anyhow!("{what} was removed as it was made."))
+}
+
+/// The directory of the upgrade `operation_id` in the data directory `data`, or `None` when
+/// there is none.
+fn work(data: &Dir, operation_id: &str) -> Result<Option<Dir>> {
+    check_operation_id(operation_id)?;
+    let Some(journal) = JOURNAL.dir(data)? else {
+        return Ok(None);
+    };
+    child(&journal, operation_id, &what(operation_id))
+}
+
+/// The directory of the upgrade `operation_id` in the data directory `data`, created when absent.
+fn create_work(durability: WriteDurability, data: &Dir, operation_id: &str) -> Result<Dir> {
+    check_operation_id(operation_id)?;
+    let journal = JOURNAL.create_dir(durability, data)?;
+    create_child(durability, &journal, operation_id, &what(operation_id))
+}
+
+/// The upgrade `operation_id`'s directory, as a refusal names it.
+fn what(operation_id: &str) -> String {
+    format!("The directory of the upgrade {operation_id}")
+}
+
+/// Stages the files `changes` names, by their paths relative to the workspace root, for the
+/// upgrade `operation_id` in the data directory `data`, under its `prepared/`.
+pub fn stage(
+    durability: WriteDurability,
+    data: &Dir,
+    operation_id: &str,
+    changes: &BTreeMap<PathBuf, Vec<u8>>,
+) -> Result<()> {
+    check_paths(changes.keys().map(PathBuf::as_path))?;
+    let work = create_work(durability, data, operation_id)?;
+    let prepared = create_child(
+        durability,
+        &work,
+        PREPARED,
+        &format!("The staging of the upgrade {operation_id}"),
+    )?;
+    for (path, bytes) in changes {
+        write_synced_in(durability, &prepared, path, bytes)?;
+    }
+    Ok(())
+}
+
+/// Authorises the upgrade `operation_id` in the data directory `data` to publish `changes` over
+/// the workspace files they replace, which `sources` holds by path: keeps each replaced file
+/// under `original/` and writes the committing journal. A path that does not stay beneath the
+/// workspace, or two that differ only in case, refuse the upgrade before anything is written.
 pub fn authorise(
     durability: WriteDurability,
-    work: &Path,
+    data: &Dir,
     operation_id: &str,
     sources: &BTreeMap<PathBuf, Vec<u8>>,
     changes: &BTreeMap<PathBuf, Vec<u8>>,
 ) -> Result<Operation> {
     check_paths(changes.keys().map(PathBuf::as_path))?;
-    create_dir_all_synced(durability, work)?;
-    let work_root = open(work)?;
+    let work = create_work(durability, data, operation_id)?;
     let mut operation = Operation {
         operation_id: operation_id.to_owned(),
         status: COMMITTING.into(),
@@ -127,15 +169,20 @@ pub fn authorise(
         source_hashes: BTreeMap::new(),
         target_hashes: BTreeMap::new(),
     };
+    let mut originals = None;
     for (path, bytes) in changes {
         let original = sources.get(path);
         if let Some(bytes) = original {
-            write_synced_in(
-                durability,
-                &work_root,
-                &Path::new("original").join(path),
-                bytes,
-            )?;
+            let kept = match &originals {
+                Some(kept) => kept,
+                None => originals.insert(create_child(
+                    durability,
+                    &work,
+                    ORIGINAL,
+                    &format!("The originals of the upgrade {operation_id}"),
+                )?),
+            };
+            write_synced_in(durability, kept, path, bytes)?;
         }
         operation
             .source_hashes
@@ -144,20 +191,20 @@ pub fn authorise(
             .target_hashes
             .insert(path.clone(), sha256_hex(bytes));
     }
-    write_journal(durability, work, &operation)?;
+    write_journal(durability, &work, &operation)?;
     Ok(operation)
 }
 
-/// Publishes an authorised upgrade into the workspace at `root`, marks it complete and
-/// removes its staging. A file already at its target is left alone, so finishing an
-/// interrupted publication completes it.
+/// Publishes an authorised upgrade into the workspace root `root` from the data directory
+/// `data`, marks it complete and removes its staging. A file already at its target is left
+/// alone, so finishing an interrupted publication completes it.
 pub fn finish(
     durability: WriteDurability,
-    root: &Path,
-    work: &Path,
+    root: &Dir,
+    data: &Dir,
     operation: &mut Operation,
 ) -> Result<()> {
-    finish_as(durability, root, work, operation, true)
+    finish_as(durability, root, data, operation, true)
 }
 
 /// Publishes an upgrade just authorised, as [`finish`] does, but only while every file it
@@ -165,24 +212,30 @@ pub fn finish(
 /// [`UPGRADE_STALE`](crate::reason_codes::UPGRADE_STALE), before any file is written.
 pub fn finish_first(
     durability: WriteDurability,
-    root: &Path,
-    work: &Path,
+    root: &Dir,
+    data: &Dir,
     operation: &mut Operation,
 ) -> Result<()> {
-    finish_as(durability, root, work, operation, false)
+    finish_as(durability, root, data, operation, false)
 }
 
 fn finish_as(
     durability: WriteDurability,
-    root: &Path,
-    work: &Path,
+    root: &Dir,
+    data: &Dir,
     operation: &mut Operation,
     resuming: bool,
 ) -> Result<()> {
     for path in &operation.paths {
         check_relative_path(path)?;
     }
-    let work_root = open(work)?;
+    let id = operation.operation_id.clone();
+    let work = work(data, &id)?.ok_or_else(|| anyhow!("The upgrade {id} has no directory."))?;
+    let originals = child(
+        &work,
+        ORIGINAL,
+        &format!("The originals of the upgrade {id}"),
+    )?;
     let mut replacements = Vec::with_capacity(operation.paths.len());
     for path in &operation.paths {
         let (Some(source_hash), Some(target_hash)) = (
@@ -192,8 +245,10 @@ fn finish_as(
             bail!("The upgrade journal omits {}.", path.display());
         };
         if let Some(expected) = source_hash {
-            let original = read_regular(&work_root, &Path::new("original").join(path))?;
-            if sha256_hex(&original) != *expected {
+            let kept = originals
+                .as_ref()
+                .ok_or_else(|| anyhow!("The upgrade {id} keeps no originals."))?;
+            if sha256_hex(&read_regular(kept, path)?) != *expected {
                 bail!("Upgrade original checksum mismatch.");
             }
         }
@@ -204,17 +259,18 @@ fn finish_as(
         });
     }
     if !replacements.is_empty() {
-        let (live, staged) = (open(root)?, work_root.open_dir(PREPARED)?);
+        let staged = child(&work, PREPARED, &format!("The staging of the upgrade {id}"))?
+            .ok_or_else(|| anyhow!("The upgrade {id} has staged nothing to publish."))?;
         if resuming {
-            publish(durability, &live, &staged, &replacements)
+            publish(durability, root, &staged, &replacements)
         } else {
-            publish_first(durability, &live, &staged, &replacements)
+            publish_first(durability, root, &staged, &replacements)
         }
         .map_err(as_upgrade)?;
     }
     operation.status = COMPLETE.into();
-    write_journal(durability, work, operation)?;
-    remove_staging(work).map(drop)
+    write_journal(durability, &work, operation)?;
+    remove_staging(&work).map(drop)
 }
 
 /// What [`recover`] did, each upgrade named by its operation id, in id order.
@@ -226,69 +282,68 @@ pub struct Recovery {
     pub discarded: Vec<String>,
 }
 
-/// One upgrade's directory: its operation id, its path and its journal, when it has one.
-type Found = (String, PathBuf, Option<Operation>);
-
-/// Each upgrade's directory under `data_dir`, in id order. Anything there but a directory, a
-/// directory whose name is not UTF-8, and a journal that cannot be read are refused.
-fn operations(data_dir: &Path) -> Result<Vec<Found>> {
-    let entries = match std::fs::read_dir(journal_root(data_dir)?) {
-        Ok(entries) => entries,
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
-        Err(error) => return Err(error.into()),
-    };
+/// Each upgrade in `journal` by its operation id, with its journal when it has one, in id
+/// order. Anything there but a directory, a directory whose name is not UTF-8, and a journal
+/// that cannot be read are refused.
+fn operations(journal: &Dir) -> Result<Vec<(String, Option<Operation>)>> {
     let mut found = Vec::new();
-    for entry in entries {
+    for entry in journal.entries()? {
         let entry = entry?;
-        let work = entry.path();
+        let name = entry.file_name();
         if !entry.file_type()?.is_dir() {
             bail!(
-                "{} is not a directory; recovery does not follow a link or open a file there.",
-                work.display()
+                "{} in the upgrade journal is not a directory; recovery does not follow a link \
+                 or open a file there.",
+                name.to_string_lossy()
             );
         }
-        let Ok(id) = entry.file_name().into_string() else {
-            bail!(
-                "{} is not named in UTF-8; recovery names each upgrade it finds.",
-                work.display()
-            );
+        let Ok(id) = name.into_string() else {
+            bail!("An upgrade's directory is not named in UTF-8; recovery names each it finds.");
         };
-        let operation = read_journal(&work)?;
-        found.push((id, work, operation));
+        let operation = read_journal(&journal.open_dir_nofollow(&id)?)?;
+        found.push((id, operation));
     }
     found.sort_by(|left, right| left.0.cmp(&right.0));
     Ok(found)
 }
 
-/// The operation id of each upgrade under `data_dir` a journal authorises and no publication
-/// has finished, in id order. [`recover`] finishes them.
-pub fn pending(data_dir: &Path) -> Result<Vec<String>> {
-    Ok(operations(data_dir)?
+/// The operation id of each upgrade in the data directory `data` a journal authorises and no
+/// publication has finished, in id order. [`recover`] finishes them.
+pub fn pending(data: &Dir) -> Result<Vec<String>> {
+    let Some(journal) = JOURNAL.dir(data)? else {
+        return Ok(Vec::new());
+    };
+    Ok(operations(&journal)?
         .into_iter()
-        .filter(|(_, _, operation)| {
+        .filter(|(_, operation)| {
             operation
                 .as_ref()
                 .is_some_and(|operation| operation.status == COMMITTING)
         })
-        .map(|(id, ..)| id)
+        .map(|(id, _)| id)
         .collect())
 }
 
-/// Finishes each authorised upgrade and discards staging no journal authorises. An upgrade's
-/// directory whose name is not UTF-8 is refused.
-pub fn recover(root: &Path, data_dir: &Path, durability: WriteDurability) -> Result<Recovery> {
+/// Finishes each upgrade in the data directory `data` a journal authorises, into the workspace
+/// root `root`, and discards staging no journal authorises. An upgrade's directory whose name is
+/// not UTF-8 is refused.
+pub fn recover(root: &Dir, data: &Dir, durability: WriteDurability) -> Result<Recovery> {
     let mut recovery = Recovery::default();
-    for (id, work, operation) in operations(data_dir)? {
+    let Some(journal) = JOURNAL.dir(data)? else {
+        return Ok(recovery);
+    };
+    for (id, operation) in operations(&journal)? {
         match operation {
             None => {
-                std::fs::remove_dir_all(&work)?;
+                journal.remove_dir_all(&id)?;
                 recovery.discarded.push(id);
             }
             Some(mut operation) if operation.status == COMMITTING => {
-                finish(durability, root, &work, &mut operation)?;
+                finish(durability, root, data, &mut operation)?;
                 recovery.finished.push(id);
             }
             Some(operation) => {
+                let work = journal.open_dir_nofollow(&id)?;
                 if remove_staging(&work)? && operation.status != COMPLETE {
                     recovery.discarded.push(id);
                 }
@@ -298,48 +353,62 @@ pub fn recover(root: &Path, data_dir: &Path, durability: WriteDurability) -> Res
     Ok(recovery)
 }
 
-/// Removes the directory `work` of a completed upgrade, with the originals it replaced, and
-/// returns whether it did. An upgrade with no journal, or one still to finish, is left for
-/// [`recover`].
-pub fn retire(work: &Path) -> Result<bool> {
-    if read_journal(work)?.is_none_or(|operation| operation.status != COMPLETE) {
+/// Whether `operation_id` is free to start an upgrade under in the data directory `data`: it
+/// names no upgrade, or a completed one, whose directory, with the originals it replaced, is
+/// removed. An upgrade with no journal, or one still to finish, is left for [`recover`].
+pub fn retire(data: &Dir, operation_id: &str) -> Result<bool> {
+    let Some(work) = work(data, operation_id)? else {
+        return Ok(true);
+    };
+    if read_journal(&work)?.is_none_or(|operation| operation.status != COMPLETE) {
         return Ok(false);
     }
-    std::fs::remove_dir_all(work)?;
+    // A directory is removed only once no handle to it is open.
+    drop(work);
+    remove_work(data, operation_id)?;
     Ok(true)
 }
 
-/// Removes the directory `work` of an authorised upgrade whose [`finish_first`] refused, which
-/// wrote no file, so recovery does not try it again. An upgrade a publication has begun to
-/// write is finished by [`recover`], never abandoned. The journal is removed, durably, before
-/// the files it names, so an abandonment that stops midway leaves staging no journal
-/// authorises, which recovery discards.
-pub fn abandon(durability: WriteDurability, work: &Path) -> Result<()> {
-    disarm(durability, work)?;
-    std::fs::remove_dir_all(work)?;
+/// Removes the directory of the upgrade `operation_id`, authorised and refused by
+/// [`finish_first`] before it wrote a file, so recovery does not try it again. An upgrade a
+/// publication has begun to write is finished by [`recover`], never abandoned. The journal is
+/// removed, durably, before the files it names, so an abandonment that stops midway leaves
+/// staging no journal authorises, which recovery discards.
+pub fn abandon(durability: WriteDurability, data: &Dir, operation_id: &str) -> Result<()> {
+    let Some(work) = work(data, operation_id)? else {
+        return Ok(());
+    };
+    disarm(durability, &work)?;
+    drop(work);
+    remove_work(data, operation_id)
+}
+
+/// Removes the directory of the upgrade `operation_id` whole.
+fn remove_work(data: &Dir, operation_id: &str) -> Result<()> {
+    if let Some(journal) = JOURNAL.dir(data)? {
+        match journal.remove_dir_all(operation_id) {
+            Err(error) if error.kind() != std::io::ErrorKind::NotFound => return Err(error.into()),
+            _ => {}
+        }
+    }
     Ok(())
 }
 
 /// Removes the journal that authorises the upgrade in `work`, durably.
-fn disarm(durability: WriteDurability, work: &Path) -> Result<()> {
-    match std::fs::remove_file(work.join(JOURNAL_FILE)) {
+fn disarm(durability: WriteDurability, work: &Dir) -> Result<()> {
+    match work.remove_file(JOURNAL_FILE) {
         Err(error) if error.kind() != std::io::ErrorKind::NotFound => return Err(error.into()),
         _ => {}
     }
-    durability.sync_directory(work)?;
+    durability.sync_dir(work)?;
     Ok(())
 }
 
 /// The journal of the upgrade in `work`, or `None` when it has none.
-fn read_journal(work: &Path) -> Result<Option<Operation>> {
-    let work = match open(work) {
-        Ok(work) => work,
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
-        Err(error) => return Err(error.into()),
-    };
+fn read_journal(work: &Dir) -> Result<Option<Operation>> {
     match work.symlink_metadata(JOURNAL_FILE) {
         Ok(_) => Ok(Some(serde_json::from_slice(&read_regular(
-            &work,
+            work,
             Path::new(JOURNAL_FILE),
         )?)?)),
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(None),
@@ -347,17 +416,18 @@ fn read_journal(work: &Path) -> Result<Option<Operation>> {
     }
 }
 
-fn write_journal(durability: WriteDurability, work: &Path, operation: &Operation) -> Result<()> {
-    write_synced(
+fn write_journal(durability: WriteDurability, work: &Dir, operation: &Operation) -> Result<()> {
+    write_synced_in(
         durability,
-        &work.join(JOURNAL_FILE),
+        work,
+        Path::new(JOURNAL_FILE),
         &serde_json::to_vec_pretty(operation)?,
     )
 }
 
-/// Removes the upgrade's staging, and returns whether there was any.
-fn remove_staging(work: &Path) -> Result<bool> {
-    match std::fs::remove_dir_all(prepared_dir(work)) {
+/// Removes the upgrade's staging from `work`, and returns whether there was any.
+fn remove_staging(work: &Dir) -> Result<bool> {
+    match work.remove_dir_all(PREPARED) {
         Ok(()) => Ok(true),
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(false),
         Err(error) => Err(error.into()),
@@ -367,9 +437,33 @@ fn remove_staging(work: &Path) -> Result<bool> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use walthamstow_kernel::durability::write_synced;
     use walthamstow_kernel::files::read_files;
 
     const DURABILITY: WriteDurability = WriteDurability::System;
+
+    /// The directory at `path`, held as a `Dir`.
+    fn dir(path: &Path) -> Dir {
+        walthamstow_kernel::files::open_dir(path).unwrap()
+    }
+
+    /// Where the upgrade `operation_id` works under `data`, once its id and the journal's
+    /// directories are checked as every operation checks them.
+    fn work_dir(data: &Path, operation_id: &str) -> Result<PathBuf> {
+        work(&dir(data), operation_id)?;
+        Ok(JOURNAL.root(data).join(operation_id))
+    }
+
+    /// Where the upgrade working in `work` stages its files.
+    fn prepared_dir(work: &Path) -> PathBuf {
+        work.join(PREPARED)
+    }
+
+    /// Writes `operation` as the journal of the upgrade working in `work`.
+    fn journal_at(work: &Path, operation: &Operation) {
+        std::fs::create_dir_all(work).unwrap();
+        write_journal(DURABILITY, &dir(work), operation).unwrap();
+    }
 
     #[test]
     fn authorised_workspace_upgrade_recovers_each_partial_publication_and_clears_its_staging() {
@@ -401,13 +495,13 @@ mod tests {
             }
             authorise(
                 DURABILITY,
-                &work,
+                &dir(data.path()),
                 "authorised",
                 &sources.collect(),
                 &changes.collect(),
             )
             .unwrap();
-            let recovery = recover(root, data.path(), DURABILITY).unwrap();
+            let recovery = recover(&dir(root), &dir(data.path()), DURABILITY).unwrap();
             assert_eq!(recovery.finished, ["authorised"]);
             assert!(recovery.discarded.is_empty());
             for (index, path) in paths.iter().enumerate() {
@@ -415,7 +509,7 @@ mod tests {
             }
             assert!(!prepared_dir(&work).exists());
             let before = read_files(root).unwrap();
-            let again = recover(root, data.path(), DURABILITY).unwrap();
+            let again = recover(&dir(root), &dir(data.path()), DURABILITY).unwrap();
             assert_eq!(again, Recovery::default());
             assert_eq!(read_files(root).unwrap(), before);
         }
@@ -433,10 +527,10 @@ mod tests {
             source_hashes: BTreeMap::new(),
             target_hashes: BTreeMap::new(),
         };
-        write_journal(DURABILITY, &work, &operation).unwrap();
+        journal_at(&work, &operation);
         std::fs::write(workspace.path().join("authored.json"), b"authored").unwrap();
         let before = read_files(workspace.path()).unwrap();
-        let recovery = recover(workspace.path(), data.path(), DURABILITY).unwrap();
+        let recovery = recover(&dir(workspace.path()), &dir(data.path()), DURABILITY).unwrap();
         assert_eq!(recovery, Recovery::default());
         assert_eq!(read_files(workspace.path()).unwrap(), before);
     }
@@ -454,7 +548,7 @@ mod tests {
                 source_hashes: BTreeMap::new(),
                 target_hashes: BTreeMap::new(),
             };
-            write_journal(DURABILITY, &work, &operation).unwrap();
+            journal_at(&work, &operation);
             write_synced(
                 DURABILITY,
                 &prepared_dir(&work).join("data/first.json"),
@@ -462,7 +556,7 @@ mod tests {
             )
             .unwrap();
         }
-        let recovery = recover(workspace.path(), data.path(), DURABILITY).unwrap();
+        let recovery = recover(&dir(workspace.path()), &dir(data.path()), DURABILITY).unwrap();
         assert!(recovery.finished.is_empty());
         assert_eq!(recovery.discarded, ["uncommitted"]);
         for id in ["uncommitted", "finished"] {
@@ -478,7 +572,14 @@ mod tests {
             (PathBuf::from("data/A.json"), b"upper".to_vec()),
             (PathBuf::from("data/a.json"), b"lower".to_vec()),
         ]);
-        let refused = authorise(DURABILITY, &work, "colliding", &changes, &changes).unwrap_err();
+        let refused = authorise(
+            DURABILITY,
+            &dir(data.path()),
+            "colliding",
+            &changes,
+            &changes,
+        )
+        .unwrap_err();
         assert_eq!(
             refused
                 .downcast_ref::<walthamstow_kernel::KernelError>()
@@ -486,7 +587,7 @@ mod tests {
             Some(crate::reason_codes::UPGRADE_PATHS_COLLIDE)
         );
         assert!(!work.exists());
-        assert!(pending(data.path()).unwrap().is_empty());
+        assert!(pending(&dir(data.path())).unwrap().is_empty());
     }
 
     #[test]
@@ -504,7 +605,7 @@ mod tests {
                 source_hashes: BTreeMap::new(),
                 target_hashes: BTreeMap::new(),
             };
-            write_journal(DURABILITY, &work_dir(data.path(), id).unwrap(), &operation).unwrap();
+            journal_at(&work_dir(data.path(), id).unwrap(), &operation);
         }
         let unjournalled = work_dir(data.path(), "unjournalled").unwrap();
         write_synced(
@@ -513,7 +614,7 @@ mod tests {
             b"a",
         )
         .unwrap();
-        assert_eq!(pending(data.path()).unwrap(), ["authorised"]);
+        assert_eq!(pending(&dir(data.path())).unwrap(), ["authorised"]);
     }
 
     #[test]
@@ -531,8 +632,8 @@ mod tests {
                 source_hashes: BTreeMap::new(),
                 target_hashes: BTreeMap::new(),
             };
-            write_journal(DURABILITY, &work, &operation).unwrap();
-            assert_eq!(retire(&work).unwrap(), retired, "{id}");
+            journal_at(&work, &operation);
+            assert_eq!(retire(&dir(data.path()), id).unwrap(), retired, "{id}");
             assert_eq!(work.exists(), !retired, "{id}");
         }
         let unjournalled = work_dir(data.path(), "unjournalled").unwrap();
@@ -542,7 +643,7 @@ mod tests {
             b"a",
         )
         .unwrap();
-        assert!(!retire(&unjournalled).unwrap());
+        assert!(!retire(&dir(data.path()), "unjournalled").unwrap());
         assert!(unjournalled.exists());
     }
 
@@ -556,15 +657,15 @@ mod tests {
         write_synced(DURABILITY, &prepared_dir(&work).join(&path), b"upgraded").unwrap();
         authorise(
             DURABILITY,
-            &work,
+            &dir(data.path()),
             "abandoned",
             &BTreeMap::from([(path.clone(), b"original".to_vec())]),
             &BTreeMap::from([(path.clone(), b"upgraded".to_vec())]),
         )
         .unwrap();
-        disarm(DURABILITY, &work).unwrap();
+        disarm(DURABILITY, &dir(&work)).unwrap();
         std::fs::remove_dir_all(work.join("original")).unwrap();
-        let recovery = recover(workspace.path(), data.path(), DURABILITY).unwrap();
+        let recovery = recover(&dir(workspace.path()), &dir(data.path()), DURABILITY).unwrap();
         assert_eq!(recovery.discarded, ["abandoned"]);
         assert!(!work.exists());
         assert_eq!(
@@ -584,7 +685,7 @@ mod tests {
             .root(data.path())
             .join(std::ffi::OsStr::from_bytes(b"\xff"));
         std::fs::create_dir_all(prepared_dir(&unnamed)).unwrap();
-        assert!(recover(workspace.path(), data.path(), DURABILITY).is_err());
+        assert!(recover(&dir(workspace.path()), &dir(data.path()), DURABILITY).is_err());
         assert!(prepared_dir(&unnamed).exists());
     }
 
@@ -599,7 +700,7 @@ mod tests {
             b"staged",
         )
         .unwrap();
-        let recovery = recover(workspace.path(), data.path(), DURABILITY).unwrap();
+        let recovery = recover(&dir(workspace.path()), &dir(data.path()), DURABILITY).unwrap();
         assert_eq!(recovery.discarded, ["abandoned"]);
         assert!(!work.exists());
     }
@@ -607,13 +708,12 @@ mod tests {
     #[test]
     fn a_path_that_leaves_the_workspace_refuses_the_upgrade_before_anything_is_written() {
         let data = tempfile::tempdir().unwrap();
-        let work = work_dir(data.path(), "escaping").unwrap();
         for path in ["../../escape.json", "/absolute.json"] {
             let path = PathBuf::from(path);
             let bytes = b"bytes".to_vec();
             assert!(authorise(
                 DURABILITY,
-                &work,
+                &dir(data.path()),
                 "escaping",
                 &BTreeMap::from([(path.clone(), bytes.clone())]),
                 &BTreeMap::from([(path.clone(), bytes)]),
@@ -661,9 +761,9 @@ mod tests {
         let workspace = tempfile::tempdir().unwrap();
         let data = tempfile::tempdir().unwrap();
         std::fs::write(data.path().join("journals"), b"not a directory").unwrap();
-        assert!(recover(workspace.path(), data.path(), DURABILITY).is_err());
+        assert!(recover(&dir(workspace.path()), &dir(data.path()), DURABILITY).is_err());
         let empty = tempfile::tempdir().unwrap();
-        recover(workspace.path(), empty.path(), DURABILITY).unwrap();
+        recover(&dir(workspace.path()), &dir(empty.path()), DURABILITY).unwrap();
     }
 
     #[test]
@@ -677,14 +777,20 @@ mod tests {
         write_synced(DURABILITY, &prepared_dir(&work).join(&path), &target).unwrap();
         let mut operation = authorise(
             DURABILITY,
-            &work,
+            &dir(data.path()),
             "tampered",
             &BTreeMap::from([(path.clone(), original.clone())]),
             &BTreeMap::from([(path.clone(), target)]),
         )
         .unwrap();
         write_synced(DURABILITY, &work.join("original").join(&path), b"altered").unwrap();
-        assert!(finish(DURABILITY, workspace.path(), &work, &mut operation).is_err());
+        assert!(finish(
+            DURABILITY,
+            &dir(workspace.path()),
+            &dir(data.path()),
+            &mut operation,
+        )
+        .is_err());
         assert_eq!(
             std::fs::read(workspace.path().join(&path)).unwrap(),
             original
@@ -717,7 +823,7 @@ mod tests {
         std::fs::create_dir_all(JOURNAL.root(data.path())).unwrap();
         std::os::unix::fs::symlink(outside.path(), JOURNAL.root(data.path()).join("linked"))
             .unwrap();
-        assert!(recover(workspace.path(), data.path(), DURABILITY).is_err());
+        assert!(recover(&dir(workspace.path()), &dir(data.path()), DURABILITY).is_err());
         assert!(prepared_dir(outside.path())
             .join("data/first.json")
             .exists());
@@ -734,7 +840,7 @@ mod tests {
         std::fs::write(outside.path().join(JOURNAL_FILE), b"{}").unwrap();
         std::os::unix::fs::symlink(outside.path().join(JOURNAL_FILE), work.join(JOURNAL_FILE))
             .unwrap();
-        let error = recover(workspace.path(), data.path(), DURABILITY).unwrap_err();
+        let error = recover(&dir(workspace.path()), &dir(data.path()), DURABILITY).unwrap_err();
         assert!(error.to_string().contains("not a regular file"), "{error}");
     }
 
@@ -742,7 +848,6 @@ mod tests {
     fn a_recovered_path_is_checked_before_its_original_is_read() {
         let workspace = tempfile::tempdir().unwrap();
         let data = tempfile::tempdir().unwrap();
-        let work = work_dir(data.path(), "escaping").unwrap();
         let path = PathBuf::from("/walthamstow-absent/escape.json");
         let mut operation = Operation {
             operation_id: "escaping".into(),
@@ -751,7 +856,13 @@ mod tests {
             source_hashes: BTreeMap::from([(path.clone(), Some(sha256_hex(b"original")))]),
             target_hashes: BTreeMap::from([(path, sha256_hex(b"target"))]),
         };
-        let error = finish(DURABILITY, workspace.path(), &work, &mut operation).unwrap_err();
+        let error = finish(
+            DURABILITY,
+            &dir(workspace.path()),
+            &dir(data.path()),
+            &mut operation,
+        )
+        .unwrap_err();
         assert!(
             error.to_string().contains("Invalid publication path"),
             "{error}"
@@ -769,7 +880,7 @@ mod tests {
             std::fs::create_dir_all(link.parent().unwrap()).unwrap();
             std::os::unix::fs::symlink(outside.path(), &link).unwrap();
             assert!(
-                recover(workspace.path(), data.path(), DURABILITY).is_err(),
+                recover(&dir(workspace.path()), &dir(data.path()), DURABILITY).is_err(),
                 "{linked}"
             );
             assert!(work_dir(data.path(), "an-upgrade").is_err(), "{linked}");
@@ -798,7 +909,7 @@ mod tests {
         let path = PathBuf::from("data/first.json");
         let refused = authorise(
             DURABILITY,
-            &work,
+            &dir(data.path()),
             "linked-originals",
             &BTreeMap::from([(path.clone(), b"original".to_vec())]),
             &BTreeMap::from([(path.clone(), b"upgraded".to_vec())]),
@@ -815,7 +926,13 @@ mod tests {
             source_hashes: BTreeMap::from([(path.clone(), Some(sha256_hex(b"original")))]),
             target_hashes: BTreeMap::from([(path, sha256_hex(b"upgraded"))]),
         };
-        assert!(finish(DURABILITY, workspace.path(), &work, &mut operation).is_err());
+        assert!(finish(
+            DURABILITY,
+            &dir(workspace.path()),
+            &dir(data.path()),
+            &mut operation,
+        )
+        .is_err());
     }
 
     #[test]
@@ -828,14 +945,19 @@ mod tests {
         write_synced(DURABILITY, &prepared_dir(&work).join(&path), b"upgraded").unwrap();
         let mut operation = authorise(
             DURABILITY,
-            &work,
+            &dir(data.path()),
             "stale",
             &BTreeMap::from([(path.clone(), b"original".to_vec())]),
             &BTreeMap::from([(path.clone(), b"upgraded".to_vec())]),
         )
         .unwrap();
-        let refused =
-            finish_first(DURABILITY, workspace.path(), &work, &mut operation).unwrap_err();
+        let refused = finish_first(
+            DURABILITY,
+            &dir(workspace.path()),
+            &dir(data.path()),
+            &mut operation,
+        )
+        .unwrap_err();
         let refused = refused.downcast_ref::<KernelError>().unwrap();
         assert_eq!(
             refused.reason_code(),
@@ -860,14 +982,20 @@ mod tests {
         write_synced(DURABILITY, &outside.path().join(&path), b"upgraded").unwrap();
         let mut operation = authorise(
             DURABILITY,
-            &work,
+            &dir(data.path()),
             "linked-staging",
             &BTreeMap::from([(path.clone(), b"original".to_vec())]),
             &BTreeMap::from([(path.clone(), b"upgraded".to_vec())]),
         )
         .unwrap();
         std::os::unix::fs::symlink(outside.path(), prepared_dir(&work)).unwrap();
-        assert!(finish(DURABILITY, workspace.path(), &work, &mut operation).is_err());
+        assert!(finish(
+            DURABILITY,
+            &dir(workspace.path()),
+            &dir(data.path()),
+            &mut operation,
+        )
+        .is_err());
         assert_eq!(
             std::fs::read(workspace.path().join(&path)).unwrap(),
             b"original"

@@ -10,6 +10,7 @@ publish = false
 
 [dependencies]
 anyhow.workspace = true
+cap-std.workspace = true
 clapham.workspace = true
 schemars.workspace = true
 serde.workspace = true

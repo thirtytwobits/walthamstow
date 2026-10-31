@@ -6,10 +6,12 @@
 //! and for tests.
 
 use crate::codes;
+use anyhow::Context;
+use cap_std::fs::Dir;
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use std::sync::{Mutex, PoisonError};
-use walthamstow_kernel::durability::{write_synced, WriteDurability};
+use walthamstow_kernel::durability::WriteDurability;
 use walthamstow_kernel::publication::{check_relative_path, read_regular};
 use walthamstow_kernel::KernelError;
 use walthamstow_upgrades::workspace::{self as upgrades, Recovery};
@@ -52,29 +54,40 @@ fn stale(path: &str) -> anyhow::Error {
         .into()
 }
 
-/// A workspace's files, upgraded through the journals under the engine's data directory.
+/// A workspace's files, upgraded through the journals under the engine's data directory. The
+/// workspace root and the data directory are each opened once, as `cap-std` directories, and
+/// every upgrade reaches them through those handles.
 #[derive(Debug)]
 pub struct FileWorkspace {
     root: PathBuf,
-    data_dir: PathBuf,
+    /// The workspace root, held open.
+    root_dir: Dir,
+    /// The engine's data directory, held open.
+    data: Dir,
     durability: WriteDurability,
     /// Each entity's directory, resolved.
     directories: BTreeMap<String, PathBuf>,
 }
 
 impl FileWorkspace {
-    /// The workspace at `root`, upgraded under `data_dir`.
+    /// The workspace at `root`, upgraded under `data_dir`, each of which must exist.
     pub fn new(
         root: impl Into<PathBuf>,
-        data_dir: impl Into<PathBuf>,
+        data_dir: impl AsRef<Path>,
         durability: WriteDurability,
-    ) -> Self {
-        Self {
-            root: root.into(),
-            data_dir: data_dir.into(),
+    ) -> anyhow::Result<Self> {
+        let root = root.into();
+        let open = |path: &Path| {
+            walthamstow_kernel::files::open_dir(path)
+                .with_context(|| format!("opening {}", path.display()))
+        };
+        Ok(Self {
+            root_dir: open(&root)?,
+            data: open(data_dir.as_ref())?,
+            root,
             durability,
             directories: BTreeMap::new(),
-        }
+        })
     }
 
     /// Keeps `entity`'s documents in `directory`, which the product resolved with
@@ -84,9 +97,9 @@ impl FileWorkspace {
         self
     }
 
-    fn work(&self, operation_id: &str) -> anyhow::Result<PathBuf> {
-        let work = upgrades::work_dir(&self.data_dir, operation_id)?;
-        if work.exists() && !upgrades::retire(&work)? {
+    /// Refuses `operation_id` while an upgrade journalled under it is not finished.
+    fn free(&self, operation_id: &str) -> anyhow::Result<()> {
+        if !upgrades::retire(&self.data, operation_id)? {
             return Err(KernelError::conflict(format!(
                 "The upgrade {operation_id} is journalled and not finished. Recover the \
                  workspace first."
@@ -95,7 +108,7 @@ impl FileWorkspace {
             .with_reason(codes::UPGRADE_PENDING)
             .into());
         }
-        Ok(work)
+        Ok(())
     }
 }
 
@@ -144,12 +157,11 @@ impl Workspace for FileWorkspace {
             .directories
             .get(entity)
             .ok_or_else(|| anyhow::anyhow!("The workspace keeps no directory for {entity}."))?;
-        let root = walthamstow_kernel::files::open_dir(&self.root)?;
         list_documents(directory)?
             .into_iter()
             .map(|file| {
                 let path = document_path(&self.root, &file)?;
-                let bytes = read_regular(&root, Path::new(&path))?;
+                let bytes = read_regular(&self.root_dir, Path::new(&path))?;
                 Ok((path, bytes))
             })
             .collect()
@@ -164,14 +176,17 @@ impl Workspace for FileWorkspace {
         let sources = by_path(sources)?;
         let changes = by_path(changes)?;
         upgrades::check_paths(changes.keys().map(PathBuf::as_path))?;
-        let work = self.work(operation_id)?;
-        let prepared = upgrades::prepared_dir(&work);
-        for (path, bytes) in &changes {
-            write_synced(self.durability, &prepared.join(path), bytes)?;
-        }
-        let mut operation =
-            upgrades::authorise(self.durability, &work, operation_id, &sources, &changes)?;
-        let finished = upgrades::finish_first(self.durability, &self.root, &work, &mut operation);
+        self.free(operation_id)?;
+        upgrades::stage(self.durability, &self.data, operation_id, &changes)?;
+        let mut operation = upgrades::authorise(
+            self.durability,
+            &self.data,
+            operation_id,
+            &sources,
+            &changes,
+        )?;
+        let finished =
+            upgrades::finish_first(self.durability, &self.root_dir, &self.data, &mut operation);
         if let Err(error) = &finished {
             // The first publication checks every file holds its source before it writes one.
             if error
@@ -179,18 +194,18 @@ impl Workspace for FileWorkspace {
                 .and_then(KernelError::reason_code)
                 == Some(codes::UPGRADE_STALE)
             {
-                upgrades::abandon(self.durability, &work)?;
+                upgrades::abandon(self.durability, &self.data, operation_id)?;
             }
         }
         finished
     }
 
     fn pending(&self) -> anyhow::Result<Vec<String>> {
-        upgrades::pending(&self.data_dir)
+        upgrades::pending(&self.data)
     }
 
     fn recover(&self) -> anyhow::Result<Recovery> {
-        upgrades::recover(&self.root, &self.data_dir, self.durability)
+        upgrades::recover(&self.root_dir, &self.data, self.durability)
     }
 }
 

@@ -106,8 +106,11 @@ fn files() -> Rig {
     let [notes] =
         walthamstow_workspace::paths::resolve_directories(root.path(), [("notes", "notes")])
             .unwrap();
-    let workspace =
-        Arc::new(FileWorkspace::new(root.path(), data.path(), DURABILITY).directory("note", notes));
+    let workspace = Arc::new(
+        FileWorkspace::new(root.path(), data.path(), DURABILITY)
+            .unwrap()
+            .directory("note", notes),
+    );
     let store: Arc<dyn LocalStore> = FileLocalStore::open(data.path(), DURABILITY).unwrap();
     let path = root.path().to_path_buf();
     let (written, read, held) = (path.clone(), path.clone(), path.clone());
@@ -500,25 +503,29 @@ async fn recovery_finishes_an_upgrade_a_stop_interrupted() {
         walthamstow_workspace::paths::resolve_directories(root.path(), [("notes", "notes")])
             .unwrap();
     write_synced(DURABILITY, &notes.join("old.json"), &note(1, "old")).unwrap();
-    let work = walthamstow_upgrades::workspace::work_dir(data.path(), "interrupted").unwrap();
+    let held = walthamstow_kernel::files::open_dir(data.path()).unwrap();
     let path = Path::new("notes/old.json").to_path_buf();
     let upgraded = to_format_2("", "", &note(1, "old")).unwrap();
-    write_synced(
+    walthamstow_upgrades::workspace::stage(
         DURABILITY,
-        &walthamstow_upgrades::workspace::prepared_dir(&work).join(&path),
-        &upgraded,
+        &held,
+        "interrupted",
+        &BTreeMap::from([(path.clone(), upgraded.clone())]),
     )
     .unwrap();
     walthamstow_upgrades::workspace::authorise(
         DURABILITY,
-        &work,
+        &held,
         "interrupted",
         &BTreeMap::from([(path.clone(), note(1, "old"))]),
         &BTreeMap::from([(path, upgraded.clone())]),
     )
     .unwrap();
-    let workspace =
-        Arc::new(FileWorkspace::new(root.path(), data.path(), DURABILITY).directory("note", notes));
+    let workspace = Arc::new(
+        FileWorkspace::new(root.path(), data.path(), DURABILITY)
+            .unwrap()
+            .directory("note", notes),
+    );
     let store: Arc<dyn LocalStore> = FileLocalStore::open(data.path(), DURABILITY).unwrap();
     let set = compose(Lease::in_process(root.path()), workspace, store);
     let all = set.all();
@@ -579,7 +586,7 @@ fn a_file_publication_refused_by_its_fence_leaves_no_journal_to_recover() {
         &note(1, "edited"),
     )
     .unwrap();
-    let workspace = FileWorkspace::new(root.path(), data.path(), DURABILITY);
+    let workspace = FileWorkspace::new(root.path(), data.path(), DURABILITY).unwrap();
     let path = "notes/old.json".to_string();
     let refused = workspace
         .publish(
@@ -645,7 +652,7 @@ fn a_publication_is_refused_when_a_document_already_holds_its_target() {
     let root = tempfile::tempdir().unwrap();
     let data = tempfile::tempdir().unwrap();
     refuses_a_document_already_at_its_target(
-        &FileWorkspace::new(root.path(), data.path(), DURABILITY),
+        &FileWorkspace::new(root.path(), data.path(), DURABILITY).unwrap(),
         &|path, bytes| write_synced(DURABILITY, &root.path().join(path), bytes).unwrap(),
         &|path| std::fs::read(root.path().join(path)).ok(),
     );

@@ -1,0 +1,38 @@
+# Sent by the newsletter from thirtytwobits/london; change it there.
+name: Verify release
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: The vVERSION tag of a published release
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verify-${{ github.event.release.tag_name || inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 20
+    permissions:
+      actions: read
+      contents: read
+    steps:
+      # v7.0.1; action.yml declares runs.using: node24.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: refs/tags/${{ github.event.release.tag_name || inputs.tag }}
+          persist-credentials: false
+      - run: rustup toolchain install 1.88 --profile minimal
+      - name: Verify the published release from a new consumer
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUSTUP_TOOLCHAIN: '1.88'
+        run: python3 tools/release.py verify

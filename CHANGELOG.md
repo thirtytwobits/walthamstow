@@ -5,6 +5,8 @@
 ### Breaking
 
 - The crates need Rust 1.95 or later.
+- Walthamstow builds on Clerkenwell 0.13.0 and Clapham 0.4.0. A host that also depends on either takes
+  its tag; Cargo treats each Git tag as a separate crate.
 
 ## 0.7.0
 

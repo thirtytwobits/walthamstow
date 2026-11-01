@@ -1,4 +1,4 @@
 {
-  "cargo-public-api": "0.50.2",
-  "rustdoc": "nightly-2025-08-02"
+  "cargo-public-api": "0.52.0",
+  "rustdoc": "nightly-2026-10-01"
 }

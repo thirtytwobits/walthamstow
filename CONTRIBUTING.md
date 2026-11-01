@@ -7,8 +7,8 @@ the storage layout, Clippy with warnings denied, the tests and the documentation
 toolchain `api/toolchain.json` names:
 
 ```bash
-rustup toolchain install nightly-2025-08-02 --profile minimal
-cargo install cargo-public-api --version 0.50.2 --locked
+rustup toolchain install nightly-2026-10-01 --profile minimal
+cargo install cargo-public-api --version 0.52.0 --locked
 ```
 
 A pull request that changes a public API reviews the snapshot diff and runs

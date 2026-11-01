@@ -32,18 +32,18 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
-      - run: rustup toolchain install nightly-2025-08-02 --profile minimal
+      - run: rustup toolchain install nightly-2026-10-01 --profile minimal
       - run: rustup toolchain install 1.99.0 --profile minimal
       - run: rustup default 1.99.0
-      - run: cargo install cargo-public-api --version 0.50.2 --locked
+      - run: cargo install cargo-public-api --version 0.52.0 --locked
       - run: cargo xtask api
   msrv:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
-      - run: rustup toolchain install 1.88.0 --profile minimal
-      - run: cargo +1.88.0 test --locked --workspace --exclude xtask
+      - run: rustup toolchain install 1.95.0 --profile minimal
+      - run: cargo +1.95.0 test --locked --workspace --exclude xtask
   release-form:
     runs-on: ubuntu-24.04
     timeout-minutes: 5

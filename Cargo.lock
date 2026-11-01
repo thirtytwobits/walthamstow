@@ -3419,7 +3419,7 @@ checksum = "5c3082ca00d5a5ef149bb8b555a72ae84c9c59f7250f013ac822ac2e49b19c64"
 
 [[package]]
 name = "walthamstow-kernel"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "anyhow",
  "cap-fs-ext",
@@ -3443,7 +3443,7 @@ dependencies = [
 
 [[package]]
 name = "walthamstow-logs"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "cap-std",
  "chrono",
@@ -3459,7 +3459,7 @@ dependencies = [
 
 [[package]]
 name = "walthamstow-ops"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "anyhow",
  "cap-std",
@@ -3477,7 +3477,7 @@ dependencies = [
 
 [[package]]
 name = "walthamstow-ops-example"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "axum",
  "clapham",
@@ -3496,7 +3496,7 @@ dependencies = [
 
 [[package]]
 name = "walthamstow-upgrades"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "anyhow",
  "cap-fs-ext",
@@ -3509,7 +3509,7 @@ dependencies = [
 
 [[package]]
 name = "walthamstow-workspace"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "anyhow",
  "cap-fs-ext",
@@ -3836,7 +3836,7 @@ checksum = "3ad82d2a33cdc9674dc7465672f271e096168fcdbe0f799d9e6db8c5892679dc"
 
 [[package]]
 name = "xtask"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "regex-lite",
  "serde_json",

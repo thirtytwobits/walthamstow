@@ -16,7 +16,7 @@ CRATE = { git = "https://github.com/thirtytwobits/walthamstow", tag = "vX.Y.Z" }
 ```
 
 Cargo treats each tag as a separate source, so take every Walthamstow crate from the
-same tag, and commit `Cargo.lock`. The libraries need Rust 1.88 or later.
+same tag, and commit `Cargo.lock`. The libraries need Rust 1.95 or later.
 
 `SHA256SUMS` lists the files attached to a release. Check a download with
 `sha256sum --check --ignore-missing SHA256SUMS`.

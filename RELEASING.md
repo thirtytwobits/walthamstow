@@ -42,9 +42,11 @@ build keeps.
 7. Publication runs the Verify release workflow, whose run is the release's evidence. It runs
    `python3 tools/release.py verify`, which checks the release and its Draft release run, takes
    the release in a new consumer with `cargo add --tag` and `cargo check` on Rust
-   1.88, and runs the verify steps. Run the workflow by hand with the tag to check
+   1.95, and runs the verify steps. Run the workflow by hand with the tag to check
    a release again.
 
-CI runs on Rust 1.99.0; the libraries support Rust 1.88 and later.
+CI runs on Rust 1.99.0; the libraries support Rust 1.95 and later. The
+London Project sets the minimum for every piece. It raises it only when a dependency or a feature
+needs a newer Rust, and only to a stable release at least six months old.
 
 <!-- newsletter:end releasing -->

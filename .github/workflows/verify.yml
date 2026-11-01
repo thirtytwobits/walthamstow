@@ -30,9 +30,9 @@ jobs:
         with:
           ref: refs/tags/${{ github.event.release.tag_name || inputs.tag }}
           persist-credentials: false
-      - run: rustup toolchain install 1.88 --profile minimal
+      - run: rustup toolchain install 1.95 --profile minimal
       - name: Verify the published release from a new consumer
         env:
           GH_TOKEN: ${{ github.token }}
-          RUSTUP_TOOLCHAIN: '1.88'
+          RUSTUP_TOOLCHAIN: '1.95'
         run: python3 tools/release.py verify

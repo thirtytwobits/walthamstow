@@ -397,8 +397,8 @@ checksum = "1c133bc6a41be0d194c306b5506d15e6feeea7b1d6604bd3f8310dfb2ca96486"
 
 [[package]]
 name = "clapham"
-version = "0.3.3"
-source = "git+https://github.com/thirtytwobits/clapham?tag=v0.3.3#c08c39042d6c0f433ae6b9a370b4f71bc32010e5"
+version = "0.4.0"
+source = "git+https://github.com/thirtytwobits/clapham?tag=v0.4.0#a04128a7cdf98c6f1ced395d97341808bd29e72d"
 dependencies = [
  "futures-util",
  "jsonschema 0.60.2",
@@ -411,8 +411,8 @@ dependencies = [
 
 [[package]]
 name = "clapham-cli"
-version = "0.3.3"
-source = "git+https://github.com/thirtytwobits/clapham?tag=v0.3.3#c08c39042d6c0f433ae6b9a370b4f71bc32010e5"
+version = "0.4.0"
+source = "git+https://github.com/thirtytwobits/clapham?tag=v0.4.0#a04128a7cdf98c6f1ced395d97341808bd29e72d"
 dependencies = [
  "clap",
  "clap_complete",
@@ -429,8 +429,8 @@ dependencies = [
 
 [[package]]
 name = "clapham-conformance"
-version = "0.3.3"
-source = "git+https://github.com/thirtytwobits/clapham?tag=v0.3.3#c08c39042d6c0f433ae6b9a370b4f71bc32010e5"
+version = "0.4.0"
+source = "git+https://github.com/thirtytwobits/clapham?tag=v0.4.0#a04128a7cdf98c6f1ced395d97341808bd29e72d"
 dependencies = [
  "clapham",
  "clapham-cli",
@@ -448,8 +448,8 @@ dependencies = [
 
 [[package]]
 name = "clapham-mcp-client"
-version = "0.3.3"
-source = "git+https://github.com/thirtytwobits/clapham?tag=v0.3.3#c08c39042d6c0f433ae6b9a370b4f71bc32010e5"
+version = "0.4.0"
+source = "git+https://github.com/thirtytwobits/clapham?tag=v0.4.0#a04128a7cdf98c6f1ced395d97341808bd29e72d"
 dependencies = [
  "bytes",
  "clapham",
@@ -470,8 +470,8 @@ dependencies = [
 
 [[package]]
 name = "clapham-mcp-server"
-version = "0.3.3"
-source = "git+https://github.com/thirtytwobits/clapham?tag=v0.3.3#c08c39042d6c0f433ae6b9a370b4f71bc32010e5"
+version = "0.4.0"
+source = "git+https://github.com/thirtytwobits/clapham?tag=v0.4.0#a04128a7cdf98c6f1ced395d97341808bd29e72d"
 dependencies = [
  "axum",
  "bytes",
@@ -493,8 +493,8 @@ dependencies = [
 
 [[package]]
 name = "clerkenwell-axum"
-version = "0.12.0"
-source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.12.0#0a3bf3f0cedfcf4bdb7d83a0bdad6feacf80ded6"
+version = "0.13.0"
+source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.13.0#616a50430f074eb7d528488f1479c0c029c3b44a"
 dependencies = [
  "axum",
  "clerkenwell-events",
@@ -508,8 +508,8 @@ dependencies = [
 
 [[package]]
 name = "clerkenwell-doc"
-version = "0.12.0"
-source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.12.0#0a3bf3f0cedfcf4bdb7d83a0bdad6feacf80ded6"
+version = "0.13.0"
+source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.13.0#616a50430f074eb7d528488f1479c0c029c3b44a"
 dependencies = [
  "base64 0.23.1",
  "clerkenwell-schema",
@@ -521,8 +521,8 @@ dependencies = [
 
 [[package]]
 name = "clerkenwell-events"
-version = "0.12.0"
-source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.12.0#0a3bf3f0cedfcf4bdb7d83a0bdad6feacf80ded6"
+version = "0.13.0"
+source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.13.0#616a50430f074eb7d528488f1479c0c029c3b44a"
 dependencies = [
  "serde",
  "serde_json",
@@ -530,8 +530,8 @@ dependencies = [
 
 [[package]]
 name = "clerkenwell-ops"
-version = "0.12.0"
-source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.12.0#0a3bf3f0cedfcf4bdb7d83a0bdad6feacf80ded6"
+version = "0.13.0"
+source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.13.0#616a50430f074eb7d528488f1479c0c029c3b44a"
 dependencies = [
  "base64 0.23.1",
  "clapham",
@@ -548,8 +548,8 @@ dependencies = [
 
 [[package]]
 name = "clerkenwell-schema"
-version = "0.12.0"
-source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.12.0#0a3bf3f0cedfcf4bdb7d83a0bdad6feacf80ded6"
+version = "0.13.0"
+source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.13.0#616a50430f074eb7d528488f1479c0c029c3b44a"
 dependencies = [
  "clerkenwell-events",
  "schemars",
@@ -559,8 +559,8 @@ dependencies = [
 
 [[package]]
 name = "clerkenwell-session"
-version = "0.12.0"
-source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.12.0#0a3bf3f0cedfcf4bdb7d83a0bdad6feacf80ded6"
+version = "0.13.0"
+source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.13.0#616a50430f074eb7d528488f1479c0c029c3b44a"
 dependencies = [
  "clerkenwell-events",
  "clerkenwell-schema",
@@ -573,8 +573,8 @@ dependencies = [
 
 [[package]]
 name = "clerkenwell-store"
-version = "0.12.0"
-source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.12.0#0a3bf3f0cedfcf4bdb7d83a0bdad6feacf80ded6"
+version = "0.13.0"
+source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.13.0#616a50430f074eb7d528488f1479c0c029c3b44a"
 dependencies = [
  "base64 0.23.1",
  "chrono",
@@ -3419,7 +3419,7 @@ checksum = "5c3082ca00d5a5ef149bb8b555a72ae84c9c59f7250f013ac822ac2e49b19c64"
 
 [[package]]
 name = "walthamstow-kernel"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "anyhow",
  "cap-fs-ext",
@@ -3443,7 +3443,7 @@ dependencies = [
 
 [[package]]
 name = "walthamstow-logs"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "cap-std",
  "chrono",
@@ -3459,7 +3459,7 @@ dependencies = [
 
 [[package]]
 name = "walthamstow-ops"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "anyhow",
  "cap-std",
@@ -3477,7 +3477,7 @@ dependencies = [
 
 [[package]]
 name = "walthamstow-ops-example"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "axum",
  "clapham",
@@ -3496,7 +3496,7 @@ dependencies = [
 
 [[package]]
 name = "walthamstow-upgrades"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "anyhow",
  "cap-fs-ext",
@@ -3509,7 +3509,7 @@ dependencies = [
 
 [[package]]
 name = "walthamstow-workspace"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "anyhow",
  "cap-fs-ext",
@@ -3836,7 +3836,7 @@ checksum = "3ad82d2a33cdc9674dc7465672f271e096168fcdbe0f799d9e6db8c5892679dc"
 
 [[package]]
 name = "xtask"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "regex-lite",
  "serde_json",

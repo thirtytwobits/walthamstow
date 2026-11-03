@@ -677,8 +677,6 @@ impl core::panic::unwind_safe::UnwindSafe for walthamstow_workspace::documents::
 impl<Q, K> equivalent::Equivalent<K> for walthamstow_workspace::documents::WorkspaceWarning where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
 pub fn walthamstow_workspace::documents::WorkspaceWarning::equivalent(&self, &K) -> bool
 impl<Q, K> hashbrown::Equivalent<K> for walthamstow_workspace::documents::WorkspaceWarning where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
-impl<Q, K> hashbrown::Equivalent<K> for walthamstow_workspace::documents::WorkspaceWarning where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
-pub fn walthamstow_workspace::documents::WorkspaceWarning::equivalent(&self, &K) -> bool
 pub fn walthamstow_workspace::documents::WorkspaceWarning::equivalent(&self, &K) -> bool
 impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for walthamstow_workspace::documents::WorkspaceWarning where ST: ?core::marker::Sized, DT: ?core::marker::Sized
 impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for walthamstow_workspace::documents::WorkspaceWarning where ST: ?core::marker::Sized, DT: ?core::marker::Sized

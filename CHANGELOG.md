@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Breaking
+
+- `walthamstow-workspace` builds on jsonschema 0.60. `schemas::compile_schema_document` returns,
+  and `validate_document_value` and `collect_validation_messages` take, its `Validator`.
+
 ## 0.8.0
 
 ### Breaking

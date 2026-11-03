@@ -29,7 +29,7 @@ pub fn normalize_schema_document(schema: &mut Value) {
     let dialect = schema
         .get("$schema")
         .cloned()
-        .filter(|_| jsonschema::Draft::default().detect(schema).is_ok());
+        .filter(|_| jsonschema::Draft::default().detect(schema) != jsonschema::Draft::Unknown);
     strip_schema_keywords(schema);
     if let (Some(dialect), Value::Object(map)) = (dialect, schema) {
         map.insert("$schema".to_string(), dialect);
@@ -138,7 +138,10 @@ properties:
                 _ => false,
             }
         }
-        assert!(jsonschema::Draft::default().detect(&schema).is_ok());
+        assert_ne!(
+            jsonschema::Draft::default().detect(&schema),
+            jsonschema::Draft::Unknown
+        );
         assert!(schema.get("$schema").is_some());
         assert!(!holds_keyword(&schema["properties"]));
     }

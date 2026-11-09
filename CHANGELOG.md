@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- The kernel builds on sha2 0.11.
+
 ## 0.10.0
 
 ### Breaking

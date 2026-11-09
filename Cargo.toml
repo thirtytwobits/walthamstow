@@ -11,7 +11,7 @@ members = [
 resolver = "2"
 
 [workspace.package]
-version = "0.9.0"
+version = "0.10.0"
 edition = "2021"
 rust-version = "1.95"
 license = "MIT"
@@ -24,16 +24,16 @@ cap-fs-ext = "4.0.3"
 cap-std = "4.0.3"
 chrono = { version = "0.4.42", features = ["serde"] }
 # The tag Clerkenwell takes, so one application composes both pieces' operations.
-clapham = { git = "https://github.com/thirtytwobits/clapham", tag = "v0.4.0", version = "0.4.0" }
-clapham-cli = { git = "https://github.com/thirtytwobits/clapham", tag = "v0.4.0", version = "0.4.0" }
-clapham-conformance = { git = "https://github.com/thirtytwobits/clapham", tag = "v0.4.0", version = "0.4.0" }
-clapham-mcp-server = { git = "https://github.com/thirtytwobits/clapham", tag = "v0.4.0", version = "0.4.0" }
-clerkenwell-doc = { git = "https://github.com/thirtytwobits/clerkenwell", tag = "v0.13.0" }
-clerkenwell-events = { git = "https://github.com/thirtytwobits/clerkenwell", tag = "v0.13.0" }
-clerkenwell-ops = { git = "https://github.com/thirtytwobits/clerkenwell", tag = "v0.13.0" }
-clerkenwell-schema = { git = "https://github.com/thirtytwobits/clerkenwell", tag = "v0.13.0" }
-clerkenwell-session = { git = "https://github.com/thirtytwobits/clerkenwell", tag = "v0.13.0" }
-clerkenwell-store = { git = "https://github.com/thirtytwobits/clerkenwell", tag = "v0.13.0" }
+clapham = { git = "https://github.com/thirtytwobits/clapham", tag = "v0.6.0", version = "0.6.0" }
+clapham-cli = { git = "https://github.com/thirtytwobits/clapham", tag = "v0.6.0", version = "0.6.0" }
+clapham-conformance = { git = "https://github.com/thirtytwobits/clapham", tag = "v0.6.0", version = "0.6.0" }
+clapham-mcp-server = { git = "https://github.com/thirtytwobits/clapham", tag = "v0.6.0", version = "0.6.0" }
+clerkenwell-doc = { git = "https://github.com/thirtytwobits/clerkenwell", tag = "v0.14.0" }
+clerkenwell-events = { git = "https://github.com/thirtytwobits/clerkenwell", tag = "v0.14.0" }
+clerkenwell-ops = { git = "https://github.com/thirtytwobits/clerkenwell", tag = "v0.14.0" }
+clerkenwell-schema = { git = "https://github.com/thirtytwobits/clerkenwell", tag = "v0.14.0" }
+clerkenwell-session = { git = "https://github.com/thirtytwobits/clerkenwell", tag = "v0.14.0" }
+clerkenwell-store = { git = "https://github.com/thirtytwobits/clerkenwell", tag = "v0.14.0" }
 jsonschema = { version = "0.60.2", default-features = false, features = ["idna", "resolve-file", "resolve-http", "tls-ring"] }
 percent-encoding = "2.3.2"
 rand = { version = "0.9.2", features = ["small_rng"] }
@@ -53,4 +53,4 @@ winx = "0.36.4"
 # dependents: every workspace that builds Clerkenwell carries Clerkenwell's override, at the
 # Loro revision its release names.
 [patch.crates-io]
-generic-btree = { git = "https://github.com/thirtytwobits/loro.git", rev = "ef1964a317d743ebd5c0419d35393ff980daa2fe" }
+generic-btree = { git = "https://github.com/thirtytwobits/loro.git", rev = "704cfb2bdb158bcd2910948ad140eb24713f35a1" }

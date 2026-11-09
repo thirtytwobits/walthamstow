@@ -173,6 +173,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "base16ct"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fd307490d624467aa6f74b0eabb77633d1f758a7b25f12bceb0b22e08d9726f6"
+
+[[package]]
 name = "base64"
 version = "0.22.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -397,22 +403,23 @@ checksum = "1c133bc6a41be0d194c306b5506d15e6feeea7b1d6604bd3f8310dfb2ca96486"
 
 [[package]]
 name = "clapham"
-version = "0.4.0"
-source = "git+https://github.com/thirtytwobits/clapham?tag=v0.4.0#a04128a7cdf98c6f1ced395d97341808bd29e72d"
+version = "0.6.0"
+source = "git+https://github.com/thirtytwobits/clapham?tag=v0.6.0#658623f24b65e67feb49da21eec0c3b2e38ecf9c"
 dependencies = [
+ "base16ct",
  "futures-util",
  "jsonschema",
  "schemars",
  "serde",
  "serde_json",
- "sha2 0.10.9",
+ "sha2 0.11.1",
  "tokio-util",
 ]
 
 [[package]]
 name = "clapham-cli"
-version = "0.4.0"
-source = "git+https://github.com/thirtytwobits/clapham?tag=v0.4.0#a04128a7cdf98c6f1ced395d97341808bd29e72d"
+version = "0.6.0"
+source = "git+https://github.com/thirtytwobits/clapham?tag=v0.6.0#658623f24b65e67feb49da21eec0c3b2e38ecf9c"
 dependencies = [
  "clap",
  "clap_complete",
@@ -429,8 +436,8 @@ dependencies = [
 
 [[package]]
 name = "clapham-conformance"
-version = "0.4.0"
-source = "git+https://github.com/thirtytwobits/clapham?tag=v0.4.0#a04128a7cdf98c6f1ced395d97341808bd29e72d"
+version = "0.6.0"
+source = "git+https://github.com/thirtytwobits/clapham?tag=v0.6.0#658623f24b65e67feb49da21eec0c3b2e38ecf9c"
 dependencies = [
  "clapham",
  "clapham-cli",
@@ -448,9 +455,10 @@ dependencies = [
 
 [[package]]
 name = "clapham-mcp-client"
-version = "0.4.0"
-source = "git+https://github.com/thirtytwobits/clapham?tag=v0.4.0#a04128a7cdf98c6f1ced395d97341808bd29e72d"
+version = "0.6.0"
+source = "git+https://github.com/thirtytwobits/clapham?tag=v0.6.0#658623f24b65e67feb49da21eec0c3b2e38ecf9c"
 dependencies = [
+ "base16ct",
  "bytes",
  "clapham",
  "futures-util",
@@ -460,7 +468,7 @@ dependencies = [
  "rmcp",
  "serde",
  "serde_json",
- "sha2 0.10.9",
+ "sha2 0.11.1",
  "sse-stream",
  "thiserror 2.0.21",
  "tokio",
@@ -470,10 +478,11 @@ dependencies = [
 
 [[package]]
 name = "clapham-mcp-server"
-version = "0.4.0"
-source = "git+https://github.com/thirtytwobits/clapham?tag=v0.4.0#a04128a7cdf98c6f1ced395d97341808bd29e72d"
+version = "0.6.0"
+source = "git+https://github.com/thirtytwobits/clapham?tag=v0.6.0#658623f24b65e67feb49da21eec0c3b2e38ecf9c"
 dependencies = [
  "axum",
+ "base16ct",
  "bytes",
  "clapham",
  "http",
@@ -485,7 +494,7 @@ dependencies = [
  "rmcp",
  "serde",
  "serde_json",
- "sha2 0.10.9",
+ "sha2 0.11.1",
  "tokio",
  "tower-service",
  "uuid",
@@ -493,8 +502,8 @@ dependencies = [
 
 [[package]]
 name = "clerkenwell-axum"
-version = "0.13.0"
-source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.13.0#616a50430f074eb7d528488f1479c0c029c3b44a"
+version = "0.14.0"
+source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.14.0#7f848bff804dfe9a6ffa39d4618a2144feaa08d2"
 dependencies = [
  "axum",
  "clerkenwell-events",
@@ -508,8 +517,8 @@ dependencies = [
 
 [[package]]
 name = "clerkenwell-doc"
-version = "0.13.0"
-source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.13.0#616a50430f074eb7d528488f1479c0c029c3b44a"
+version = "0.14.0"
+source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.14.0#7f848bff804dfe9a6ffa39d4618a2144feaa08d2"
 dependencies = [
  "base64 0.23.1",
  "clerkenwell-schema",
@@ -521,8 +530,8 @@ dependencies = [
 
 [[package]]
 name = "clerkenwell-events"
-version = "0.13.0"
-source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.13.0#616a50430f074eb7d528488f1479c0c029c3b44a"
+version = "0.14.0"
+source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.14.0#7f848bff804dfe9a6ffa39d4618a2144feaa08d2"
 dependencies = [
  "serde",
  "serde_json",
@@ -530,8 +539,8 @@ dependencies = [
 
 [[package]]
 name = "clerkenwell-ops"
-version = "0.13.0"
-source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.13.0#616a50430f074eb7d528488f1479c0c029c3b44a"
+version = "0.14.0"
+source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.14.0#7f848bff804dfe9a6ffa39d4618a2144feaa08d2"
 dependencies = [
  "base64 0.23.1",
  "clapham",
@@ -548,8 +557,8 @@ dependencies = [
 
 [[package]]
 name = "clerkenwell-schema"
-version = "0.13.0"
-source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.13.0#616a50430f074eb7d528488f1479c0c029c3b44a"
+version = "0.14.0"
+source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.14.0#7f848bff804dfe9a6ffa39d4618a2144feaa08d2"
 dependencies = [
  "clerkenwell-events",
  "schemars",
@@ -559,8 +568,8 @@ dependencies = [
 
 [[package]]
 name = "clerkenwell-session"
-version = "0.13.0"
-source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.13.0#616a50430f074eb7d528488f1479c0c029c3b44a"
+version = "0.14.0"
+source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.14.0#7f848bff804dfe9a6ffa39d4618a2144feaa08d2"
 dependencies = [
  "clerkenwell-events",
  "clerkenwell-schema",
@@ -573,8 +582,8 @@ dependencies = [
 
 [[package]]
 name = "clerkenwell-store"
-version = "0.13.0"
-source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.13.0#616a50430f074eb7d528488f1479c0c029c3b44a"
+version = "0.14.0"
+source = "git+https://github.com/thirtytwobits/clerkenwell?tag=v0.14.0#7f848bff804dfe9a6ffa39d4618a2144feaa08d2"
 dependencies = [
  "base64 0.23.1",
  "chrono",
@@ -1077,7 +1086,7 @@ dependencies = [
 [[package]]
 name = "generic-btree"
 version = "0.10.7"
-source = "git+https://github.com/thirtytwobits/loro.git?rev=ef1964a317d743ebd5c0419d35393ff980daa2fe#ef1964a317d743ebd5c0419d35393ff980daa2fe"
+source = "git+https://github.com/thirtytwobits/loro.git?rev=704cfb2bdb158bcd2910948ad140eb24713f35a1#704cfb2bdb158bcd2910948ad140eb24713f35a1"
 dependencies = [
  "arref",
  "heapless 0.9.3",
@@ -1751,8 +1760,8 @@ dependencies = [
 
 [[package]]
 name = "loro"
-version = "1.16.0"
-source = "git+https://github.com/thirtytwobits/loro.git?rev=ef1964a317d743ebd5c0419d35393ff980daa2fe#ef1964a317d743ebd5c0419d35393ff980daa2fe"
+version = "1.17.1"
+source = "git+https://github.com/thirtytwobits/loro.git?rev=704cfb2bdb158bcd2910948ad140eb24713f35a1#704cfb2bdb158bcd2910948ad140eb24713f35a1"
 dependencies = [
  "enum-as-inner 0.6.1",
  "generic-btree",
@@ -1766,8 +1775,8 @@ dependencies = [
 
 [[package]]
 name = "loro-common"
-version = "1.16.0"
-source = "git+https://github.com/thirtytwobits/loro.git?rev=ef1964a317d743ebd5c0419d35393ff980daa2fe#ef1964a317d743ebd5c0419d35393ff980daa2fe"
+version = "1.17.0"
+source = "git+https://github.com/thirtytwobits/loro.git?rev=704cfb2bdb158bcd2910948ad140eb24713f35a1#704cfb2bdb158bcd2910948ad140eb24713f35a1"
 dependencies = [
  "arbitrary",
  "enum-as-inner 0.6.1",
@@ -1784,7 +1793,7 @@ dependencies = [
 [[package]]
 name = "loro-delta"
 version = "1.13.0"
-source = "git+https://github.com/thirtytwobits/loro.git?rev=ef1964a317d743ebd5c0419d35393ff980daa2fe#ef1964a317d743ebd5c0419d35393ff980daa2fe"
+source = "git+https://github.com/thirtytwobits/loro.git?rev=704cfb2bdb158bcd2910948ad140eb24713f35a1#704cfb2bdb158bcd2910948ad140eb24713f35a1"
 dependencies = [
  "arrayvec",
  "enum-as-inner 0.5.1",
@@ -1794,8 +1803,8 @@ dependencies = [
 
 [[package]]
 name = "loro-internal"
-version = "1.16.0"
-source = "git+https://github.com/thirtytwobits/loro.git?rev=ef1964a317d743ebd5c0419d35393ff980daa2fe#ef1964a317d743ebd5c0419d35393ff980daa2fe"
+version = "1.17.1"
+source = "git+https://github.com/thirtytwobits/loro.git?rev=704cfb2bdb158bcd2910948ad140eb24713f35a1#704cfb2bdb158bcd2910948ad140eb24713f35a1"
 dependencies = [
  "append-only-bytes",
  "arref",
@@ -1840,8 +1849,8 @@ dependencies = [
 
 [[package]]
 name = "loro-kv-store"
-version = "1.16.0"
-source = "git+https://github.com/thirtytwobits/loro.git?rev=ef1964a317d743ebd5c0419d35393ff980daa2fe#ef1964a317d743ebd5c0419d35393ff980daa2fe"
+version = "1.17.0"
+source = "git+https://github.com/thirtytwobits/loro.git?rev=704cfb2bdb158bcd2910948ad140eb24713f35a1#704cfb2bdb158bcd2910948ad140eb24713f35a1"
 dependencies = [
  "bytes",
  "ensure-cov",
@@ -1857,7 +1866,7 @@ dependencies = [
 [[package]]
 name = "loro-rle"
 version = "1.6.0"
-source = "git+https://github.com/thirtytwobits/loro.git?rev=ef1964a317d743ebd5c0419d35393ff980daa2fe#ef1964a317d743ebd5c0419d35393ff980daa2fe"
+source = "git+https://github.com/thirtytwobits/loro.git?rev=704cfb2bdb158bcd2910948ad140eb24713f35a1#704cfb2bdb158bcd2910948ad140eb24713f35a1"
 dependencies = [
  "append-only-bytes",
  "num",
@@ -1873,7 +1882,7 @@ checksum = "3f3d053a135388e6b1df14e8af1212af5064746e9b87a06a345a7a779ee9695a"
 [[package]]
 name = "loro_fractional_index"
 version = "1.13.0"
-source = "git+https://github.com/thirtytwobits/loro.git?rev=ef1964a317d743ebd5c0419d35393ff980daa2fe#ef1964a317d743ebd5c0419d35393ff980daa2fe"
+source = "git+https://github.com/thirtytwobits/loro.git?rev=704cfb2bdb158bcd2910948ad140eb24713f35a1#704cfb2bdb158bcd2910948ad140eb24713f35a1"
 dependencies = [
  "once_cell",
  "rand 0.8.8",
@@ -2586,9 +2595,9 @@ dependencies = [
 
 [[package]]
 name = "rmcp"
-version = "3.6.0"
+version = "3.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ceb42e9e47443cd83a834dea57b5816d35481417bae72ade5dc5615c59122e26"
+checksum = "d24a7e92f4bcaa36b97fa93c4fa7ca8f3e669eced949345b3462dba333c7f909"
 dependencies = [
  "async-trait",
  "base64 0.23.1",
@@ -2606,6 +2615,7 @@ dependencies = [
  "schemars",
  "serde",
  "serde_json",
+ "sha2 0.11.1",
  "sse-stream",
  "thiserror 2.0.21",
  "tokio",
@@ -3588,7 +3598,7 @@ dependencies = [
 
 [[package]]
 name = "walthamstow-kernel"
-version = "0.9.0"
+version = "0.10.0"
 dependencies = [
  "anyhow",
  "cap-fs-ext",
@@ -3612,7 +3622,7 @@ dependencies = [
 
 [[package]]
 name = "walthamstow-logs"
-version = "0.9.0"
+version = "0.10.0"
 dependencies = [
  "cap-std",
  "chrono",
@@ -3628,7 +3638,7 @@ dependencies = [
 
 [[package]]
 name = "walthamstow-ops"
-version = "0.9.0"
+version = "0.10.0"
 dependencies = [
  "anyhow",
  "cap-std",
@@ -3646,7 +3656,7 @@ dependencies = [
 
 [[package]]
 name = "walthamstow-ops-example"
-version = "0.9.0"
+version = "0.10.0"
 dependencies = [
  "axum",
  "clapham",
@@ -3665,7 +3675,7 @@ dependencies = [
 
 [[package]]
 name = "walthamstow-upgrades"
-version = "0.9.0"
+version = "0.10.0"
 dependencies = [
  "anyhow",
  "cap-fs-ext",
@@ -3678,7 +3688,7 @@ dependencies = [
 
 [[package]]
 name = "walthamstow-workspace"
-version = "0.9.0"
+version = "0.10.0"
 dependencies = [
  "anyhow",
  "cap-fs-ext",
@@ -4023,7 +4033,7 @@ checksum = "3ad82d2a33cdc9674dc7465672f271e096168fcdbe0f799d9e6db8c5892679dc"
 
 [[package]]
 name = "xtask"
-version = "0.9.0"
+version = "0.10.0"
 dependencies = [
  "regex-lite",
  "serde_json",

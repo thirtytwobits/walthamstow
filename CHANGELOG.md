@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+### Breaking
+
+- Walthamstow builds on Clerkenwell 0.14.0 and Clapham 0.6.0. A host that also depends on either
+  takes its tag; Cargo treats each Git tag as a separate crate. A workspace that builds Walthamstow
+  sets its `generic-btree` override to `704cfb2b`, the Loro revision Clerkenwell 0.14.0 names.
+
 ## 0.9.0
 
 ### Breaking

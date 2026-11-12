@@ -5,13 +5,14 @@
 //! log each item at `debug`, and a heartbeat repeats the step in hand whenever
 //! the console has been quiet for the progress interval.
 
-use crate::clock::WallClock;
+use crate::clock::{Moment, WallClock};
+use crate::error::KernelError;
 use anyhow::Result;
 use std::cell::RefCell;
 use std::fmt;
 use std::sync::{Arc, Condvar, Mutex, MutexGuard, PoisonError};
 use std::thread::JoinHandle;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 /// The `tracing` target every startup line is logged under.
 pub const TARGET: &str = "walthamstow_kernel::startup";
@@ -75,16 +76,17 @@ pub struct StartupRecord {
 /// Runs the phases of one engine load and reports them.
 pub struct StartupProgress {
     started_at: std::time::SystemTime,
-    started: Instant,
+    started: Moment,
     shared: Arc<Shared>,
     heartbeat: Option<JoinHandle<()>>,
     phases: Vec<PhaseRecord>,
 }
 
 impl StartupProgress {
-    /// Starts a load, whose record gives its start as `clock` reads it.
-    pub fn new(clock: &WallClock) -> Self {
-        let started = Instant::now();
+    /// Starts a load. Its record gives its start as `clock` reads it, and its
+    /// durations and its heartbeat go by the moment `now` gives.
+    pub fn new(clock: &WallClock, now: impl Fn() -> Moment + Send + Sync + 'static) -> Self {
+        let started = now();
         Self {
             started_at: clock.now(),
             started,
@@ -96,6 +98,7 @@ impl StartupProgress {
                     stopped: false,
                 }),
                 wake: Condvar::new(),
+                now: Box::new(now),
             }),
             heartbeat: None,
             phases: Vec::new(),
@@ -103,9 +106,15 @@ impl StartupProgress {
     }
 
     /// Repeats the step in hand whenever the console has been quiet for
-    /// `interval`. The heartbeat logs through the subscriber and in the span
-    /// of the thread that starts it.
+    /// `interval`, which is longer than zero. The heartbeat logs through the
+    /// subscriber and in the span of the thread that starts it.
     pub fn start_heartbeat(&mut self, interval: Duration) -> Result<()> {
+        if interval.is_zero() {
+            return Err(KernelError::invalid_request(
+                "a startup heartbeat's interval must be longer than zero",
+            )
+            .into());
+        }
         let shared = self.shared.clone();
         let dispatch = tracing::dispatcher::get_default(Clone::clone);
         let span = tracing::Span::current();
@@ -128,12 +137,12 @@ impl StartupProgress {
         phase: Phase,
         work: impl FnOnce(&PhaseProgress<'_>) -> Result<T>,
     ) -> Result<T> {
-        let started = Instant::now();
+        let started = (self.shared.now)();
         {
             let mut state = lock(&self.shared);
             let mut step = Step::new(phase, started);
             if !phase.itemised {
-                step.announce(&mut state.last_line);
+                step.announce(&mut state.last_line, started);
             }
             state.step = Some(step);
         }
@@ -142,9 +151,10 @@ impl StartupProgress {
             counts: RefCell::new(Vec::new()),
         };
         let result = work(&progress);
+        let ended = (self.shared.now)();
         let record = PhaseRecord {
             phase,
-            elapsed: started.elapsed(),
+            elapsed: ended.duration_since(started),
             counts: progress.counts.into_inner(),
         };
         let mut state = lock(&self.shared);
@@ -154,10 +164,10 @@ impl StartupProgress {
         let Some(mut step) = step.take() else {
             return result;
         };
-        step.finish_item();
+        step.finish_item(ended);
         if result.is_ok() {
             if !step.announced {
-                step.announce(last_line);
+                step.announce(last_line, ended);
             }
             tracing::info!(
                 name: "startup.phase.end",
@@ -168,7 +178,7 @@ impl StartupProgress {
                 record.phase.finished,
                 Counts(&record.counts),
             );
-            *last_line = Instant::now();
+            *last_line = ended;
             drop(state);
             self.phases.push(record);
         }
@@ -180,7 +190,7 @@ impl StartupProgress {
         self.stop_heartbeat();
         let record = StartupRecord {
             started_at: self.started_at,
-            elapsed: self.started.elapsed(),
+            elapsed: (self.shared.now)().duration_since(self.started),
             phases: std::mem::take(&mut self.phases),
         };
         tracing::info!(
@@ -219,23 +229,11 @@ impl PhaseProgress<'_> {
     pub fn record(&self, counts: &[(&'static str, usize)]) {
         self.counts.borrow_mut().extend_from_slice(counts);
     }
-
-    /// Logs one heartbeat `after` the step in hand began, as the heartbeat
-    /// thread does once the console has been quiet for its interval.
-    #[cfg(test)]
-    fn beat(&self, after: Duration) {
-        let mut state = lock(self.shared);
-        let began = state.step.as_ref().map_or(state.started, |step| {
-            step.item
-                .as_ref()
-                .map_or(step.started, |(_, started)| *started)
-        });
-        state.log_beat(began + after);
-    }
 }
 
 impl ItemProgress for PhaseProgress<'_> {
     fn expect(&self, total: usize) {
+        let now = (self.shared.now)();
         let mut state = lock(self.shared);
         let State {
             last_line, step, ..
@@ -243,16 +241,17 @@ impl ItemProgress for PhaseProgress<'_> {
         if let Some(step) = step {
             step.total = Some(total);
             if !step.announced {
-                step.announce(last_line);
+                step.announce(last_line, now);
             }
         }
     }
 
     fn next(&self, item: &str) {
+        let now = (self.shared.now)();
         let mut state = lock(self.shared);
         if let Some(step) = state.step.as_mut() {
-            step.finish_item();
-            step.item = Some((item.to_string(), Instant::now()));
+            step.finish_item(now);
+            step.item = Some((item.to_string(), now));
         }
     }
 }
@@ -260,29 +259,31 @@ impl ItemProgress for PhaseProgress<'_> {
 struct Shared {
     state: Mutex<State>,
     wake: Condvar,
+    /// The moment the load is at.
+    now: Box<dyn Fn() -> Moment + Send + Sync>,
 }
 
 struct State {
     /// When the load started.
-    started: Instant,
-    last_line: Instant,
+    started: Moment,
+    last_line: Moment,
     step: Option<Step>,
     stopped: bool,
 }
 
 struct Step {
     phase: Phase,
-    started: Instant,
+    started: Moment,
     announced: bool,
     total: Option<usize>,
     done: usize,
     /// `done` as of the last line the heartbeat wrote.
     reported: usize,
-    item: Option<(String, Instant)>,
+    item: Option<(String, Moment)>,
 }
 
 impl Step {
-    fn new(phase: Phase, started: Instant) -> Self {
+    fn new(phase: Phase, started: Moment) -> Self {
         Self {
             phase,
             started,
@@ -294,7 +295,7 @@ impl Step {
         }
     }
 
-    fn announce(&mut self, last_line: &mut Instant) {
+    fn announce(&mut self, last_line: &mut Moment, now: Moment) {
         self.announced = true;
         match self.total {
             Some(total) => tracing::info!(
@@ -313,10 +314,10 @@ impl Step {
                 self.phase.running,
             ),
         }
-        *last_line = Instant::now();
+        *last_line = now;
     }
 
-    fn finish_item(&mut self) {
+    fn finish_item(&mut self, now: Moment) {
         let Some((item, started)) = self.item.take() else {
             return;
         };
@@ -328,7 +329,7 @@ impl Step {
             done = self.done,
             total = self.total.unwrap_or(self.done),
             item = %item,
-            elapsed_ms = started.elapsed().as_millis() as u64,
+            elapsed_ms = now.duration_since(started).as_millis() as u64,
             "{}",
             self.phase.running,
         );
@@ -339,31 +340,35 @@ fn lock(shared: &Shared) -> MutexGuard<'_, State> {
     shared.state.lock().unwrap_or_else(PoisonError::into_inner)
 }
 
+/// Runs the heartbeat until the load stops it.
 fn beat(shared: &Shared, interval: Duration) {
     let mut state = lock(shared);
-    loop {
-        if state.stopped {
-            return;
-        }
-        let now = Instant::now();
-        let due = state.last_line + interval;
-        if now < due {
-            state = shared
-                .wake
-                .wait_timeout(state, due - now)
-                .unwrap_or_else(PoisonError::into_inner)
-                .0;
-            continue;
-        }
-        state.log_beat(now);
+    while !state.stopped {
+        let wait = state.beat((shared.now)(), interval);
+        state = shared
+            .wake
+            .wait_timeout(state, wait)
+            .unwrap_or_else(PoisonError::into_inner)
+            .0;
     }
 }
 
 impl State {
+    /// The heartbeat's turn at `now`: logs a line when the console has been
+    /// quiet for `interval`, and gives how long until a line could next be due.
+    fn beat(&mut self, now: Moment, interval: Duration) -> Duration {
+        let due = self.last_line + interval;
+        if now < due {
+            return due.duration_since(now);
+        }
+        self.log_beat(now);
+        interval
+    }
+
     /// Logs one heartbeat line for the step in hand: the items done since the
     /// last report, or that the step is still running.
-    fn log_beat(&mut self, now: Instant) {
-        let load_elapsed = now - self.started;
+    fn log_beat(&mut self, now: Moment) {
+        let load_elapsed = now.duration_since(self.started);
         match self.step.as_mut() {
             Some(step) if step.done > step.reported => {
                 step.reported = step.done;
@@ -385,7 +390,7 @@ impl State {
                     target: TARGET,
                     phase = %step.phase.id,
                     item = %item,
-                    elapsed_s = %Seconds(now - *started),
+                    elapsed_s = %Seconds(now.duration_since(*started)),
                     "Still {}",
                     Lowercased(step.phase.running),
                 ),
@@ -393,7 +398,7 @@ impl State {
                     name: "startup.still",
                     target: TARGET,
                     phase = %step.phase.id,
-                    elapsed_s = %Seconds(now - step.started),
+                    elapsed_s = %Seconds(now.duration_since(step.started)),
                     "Still {}",
                     Lowercased(step.phase.running),
                 ),
@@ -508,20 +513,26 @@ pub mod capture {
         }
 
         fn on_event(&self, event: &Event<'_>, context: Context<'_, S>) {
-            let Some(capture) = context.event_scope(event).and_then(|scope| {
-                scope
-                    .from_root()
-                    .find_map(|span| span.extensions().get::<CaptureId>().map(|id| id.0))
-            }) else {
+            let Some(scope) = context.event_scope(event) else {
                 return;
             };
+            let enclosing = scope
+                .filter_map(|span| span.extensions().get::<CaptureId>().map(|id| id.0))
+                .collect::<Vec<_>>();
+            if enclosing.is_empty() {
+                return;
+            }
             let mut fields = Fields::default();
             event.record(&mut fields);
-            if let Some(lines) = CAPTURES.lock().expect("captures").get_mut(&capture) {
-                lines.push(Captured {
-                    name: event.metadata().name(),
-                    fields: fields.0,
-                });
+            let line = Captured {
+                name: event.metadata().name(),
+                fields: fields.0,
+            };
+            let mut captures = CAPTURES.lock().expect("captures");
+            for capture in enclosing {
+                if let Some(lines) = captures.get_mut(&capture) {
+                    lines.push(line.clone());
+                }
             }
         }
     }
@@ -544,7 +555,8 @@ pub mod capture {
     }
 
     /// Runs `work` and returns what it produced with every startup line it
-    /// logged, at every level.
+    /// logged, at every level. A line logged inside a capture that `work`
+    /// itself runs belongs to both captures.
     pub fn startup_lines<T>(work: impl FnOnce() -> T) -> (T, Vec<Captured>) {
         static INSTALL: Once = Once::new();
         INSTALL.call_once(|| {
@@ -568,19 +580,50 @@ pub mod capture {
 
 #[cfg(test)]
 mod tests {
-    use super::capture::startup_lines;
+    use super::capture::{startup_lines, Captured};
     use super::*;
 
     const LOADING: Phase = Phase::new("loading", "Loading", "Loaded");
-
-    /// A clock a test's load reads its start from.
-    fn clock() -> WallClock {
-        WallClock::new(|| std::time::SystemTime::UNIX_EPOCH)
-    }
     const VISITING: Phase = Phase {
         itemised: true,
         ..Phase::new("visiting", "Visiting items", "Visited items")
     };
+    const INTERVAL: Duration = Duration::from_secs(2);
+
+    /// A clock that moves only when a test moves it.
+    #[derive(Clone)]
+    struct Hands(Arc<Mutex<Moment>>);
+
+    impl Hands {
+        fn new() -> Self {
+            Self(Arc::new(Mutex::new(Moment::ORIGIN)))
+        }
+
+        fn advance(&self, by: Duration) {
+            let mut now = self.0.lock().expect("hands");
+            *now = *now + by;
+        }
+
+        /// A load whose durations and heartbeat go by these hands.
+        fn load(&self) -> StartupProgress {
+            let hands = self.clone();
+            StartupProgress::new(
+                &WallClock::new(|| std::time::SystemTime::UNIX_EPOCH),
+                move || *hands.0.lock().expect("hands"),
+            )
+        }
+    }
+
+    /// Gives the heartbeat its turn, as its thread does when its wait ends,
+    /// and returns how long it would wait next.
+    fn heartbeat(phase: &PhaseProgress<'_>) -> Duration {
+        let now = (phase.shared.now)();
+        lock(phase.shared).beat(now, INTERVAL)
+    }
+
+    fn named<'a>(lines: &'a [Captured], name: &str) -> Vec<&'a Captured> {
+        lines.iter().filter(|line| line.name == name).collect()
+    }
 
     /// A capture keeps the lines its work logs even when another thread, with
     /// no capture of its own, logged the same line first.
@@ -593,39 +636,105 @@ mod tests {
             std::thread::spawn(line).join().expect("uncaptured thread");
             line();
         });
+        assert_eq!(named(&lines, "startup.capture_probe").len(), 1);
+    }
+
+    /// A capture that runs inside another keeps its own lines, and the outer
+    /// capture keeps them as well as its own.
+    #[test]
+    fn a_capture_inside_another_keeps_its_lines() {
+        let (inner, outer) = startup_lines(|| {
+            tracing::info!(name: "startup.outer_probe", target: TARGET, "Probed the outer capture");
+            let ((), inner) = startup_lines(|| {
+                tracing::info!(name: "startup.inner_probe", target: TARGET, "Probed the inner capture");
+            });
+            inner
+        });
+        let names = |lines: &[Captured]| lines.iter().map(|line| line.name).collect::<Vec<_>>();
+        assert_eq!(names(&inner), vec!["startup.inner_probe"]);
         assert_eq!(
-            lines
-                .iter()
-                .filter(|line| line.name == "startup.capture_probe")
-                .count(),
-            1
+            names(&outer),
+            vec!["startup.outer_probe", "startup.inner_probe"]
         );
     }
 
-    /// One large item must not leave the console silent: while a step runs
-    /// past the interval, the heartbeat keeps naming it.
+    /// A load's record gives its start as the wall clock it was given reads it.
     #[test]
-    fn the_heartbeat_repeats_a_step_that_outlasts_the_interval() {
-        let item = "a-large-item";
+    fn a_load_starts_when_its_clock_says() {
+        let start = std::time::SystemTime::UNIX_EPOCH + Duration::from_secs(1_000);
+        let record =
+            StartupProgress::new(&WallClock::new(move || start), || Moment::ORIGIN).finish();
+
+        assert_eq!(record.started_at, start);
+    }
+
+    /// A phase and its load last as long as the load's clock moved.
+    #[test]
+    fn a_phase_and_its_load_last_as_long_as_the_clock_moved() {
+        let hands = Hands::new();
+        let (within, after) = (Duration::from_secs(3), Duration::from_secs(4));
+        let mut progress = hands.load();
+        progress
+            .phase(LOADING, |_| {
+                hands.advance(within);
+                Ok(())
+            })
+            .expect("phase");
+        hands.advance(after);
+        let record = progress.finish();
+
+        assert_eq!(record.phases[0].elapsed, within);
+        assert_eq!(record.elapsed, within + after);
+    }
+
+    /// The heartbeat says nothing until the console has been quiet for the
+    /// interval, and waits out what is left of it.
+    #[test]
+    fn the_heartbeat_waits_until_the_console_has_been_quiet_for_the_interval() {
+        let hands = Hands::new();
+        let early = INTERVAL / 2;
         let ((), lines) = startup_lines(|| {
-            let mut progress = StartupProgress::new(&clock());
+            let mut progress = hands.load();
             progress
-                .phase(VISITING, |phase| {
-                    phase.expect(1);
-                    phase.next(item);
-                    phase.beat(Duration::from_secs(1));
-                    phase.beat(Duration::from_secs(1));
+                .phase(LOADING, |phase| {
+                    hands.advance(early);
+                    assert_eq!(heartbeat(phase), INTERVAL - early);
+                    hands.advance(INTERVAL - early);
+                    assert_eq!(heartbeat(phase), INTERVAL);
                     Ok(())
                 })
                 .expect("phase");
             progress.finish();
         });
 
-        let still = lines
-            .iter()
-            .filter(|line| line.name == "startup.still")
-            .collect::<Vec<_>>();
-        assert!(still.len() >= 2, "{lines:#?}");
+        assert_eq!(named(&lines, "startup.still").len(), 1);
+    }
+
+    /// One large item must not leave the console silent: while a step runs
+    /// past the interval, the heartbeat keeps naming it.
+    #[test]
+    fn the_heartbeat_repeats_a_step_that_outlasts_the_interval() {
+        let hands = Hands::new();
+        let item = "a-large-item";
+        let beats = 2;
+        let ((), lines) = startup_lines(|| {
+            let mut progress = hands.load();
+            progress
+                .phase(VISITING, |phase| {
+                    phase.expect(1);
+                    phase.next(item);
+                    for _ in 0..beats {
+                        hands.advance(INTERVAL);
+                        heartbeat(phase);
+                    }
+                    Ok(())
+                })
+                .expect("phase");
+            progress.finish();
+        });
+
+        let still = named(&lines, "startup.still");
+        assert_eq!(still.len(), beats, "{lines:#?}");
         assert!(still.iter().all(
             |line| line.field("item") == Some(item) && line.field("phase") == Some(VISITING.id)
         ));
@@ -634,15 +743,17 @@ mod tests {
     /// Items that each finish within the interval are reported by count.
     #[test]
     fn the_heartbeat_reports_items_done_out_of_the_total() {
+        let hands = Hands::new();
         let total = 6;
         let ((), lines) = startup_lines(|| {
-            let mut progress = StartupProgress::new(&clock());
+            let mut progress = hands.load();
             progress
                 .phase(VISITING, |phase| {
                     phase.expect(total);
                     for index in 0..total {
                         phase.next(&format!("item-{index}"));
-                        phase.beat(Duration::from_secs(1));
+                        hands.advance(INTERVAL);
+                        heartbeat(phase);
                     }
                     Ok(())
                 })
@@ -650,9 +761,8 @@ mod tests {
             progress.finish();
         });
 
-        let reported = lines
-            .iter()
-            .filter(|line| line.name == "startup.progress")
+        let reported = named(&lines, "startup.progress")
+            .into_iter()
             .map(|line| {
                 let done: usize = line.field("done").expect("done").parse().expect("count");
                 let of: usize = line.field("total").expect("total").parse().expect("count");
@@ -666,20 +776,22 @@ mod tests {
         assert!(reported.windows(2).all(|pair| pair[0].0 < pair[1].0));
     }
 
-    /// A load's record gives its start as the clock it was given reads it.
+    /// A heartbeat with no interval would never wait, so it is refused.
     #[test]
-    fn a_load_starts_when_its_clock_says() {
-        let start = std::time::SystemTime::UNIX_EPOCH + Duration::from_secs(1_000);
-        let record = StartupProgress::new(&WallClock::new(move || start)).finish();
+    fn a_heartbeat_with_no_interval_is_refused() {
+        let error = Hands::new()
+            .load()
+            .start_heartbeat(Duration::ZERO)
+            .expect_err("no interval");
 
-        assert_eq!(record.started_at, start);
+        assert!(error.downcast_ref::<KernelError>().is_some());
     }
 
     /// A phase that fails reports no end, and the error reaches the caller.
     #[test]
     fn a_failed_phase_reports_its_start_and_no_end() {
         let (result, lines) = startup_lines(|| {
-            let mut progress = StartupProgress::new(&clock());
+            let mut progress = Hands::new().load();
             progress.phase(LOADING, |_| -> Result<()> {
                 Err(anyhow::anyhow!("the load cannot proceed"))
             })

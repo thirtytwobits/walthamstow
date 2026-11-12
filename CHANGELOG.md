@@ -7,9 +7,12 @@
 - `walthamstow_kernel::startup` reports an engine load on the console. `StartupProgress` runs each
   `Phase`, logging its start and its end with its duration and counts; a phase that visits items
   one at a time reports them through `ItemProgress`; and a heartbeat repeats the step in hand when
-  the console has been quiet for an interval. The lines are logged under the `tracing` target
-  `walthamstow_kernel::startup`. The `capture` feature adds `startup::capture`, which returns the
-  lines a piece of work logged, for a host's tests of its load.
+  the console has been quiet for an interval. A load takes the wall clock its record's start is
+  read from and the monotonic clock its durations and heartbeat go by. The lines are logged under
+  the `tracing` target `walthamstow_kernel::startup`. The `capture` feature adds
+  `startup::capture`, which returns the lines a piece of work logged, for a host's tests of its
+  load.
+- `clock::Moment::duration_since` gives how long one moment is after another.
 
 ## 0.10.1
 

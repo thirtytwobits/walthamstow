@@ -5,6 +5,7 @@ impl walthamstow_kernel::clock::Moment
 pub const walthamstow_kernel::clock::Moment::ORIGIN: walthamstow_kernel::clock::Moment
 pub fn walthamstow_kernel::clock::Moment::now() -> Self
 impl walthamstow_kernel::clock::Moment
+pub fn walthamstow_kernel::clock::Moment::duration_since(self, walthamstow_kernel::clock::Moment) -> core::time::Duration
 pub fn walthamstow_kernel::clock::Moment::elapsed(self) -> core::time::Duration
 pub fn walthamstow_kernel::clock::Moment::remaining(self) -> core::time::Duration
 impl core::clone::Clone for walthamstow_kernel::clock::Moment
@@ -2814,7 +2815,7 @@ impl<'a> !core::marker::Sync for walthamstow_kernel::startup::PhaseProgress<'a>
 impl<'a> core::marker::Unpin for walthamstow_kernel::startup::PhaseProgress<'a>
 impl<'a> core::marker::UnsafeUnpin for walthamstow_kernel::startup::PhaseProgress<'a>
 impl<'a> !core::panic::unwind_safe::RefUnwindSafe for walthamstow_kernel::startup::PhaseProgress<'a>
-impl<'a> core::panic::unwind_safe::UnwindSafe for walthamstow_kernel::startup::PhaseProgress<'a>
+impl<'a> !core::panic::unwind_safe::UnwindSafe for walthamstow_kernel::startup::PhaseProgress<'a>
 impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for walthamstow_kernel::startup::PhaseProgress<'a> where ST: ?core::marker::Sized, DT: ?core::marker::Sized
 impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for walthamstow_kernel::startup::PhaseProgress<'a> where ST: ?core::marker::Sized, DT: ?core::marker::Sized
 impl<T, U> core::convert::Into<U> for walthamstow_kernel::startup::PhaseProgress<'a> where U: core::convert::From<T>
@@ -3021,7 +3022,7 @@ pub fn walthamstow_kernel::startup::PhaseRecord::vzip(self) -> V
 pub struct walthamstow_kernel::startup::StartupProgress
 impl walthamstow_kernel::startup::StartupProgress
 pub fn walthamstow_kernel::startup::StartupProgress::finish(self) -> walthamstow_kernel::startup::StartupRecord
-pub fn walthamstow_kernel::startup::StartupProgress::new(&walthamstow_kernel::clock::WallClock) -> Self
+pub fn walthamstow_kernel::startup::StartupProgress::new(&walthamstow_kernel::clock::WallClock, impl core::ops::function::Fn() -> walthamstow_kernel::clock::Moment + core::marker::Send + core::marker::Sync + 'static) -> Self
 pub fn walthamstow_kernel::startup::StartupProgress::phase<T>(&mut self, walthamstow_kernel::startup::Phase, impl core::ops::function::FnOnce(&walthamstow_kernel::startup::PhaseProgress<'_>) -> anyhow::Result<T>) -> anyhow::Result<T>
 pub fn walthamstow_kernel::startup::StartupProgress::start_heartbeat(&mut self, core::time::Duration) -> anyhow::Result<()>
 impl core::ops::drop::Drop for walthamstow_kernel::startup::StartupProgress

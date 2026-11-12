@@ -5,6 +5,7 @@ impl walthamstow_kernel::clock::Moment
 pub const walthamstow_kernel::clock::Moment::ORIGIN: walthamstow_kernel::clock::Moment
 pub fn walthamstow_kernel::clock::Moment::now() -> Self
 impl walthamstow_kernel::clock::Moment
+pub fn walthamstow_kernel::clock::Moment::duration_since(self, walthamstow_kernel::clock::Moment) -> core::time::Duration
 pub fn walthamstow_kernel::clock::Moment::elapsed(self) -> core::time::Duration
 pub fn walthamstow_kernel::clock::Moment::remaining(self) -> core::time::Duration
 impl core::clone::Clone for walthamstow_kernel::clock::Moment
@@ -2680,6 +2681,572 @@ pub const walthamstow_kernel::reason_codes::LEASE_LOST: &str
 pub const walthamstow_kernel::reason_codes::PUBLICATION_PATHS_COLLIDE: &str
 pub const walthamstow_kernel::reason_codes::PUBLICATION_STALE: &str
 pub const walthamstow_kernel::reason_codes::WORKSPACE_HELD: &str
+pub mod walthamstow_kernel::startup
+pub struct walthamstow_kernel::startup::Phase
+pub walthamstow_kernel::startup::Phase::finished: &'static str
+pub walthamstow_kernel::startup::Phase::id: &'static str
+pub walthamstow_kernel::startup::Phase::itemised: bool
+pub walthamstow_kernel::startup::Phase::running: &'static str
+impl walthamstow_kernel::startup::Phase
+pub const fn walthamstow_kernel::startup::Phase::new(&'static str, &'static str, &'static str) -> Self
+impl core::clone::Clone for walthamstow_kernel::startup::Phase
+pub fn walthamstow_kernel::startup::Phase::clone(&self) -> Self
+impl core::cmp::Eq for walthamstow_kernel::startup::Phase
+impl core::cmp::PartialEq for walthamstow_kernel::startup::Phase
+pub fn walthamstow_kernel::startup::Phase::eq(&self, &Self) -> bool
+impl core::fmt::Debug for walthamstow_kernel::startup::Phase
+pub fn walthamstow_kernel::startup::Phase::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for walthamstow_kernel::startup::Phase
+impl core::marker::StructuralPartialEq for walthamstow_kernel::startup::Phase
+impl core::marker::Freeze for walthamstow_kernel::startup::Phase
+impl core::marker::Send for walthamstow_kernel::startup::Phase
+impl core::marker::Sync for walthamstow_kernel::startup::Phase
+impl core::marker::Unpin for walthamstow_kernel::startup::Phase
+impl core::marker::UnsafeUnpin for walthamstow_kernel::startup::Phase
+impl core::panic::unwind_safe::RefUnwindSafe for walthamstow_kernel::startup::Phase
+impl core::panic::unwind_safe::UnwindSafe for walthamstow_kernel::startup::Phase
+impl<Q, K> equivalent::Equivalent<K> for walthamstow_kernel::startup::Phase where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn walthamstow_kernel::startup::Phase::equivalent(&self, &K) -> bool
+impl<Q, K> hashbrown::Equivalent<K> for walthamstow_kernel::startup::Phase where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn walthamstow_kernel::startup::Phase::equivalent(&self, &K) -> bool
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for walthamstow_kernel::startup::Phase where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for walthamstow_kernel::startup::Phase where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<T, U> core::convert::Into<U> for walthamstow_kernel::startup::Phase where U: core::convert::From<T>
+pub fn walthamstow_kernel::startup::Phase::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for walthamstow_kernel::startup::Phase where U: core::convert::Into<T>
+pub type walthamstow_kernel::startup::Phase::Error = never
+pub fn walthamstow_kernel::startup::Phase::try_from(U) -> core::result::Result<T, never>
+impl<T, U> core::convert::TryInto<U> for walthamstow_kernel::startup::Phase where U: core::convert::TryFrom<T>
+pub type walthamstow_kernel::startup::Phase::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn walthamstow_kernel::startup::Phase::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for walthamstow_kernel::startup::Phase where T: core::clone::Clone
+pub type walthamstow_kernel::startup::Phase::Owned = T
+pub fn walthamstow_kernel::startup::Phase::clone_into(&self, &mut T)
+pub fn walthamstow_kernel::startup::Phase::to_owned(&self) -> T
+impl<T> core::any::Any for walthamstow_kernel::startup::Phase where T: 'static + ?core::marker::Sized
+pub fn walthamstow_kernel::startup::Phase::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for walthamstow_kernel::startup::Phase where T: ?core::marker::Sized
+pub fn walthamstow_kernel::startup::Phase::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for walthamstow_kernel::startup::Phase where T: ?core::marker::Sized
+pub fn walthamstow_kernel::startup::Phase::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for walthamstow_kernel::startup::Phase where T: core::clone::Clone
+pub unsafe fn walthamstow_kernel::startup::Phase::clone_to_uninit(&self, *mut u8)
+impl<T> core::convert::From<T> for walthamstow_kernel::startup::Phase
+pub fn walthamstow_kernel::startup::Phase::from(T) -> T
+impl<T> dyn_clone::DynClone for walthamstow_kernel::startup::Phase where T: core::clone::Clone
+pub fn walthamstow_kernel::startup::Phase::__clone_box(&self, dyn_clone::sealed::Private) -> *mut ()
+impl<T> either::into_either::IntoEither for walthamstow_kernel::startup::Phase
+impl<T> tracing::instrument::Instrument for walthamstow_kernel::startup::Phase
+impl<T> tracing::instrument::WithSubscriber for walthamstow_kernel::startup::Phase
+impl<T> typenum::type_operators::Same for walthamstow_kernel::startup::Phase
+pub type walthamstow_kernel::startup::Phase::Output = T
+impl<T> yansi::paint::Paint for walthamstow_kernel::startup::Phase where T: ?core::marker::Sized
+pub fn walthamstow_kernel::startup::Phase::attr(&self, yansi::attr_quirk::Attribute) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::bg(&self, yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::bold(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::clear(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::conceal(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::dim(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::fg(&self, yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::fixed(&self, u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::invert(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::italic(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::linger(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::mask(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::on_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::on_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::on_bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::on_bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::on_bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::on_bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::on_bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::on_bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::on_bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::on_bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::on_bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::on_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::on_fixed(&self, u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::on_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::on_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::on_primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::on_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::on_rgb(&self, u8, u8, u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::on_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::on_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::quirk(&self, yansi::attr_quirk::Quirk) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::rapid_blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::resetting(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::rgb(&self, u8, u8, u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::strike(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::underline(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::whenever(&self, yansi::condition::Condition) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::wrap(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::Phase::yellow(&self) -> yansi::paint::Painted<&T>
+impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_kernel::startup::Phase where T: ?core::marker::Sized
+impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_kernel::startup::Phase where V: ppv_lite86::types::MultiLane<T>
+pub fn walthamstow_kernel::startup::Phase::vzip(self) -> V
+pub struct walthamstow_kernel::startup::PhaseProgress<'a>
+impl walthamstow_kernel::startup::PhaseProgress<'_>
+pub fn walthamstow_kernel::startup::PhaseProgress<'_>::record(&self, &[(&'static str, usize)])
+impl walthamstow_kernel::startup::ItemProgress for walthamstow_kernel::startup::PhaseProgress<'_>
+pub fn walthamstow_kernel::startup::PhaseProgress<'_>::expect(&self, usize)
+pub fn walthamstow_kernel::startup::PhaseProgress<'_>::next(&self, &str)
+impl<'a> !core::marker::Freeze for walthamstow_kernel::startup::PhaseProgress<'a>
+impl<'a> core::marker::Send for walthamstow_kernel::startup::PhaseProgress<'a>
+impl<'a> !core::marker::Sync for walthamstow_kernel::startup::PhaseProgress<'a>
+impl<'a> core::marker::Unpin for walthamstow_kernel::startup::PhaseProgress<'a>
+impl<'a> core::marker::UnsafeUnpin for walthamstow_kernel::startup::PhaseProgress<'a>
+impl<'a> !core::panic::unwind_safe::RefUnwindSafe for walthamstow_kernel::startup::PhaseProgress<'a>
+impl<'a> !core::panic::unwind_safe::UnwindSafe for walthamstow_kernel::startup::PhaseProgress<'a>
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for walthamstow_kernel::startup::PhaseProgress<'a> where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for walthamstow_kernel::startup::PhaseProgress<'a> where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<T, U> core::convert::Into<U> for walthamstow_kernel::startup::PhaseProgress<'a> where U: core::convert::From<T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for walthamstow_kernel::startup::PhaseProgress<'a> where U: core::convert::Into<T>
+pub type walthamstow_kernel::startup::PhaseProgress<'a>::Error = never
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::try_from(U) -> core::result::Result<T, never>
+impl<T, U> core::convert::TryInto<U> for walthamstow_kernel::startup::PhaseProgress<'a> where U: core::convert::TryFrom<T>
+pub type walthamstow_kernel::startup::PhaseProgress<'a>::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for walthamstow_kernel::startup::PhaseProgress<'a> where T: 'static + ?core::marker::Sized
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for walthamstow_kernel::startup::PhaseProgress<'a> where T: ?core::marker::Sized
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for walthamstow_kernel::startup::PhaseProgress<'a> where T: ?core::marker::Sized
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for walthamstow_kernel::startup::PhaseProgress<'a>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::from(T) -> T
+impl<T> either::into_either::IntoEither for walthamstow_kernel::startup::PhaseProgress<'a>
+impl<T> tracing::instrument::Instrument for walthamstow_kernel::startup::PhaseProgress<'a>
+impl<T> tracing::instrument::WithSubscriber for walthamstow_kernel::startup::PhaseProgress<'a>
+impl<T> typenum::type_operators::Same for walthamstow_kernel::startup::PhaseProgress<'a>
+pub type walthamstow_kernel::startup::PhaseProgress<'a>::Output = T
+impl<T> yansi::paint::Paint for walthamstow_kernel::startup::PhaseProgress<'a> where T: ?core::marker::Sized
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::attr(&self, yansi::attr_quirk::Attribute) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::bg(&self, yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::bold(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::clear(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::conceal(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::dim(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::fg(&self, yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::fixed(&self, u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::invert(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::italic(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::linger(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::mask(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::on_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::on_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::on_bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::on_bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::on_bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::on_bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::on_bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::on_bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::on_bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::on_bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::on_bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::on_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::on_fixed(&self, u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::on_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::on_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::on_primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::on_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::on_rgb(&self, u8, u8, u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::on_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::on_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::quirk(&self, yansi::attr_quirk::Quirk) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::rapid_blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::resetting(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::rgb(&self, u8, u8, u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::strike(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::underline(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::whenever(&self, yansi::condition::Condition) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::wrap(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::yellow(&self) -> yansi::paint::Painted<&T>
+impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_kernel::startup::PhaseProgress<'a> where T: ?core::marker::Sized
+impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_kernel::startup::PhaseProgress<'a> where V: ppv_lite86::types::MultiLane<T>
+pub fn walthamstow_kernel::startup::PhaseProgress<'a>::vzip(self) -> V
+pub struct walthamstow_kernel::startup::PhaseRecord
+pub walthamstow_kernel::startup::PhaseRecord::counts: alloc::vec::Vec<(&'static str, usize)>
+pub walthamstow_kernel::startup::PhaseRecord::elapsed: core::time::Duration
+pub walthamstow_kernel::startup::PhaseRecord::phase: walthamstow_kernel::startup::Phase
+impl core::clone::Clone for walthamstow_kernel::startup::PhaseRecord
+pub fn walthamstow_kernel::startup::PhaseRecord::clone(&self) -> Self
+impl core::cmp::Eq for walthamstow_kernel::startup::PhaseRecord
+impl core::cmp::PartialEq for walthamstow_kernel::startup::PhaseRecord
+pub fn walthamstow_kernel::startup::PhaseRecord::eq(&self, &Self) -> bool
+impl core::fmt::Debug for walthamstow_kernel::startup::PhaseRecord
+pub fn walthamstow_kernel::startup::PhaseRecord::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for walthamstow_kernel::startup::PhaseRecord
+impl core::marker::Freeze for walthamstow_kernel::startup::PhaseRecord
+impl core::marker::Send for walthamstow_kernel::startup::PhaseRecord
+impl core::marker::Sync for walthamstow_kernel::startup::PhaseRecord
+impl core::marker::Unpin for walthamstow_kernel::startup::PhaseRecord
+impl core::marker::UnsafeUnpin for walthamstow_kernel::startup::PhaseRecord
+impl core::panic::unwind_safe::RefUnwindSafe for walthamstow_kernel::startup::PhaseRecord
+impl core::panic::unwind_safe::UnwindSafe for walthamstow_kernel::startup::PhaseRecord
+impl<Q, K> equivalent::Equivalent<K> for walthamstow_kernel::startup::PhaseRecord where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn walthamstow_kernel::startup::PhaseRecord::equivalent(&self, &K) -> bool
+impl<Q, K> hashbrown::Equivalent<K> for walthamstow_kernel::startup::PhaseRecord where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn walthamstow_kernel::startup::PhaseRecord::equivalent(&self, &K) -> bool
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for walthamstow_kernel::startup::PhaseRecord where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for walthamstow_kernel::startup::PhaseRecord where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<T, U> core::convert::Into<U> for walthamstow_kernel::startup::PhaseRecord where U: core::convert::From<T>
+pub fn walthamstow_kernel::startup::PhaseRecord::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for walthamstow_kernel::startup::PhaseRecord where U: core::convert::Into<T>
+pub type walthamstow_kernel::startup::PhaseRecord::Error = never
+pub fn walthamstow_kernel::startup::PhaseRecord::try_from(U) -> core::result::Result<T, never>
+impl<T, U> core::convert::TryInto<U> for walthamstow_kernel::startup::PhaseRecord where U: core::convert::TryFrom<T>
+pub type walthamstow_kernel::startup::PhaseRecord::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn walthamstow_kernel::startup::PhaseRecord::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for walthamstow_kernel::startup::PhaseRecord where T: core::clone::Clone
+pub type walthamstow_kernel::startup::PhaseRecord::Owned = T
+pub fn walthamstow_kernel::startup::PhaseRecord::clone_into(&self, &mut T)
+pub fn walthamstow_kernel::startup::PhaseRecord::to_owned(&self) -> T
+impl<T> core::any::Any for walthamstow_kernel::startup::PhaseRecord where T: 'static + ?core::marker::Sized
+pub fn walthamstow_kernel::startup::PhaseRecord::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for walthamstow_kernel::startup::PhaseRecord where T: ?core::marker::Sized
+pub fn walthamstow_kernel::startup::PhaseRecord::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for walthamstow_kernel::startup::PhaseRecord where T: ?core::marker::Sized
+pub fn walthamstow_kernel::startup::PhaseRecord::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for walthamstow_kernel::startup::PhaseRecord where T: core::clone::Clone
+pub unsafe fn walthamstow_kernel::startup::PhaseRecord::clone_to_uninit(&self, *mut u8)
+impl<T> core::convert::From<T> for walthamstow_kernel::startup::PhaseRecord
+pub fn walthamstow_kernel::startup::PhaseRecord::from(T) -> T
+impl<T> dyn_clone::DynClone for walthamstow_kernel::startup::PhaseRecord where T: core::clone::Clone
+pub fn walthamstow_kernel::startup::PhaseRecord::__clone_box(&self, dyn_clone::sealed::Private) -> *mut ()
+impl<T> either::into_either::IntoEither for walthamstow_kernel::startup::PhaseRecord
+impl<T> tracing::instrument::Instrument for walthamstow_kernel::startup::PhaseRecord
+impl<T> tracing::instrument::WithSubscriber for walthamstow_kernel::startup::PhaseRecord
+impl<T> typenum::type_operators::Same for walthamstow_kernel::startup::PhaseRecord
+pub type walthamstow_kernel::startup::PhaseRecord::Output = T
+impl<T> yansi::paint::Paint for walthamstow_kernel::startup::PhaseRecord where T: ?core::marker::Sized
+pub fn walthamstow_kernel::startup::PhaseRecord::attr(&self, yansi::attr_quirk::Attribute) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::bg(&self, yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::bold(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::clear(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::conceal(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::dim(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::fg(&self, yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::fixed(&self, u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::invert(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::italic(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::linger(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::mask(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::on_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::on_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::on_bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::on_bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::on_bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::on_bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::on_bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::on_bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::on_bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::on_bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::on_bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::on_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::on_fixed(&self, u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::on_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::on_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::on_primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::on_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::on_rgb(&self, u8, u8, u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::on_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::on_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::quirk(&self, yansi::attr_quirk::Quirk) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::rapid_blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::resetting(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::rgb(&self, u8, u8, u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::strike(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::underline(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::whenever(&self, yansi::condition::Condition) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::wrap(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::PhaseRecord::yellow(&self) -> yansi::paint::Painted<&T>
+impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_kernel::startup::PhaseRecord where T: ?core::marker::Sized
+impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_kernel::startup::PhaseRecord where V: ppv_lite86::types::MultiLane<T>
+pub fn walthamstow_kernel::startup::PhaseRecord::vzip(self) -> V
+pub struct walthamstow_kernel::startup::StartupProgress
+impl walthamstow_kernel::startup::StartupProgress
+pub fn walthamstow_kernel::startup::StartupProgress::finish(self) -> walthamstow_kernel::startup::StartupRecord
+pub fn walthamstow_kernel::startup::StartupProgress::new(&walthamstow_kernel::clock::WallClock, impl core::ops::function::Fn() -> walthamstow_kernel::clock::Moment + core::marker::Send + core::marker::Sync + 'static) -> Self
+pub fn walthamstow_kernel::startup::StartupProgress::phase<T>(&mut self, walthamstow_kernel::startup::Phase, impl core::ops::function::FnOnce(&walthamstow_kernel::startup::PhaseProgress<'_>) -> anyhow::Result<T>) -> anyhow::Result<T>
+pub fn walthamstow_kernel::startup::StartupProgress::start_heartbeat(&mut self, core::time::Duration) -> anyhow::Result<()>
+impl core::ops::drop::Drop for walthamstow_kernel::startup::StartupProgress
+pub fn walthamstow_kernel::startup::StartupProgress::drop(&mut self)
+impl core::marker::Freeze for walthamstow_kernel::startup::StartupProgress
+impl core::marker::Send for walthamstow_kernel::startup::StartupProgress
+impl core::marker::Sync for walthamstow_kernel::startup::StartupProgress
+impl core::marker::Unpin for walthamstow_kernel::startup::StartupProgress
+impl core::marker::UnsafeUnpin for walthamstow_kernel::startup::StartupProgress
+impl !core::panic::unwind_safe::RefUnwindSafe for walthamstow_kernel::startup::StartupProgress
+impl !core::panic::unwind_safe::UnwindSafe for walthamstow_kernel::startup::StartupProgress
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for walthamstow_kernel::startup::StartupProgress where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for walthamstow_kernel::startup::StartupProgress where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<T, U> core::convert::Into<U> for walthamstow_kernel::startup::StartupProgress where U: core::convert::From<T>
+pub fn walthamstow_kernel::startup::StartupProgress::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for walthamstow_kernel::startup::StartupProgress where U: core::convert::Into<T>
+pub type walthamstow_kernel::startup::StartupProgress::Error = never
+pub fn walthamstow_kernel::startup::StartupProgress::try_from(U) -> core::result::Result<T, never>
+impl<T, U> core::convert::TryInto<U> for walthamstow_kernel::startup::StartupProgress where U: core::convert::TryFrom<T>
+pub type walthamstow_kernel::startup::StartupProgress::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn walthamstow_kernel::startup::StartupProgress::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> core::any::Any for walthamstow_kernel::startup::StartupProgress where T: 'static + ?core::marker::Sized
+pub fn walthamstow_kernel::startup::StartupProgress::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for walthamstow_kernel::startup::StartupProgress where T: ?core::marker::Sized
+pub fn walthamstow_kernel::startup::StartupProgress::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for walthamstow_kernel::startup::StartupProgress where T: ?core::marker::Sized
+pub fn walthamstow_kernel::startup::StartupProgress::borrow_mut(&mut self) -> &mut T
+impl<T> core::convert::From<T> for walthamstow_kernel::startup::StartupProgress
+pub fn walthamstow_kernel::startup::StartupProgress::from(T) -> T
+impl<T> either::into_either::IntoEither for walthamstow_kernel::startup::StartupProgress
+impl<T> tracing::instrument::Instrument for walthamstow_kernel::startup::StartupProgress
+impl<T> tracing::instrument::WithSubscriber for walthamstow_kernel::startup::StartupProgress
+impl<T> typenum::type_operators::Same for walthamstow_kernel::startup::StartupProgress
+pub type walthamstow_kernel::startup::StartupProgress::Output = T
+impl<T> yansi::paint::Paint for walthamstow_kernel::startup::StartupProgress where T: ?core::marker::Sized
+pub fn walthamstow_kernel::startup::StartupProgress::attr(&self, yansi::attr_quirk::Attribute) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::bg(&self, yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::bold(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::clear(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::conceal(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::dim(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::fg(&self, yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::fixed(&self, u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::invert(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::italic(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::linger(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::mask(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::on_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::on_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::on_bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::on_bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::on_bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::on_bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::on_bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::on_bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::on_bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::on_bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::on_bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::on_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::on_fixed(&self, u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::on_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::on_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::on_primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::on_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::on_rgb(&self, u8, u8, u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::on_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::on_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::quirk(&self, yansi::attr_quirk::Quirk) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::rapid_blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::resetting(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::rgb(&self, u8, u8, u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::strike(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::underline(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::whenever(&self, yansi::condition::Condition) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::wrap(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupProgress::yellow(&self) -> yansi::paint::Painted<&T>
+impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_kernel::startup::StartupProgress where T: ?core::marker::Sized
+impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_kernel::startup::StartupProgress where V: ppv_lite86::types::MultiLane<T>
+pub fn walthamstow_kernel::startup::StartupProgress::vzip(self) -> V
+pub struct walthamstow_kernel::startup::StartupRecord
+pub walthamstow_kernel::startup::StartupRecord::elapsed: core::time::Duration
+pub walthamstow_kernel::startup::StartupRecord::phases: alloc::vec::Vec<walthamstow_kernel::startup::PhaseRecord>
+pub walthamstow_kernel::startup::StartupRecord::started_at: std::time::SystemTime
+impl core::clone::Clone for walthamstow_kernel::startup::StartupRecord
+pub fn walthamstow_kernel::startup::StartupRecord::clone(&self) -> Self
+impl core::cmp::Eq for walthamstow_kernel::startup::StartupRecord
+impl core::cmp::PartialEq for walthamstow_kernel::startup::StartupRecord
+pub fn walthamstow_kernel::startup::StartupRecord::eq(&self, &Self) -> bool
+impl core::fmt::Debug for walthamstow_kernel::startup::StartupRecord
+pub fn walthamstow_kernel::startup::StartupRecord::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for walthamstow_kernel::startup::StartupRecord
+impl core::marker::Freeze for walthamstow_kernel::startup::StartupRecord
+impl core::marker::Send for walthamstow_kernel::startup::StartupRecord
+impl core::marker::Sync for walthamstow_kernel::startup::StartupRecord
+impl core::marker::Unpin for walthamstow_kernel::startup::StartupRecord
+impl core::marker::UnsafeUnpin for walthamstow_kernel::startup::StartupRecord
+impl core::panic::unwind_safe::RefUnwindSafe for walthamstow_kernel::startup::StartupRecord
+impl core::panic::unwind_safe::UnwindSafe for walthamstow_kernel::startup::StartupRecord
+impl<Q, K> equivalent::Equivalent<K> for walthamstow_kernel::startup::StartupRecord where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn walthamstow_kernel::startup::StartupRecord::equivalent(&self, &K) -> bool
+impl<Q, K> hashbrown::Equivalent<K> for walthamstow_kernel::startup::StartupRecord where Q: core::cmp::Eq + ?core::marker::Sized, K: core::borrow::Borrow<Q> + ?core::marker::Sized
+pub fn walthamstow_kernel::startup::StartupRecord::equivalent(&self, &K) -> bool
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Initialized, zerocopy::pointer::invariant::Initialized> for walthamstow_kernel::startup::StartupRecord where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<ST, DT> zerocopy::pointer::invariant::CastableFrom<ST, zerocopy::pointer::invariant::Uninit, zerocopy::pointer::invariant::Uninit> for walthamstow_kernel::startup::StartupRecord where ST: ?core::marker::Sized, DT: ?core::marker::Sized
+impl<T, U> core::convert::Into<U> for walthamstow_kernel::startup::StartupRecord where U: core::convert::From<T>
+pub fn walthamstow_kernel::startup::StartupRecord::into(self) -> U
+impl<T, U> core::convert::TryFrom<U> for walthamstow_kernel::startup::StartupRecord where U: core::convert::Into<T>
+pub type walthamstow_kernel::startup::StartupRecord::Error = never
+pub fn walthamstow_kernel::startup::StartupRecord::try_from(U) -> core::result::Result<T, never>
+impl<T, U> core::convert::TryInto<U> for walthamstow_kernel::startup::StartupRecord where U: core::convert::TryFrom<T>
+pub type walthamstow_kernel::startup::StartupRecord::Error = <U as core::convert::TryFrom<T>>::Error
+pub fn walthamstow_kernel::startup::StartupRecord::try_into(self) -> core::result::Result<U, <U as core::convert::TryFrom<T>>::Error>
+impl<T> alloc::borrow::ToOwned for walthamstow_kernel::startup::StartupRecord where T: core::clone::Clone
+pub type walthamstow_kernel::startup::StartupRecord::Owned = T
+pub fn walthamstow_kernel::startup::StartupRecord::clone_into(&self, &mut T)
+pub fn walthamstow_kernel::startup::StartupRecord::to_owned(&self) -> T
+impl<T> core::any::Any for walthamstow_kernel::startup::StartupRecord where T: 'static + ?core::marker::Sized
+pub fn walthamstow_kernel::startup::StartupRecord::type_id(&self) -> core::any::TypeId
+impl<T> core::borrow::Borrow<T> for walthamstow_kernel::startup::StartupRecord where T: ?core::marker::Sized
+pub fn walthamstow_kernel::startup::StartupRecord::borrow(&self) -> &T
+impl<T> core::borrow::BorrowMut<T> for walthamstow_kernel::startup::StartupRecord where T: ?core::marker::Sized
+pub fn walthamstow_kernel::startup::StartupRecord::borrow_mut(&mut self) -> &mut T
+impl<T> core::clone::CloneToUninit for walthamstow_kernel::startup::StartupRecord where T: core::clone::Clone
+pub unsafe fn walthamstow_kernel::startup::StartupRecord::clone_to_uninit(&self, *mut u8)
+impl<T> core::convert::From<T> for walthamstow_kernel::startup::StartupRecord
+pub fn walthamstow_kernel::startup::StartupRecord::from(T) -> T
+impl<T> dyn_clone::DynClone for walthamstow_kernel::startup::StartupRecord where T: core::clone::Clone
+pub fn walthamstow_kernel::startup::StartupRecord::__clone_box(&self, dyn_clone::sealed::Private) -> *mut ()
+impl<T> either::into_either::IntoEither for walthamstow_kernel::startup::StartupRecord
+impl<T> tracing::instrument::Instrument for walthamstow_kernel::startup::StartupRecord
+impl<T> tracing::instrument::WithSubscriber for walthamstow_kernel::startup::StartupRecord
+impl<T> typenum::type_operators::Same for walthamstow_kernel::startup::StartupRecord
+pub type walthamstow_kernel::startup::StartupRecord::Output = T
+impl<T> yansi::paint::Paint for walthamstow_kernel::startup::StartupRecord where T: ?core::marker::Sized
+pub fn walthamstow_kernel::startup::StartupRecord::attr(&self, yansi::attr_quirk::Attribute) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::bg(&self, yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::bold(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::clear(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::conceal(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::dim(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::fg(&self, yansi::color::Color) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::fixed(&self, u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::invert(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::italic(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::linger(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::mask(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::on_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::on_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::on_bright(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::on_bright_black(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::on_bright_blue(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::on_bright_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::on_bright_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::on_bright_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::on_bright_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::on_bright_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::on_bright_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::on_cyan(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::on_fixed(&self, u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::on_green(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::on_magenta(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::on_primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::on_red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::on_rgb(&self, u8, u8, u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::on_white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::on_yellow(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::primary(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::quirk(&self, yansi::attr_quirk::Quirk) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::rapid_blink(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::red(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::resetting(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::rgb(&self, u8, u8, u8) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::strike(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::underline(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::whenever(&self, yansi::condition::Condition) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::white(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::wrap(&self) -> yansi::paint::Painted<&T>
+pub fn walthamstow_kernel::startup::StartupRecord::yellow(&self) -> yansi::paint::Painted<&T>
+impl<T> zerocopy::pointer::invariant::Read<zerocopy::pointer::invariant::Exclusive, zerocopy::pointer::invariant::BecauseExclusive> for walthamstow_kernel::startup::StartupRecord where T: ?core::marker::Sized
+impl<V, T> ppv_lite86::types::VZip<V> for walthamstow_kernel::startup::StartupRecord where V: ppv_lite86::types::MultiLane<T>
+pub fn walthamstow_kernel::startup::StartupRecord::vzip(self) -> V
+pub const walthamstow_kernel::startup::TARGET: &str
+pub trait walthamstow_kernel::startup::ItemProgress
+pub fn walthamstow_kernel::startup::ItemProgress::expect(&self, usize)
+pub fn walthamstow_kernel::startup::ItemProgress::next(&self, &str)
+impl walthamstow_kernel::startup::ItemProgress for ()
+pub fn ()::expect(&self, usize)
+pub fn ()::next(&self, &str)
+impl walthamstow_kernel::startup::ItemProgress for walthamstow_kernel::startup::PhaseProgress<'_>
+pub fn walthamstow_kernel::startup::PhaseProgress<'_>::expect(&self, usize)
+pub fn walthamstow_kernel::startup::PhaseProgress<'_>::next(&self, &str)
 pub struct walthamstow_kernel::DocumentId
 impl walthamstow_kernel::document::DocumentId
 pub fn walthamstow_kernel::document::DocumentId::entity(&self) -> &str

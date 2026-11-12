@@ -3,9 +3,10 @@
 An engine kernel for products built on [Clerkenwell](https://github.com/thirtytwobits/clerkenwell):
 the parts of an engine daemon that do not depend on what the product is.
 
-- `walthamstow-kernel`: errors and reason codes, the event bus and daemon lifecycle, clocks,
-  durable writes, file helpers, hashes, journal layout, the engine's local records, document names,
-  leases, the fenced publication of staged files and collaboration storage.
+- `walthamstow-kernel`: errors and reason codes, the event bus and daemon lifecycle, the progress
+  of a load, clocks, durable writes, file helpers, hashes, journal layout, the engine's local
+  records, document names, leases, the fenced publication of staged files and collaboration
+  storage.
 - `walthamstow-logs`: log documents, which do not merge: a head and an ordered log of records,
   written by one lease holder at a time, and the blobs they name. It holds the `LogStore` and
   `BlobStore` ports, their memory adapters, the file log and blob stores and the document layout

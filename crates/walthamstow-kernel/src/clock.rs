@@ -33,6 +33,12 @@ impl Moment {
     pub fn remaining(self) -> Duration {
         self.0.saturating_sub(Moment::now().0)
     }
+
+    /// How long after `earlier` this moment is, or nothing when it is not
+    /// after it.
+    pub fn duration_since(self, earlier: Moment) -> Duration {
+        self.0.saturating_sub(earlier.0)
+    }
 }
 
 impl std::ops::Add<Duration> for Moment {
@@ -87,5 +93,21 @@ impl Default for WallClock {
 impl std::fmt::Debug for WallClock {
     fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         formatter.write_str("WallClock")
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// A moment is as long after an earlier one as was added to it, and no
+    /// time at all after a later one.
+    #[test]
+    fn a_moment_is_after_an_earlier_one_by_what_was_added() {
+        let added = Duration::from_secs(5);
+        let later = Moment::ORIGIN + added;
+
+        assert_eq!(later.duration_since(Moment::ORIGIN), added);
+        assert_eq!(Moment::ORIGIN.duration_since(later), Duration::ZERO);
     }
 }

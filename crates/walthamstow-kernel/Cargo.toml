@@ -8,6 +8,10 @@ license.workspace = true
 repository.workspace = true
 publish = false
 
+[features]
+# The capture of a load's progress lines, for a host's tests of its load.
+capture = ["dep:tracing-subscriber"]
+
 [dependencies]
 anyhow.workspace = true
 cap-fs-ext.workspace = true
@@ -23,6 +27,7 @@ sha2 = "0.11.1"
 tokio.workspace = true
 tokio-util = { workspace = true, features = ["rt"] }
 tracing.workspace = true
+tracing-subscriber = { workspace = true, optional = true }
 uuid.workspace = true
 
 [target.'cfg(unix)'.dependencies]
@@ -33,3 +38,4 @@ winx.workspace = true
 
 [dev-dependencies]
 tempfile.workspace = true
+tracing-subscriber.workspace = true

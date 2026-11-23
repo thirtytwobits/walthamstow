@@ -14,8 +14,8 @@ conformance = ["dep:rand"]
 
 [dependencies]
 cap-std.workspace = true
-chrono.workspace = true
 clerkenwell-events.workspace = true
+jiff.workspace = true
 percent-encoding.workspace = true
 rand = { workspace = true, optional = true }
 serde.workspace = true

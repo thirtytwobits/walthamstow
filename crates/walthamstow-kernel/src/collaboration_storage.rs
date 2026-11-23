@@ -689,7 +689,7 @@ impl CollaborationStoragePort for FileCollaborationStorage {
             "{}-{}-{}-{}-{}.json",
             safe_entity_name(&document.entity),
             sha256_hex(document.resource_id.as_bytes()),
-            self.clock.utc().format("%Y%m%dT%H%M%S%.3fZ"),
+            self.clock.utc().strftime("%Y%m%dT%H%M%S%.3fZ"),
             path_component(label),
             uuid::Uuid::new_v4().simple()
         );

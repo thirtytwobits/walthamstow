@@ -1,5 +1,23 @@
 # Changelog
 
+## Unreleased
+
+### Breaking
+
+- `WallClock::utc` returns a `jiff::Timestamp`, and `StoredRecord::recorded` is one, in place of
+  `chrono::DateTime<Utc>`. `chrono` is unmaintained (RUSTSEC-2026-0543). `WallClock::rfc3339` and a
+  log record's `recorded` field write the same text as before.
+
+### Added
+
+- `clock::utc_rfc3339` serialises a `jiff::Timestamp` as a log record's `recorded` field is
+  written.
+
+### Fixed
+
+- The lockfile takes `url` 2.5.9 for RUSTSEC-2026-0592, a stack overflow in `Url::origin()`, and
+  `ctutils` 0.4.8 for RUSTSEC-2026-0385, non-constant-time comparisons.
+
 ## 0.11.0
 
 ### Added

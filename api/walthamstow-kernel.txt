@@ -1,5 +1,8 @@
 pub mod walthamstow_kernel
 pub mod walthamstow_kernel::clock
+pub mod walthamstow_kernel::clock::utc_rfc3339
+pub fn walthamstow_kernel::clock::utc_rfc3339::deserialize<'de, D: serde_core::de::Deserializer<'de>>(D) -> core::result::Result<jiff::timestamp::Timestamp, <D as serde_core::de::Deserializer>::Error>
+pub fn walthamstow_kernel::clock::utc_rfc3339::serialize<S: serde_core::ser::Serializer>(&jiff::timestamp::Timestamp, S) -> core::result::Result<<S as serde_core::ser::Serializer>::Ok, <S as serde_core::ser::Serializer>::Error>
 pub struct walthamstow_kernel::clock::Moment(_)
 impl walthamstow_kernel::clock::Moment
 pub const walthamstow_kernel::clock::Moment::ORIGIN: walthamstow_kernel::clock::Moment
@@ -139,7 +142,7 @@ pub fn walthamstow_kernel::clock::WallClock::epoch_ms(&self) -> i64
 pub fn walthamstow_kernel::clock::WallClock::new(impl core::ops::function::Fn() -> std::time::SystemTime + core::marker::Send + core::marker::Sync + 'static) -> Self
 pub fn walthamstow_kernel::clock::WallClock::now(&self) -> std::time::SystemTime
 pub fn walthamstow_kernel::clock::WallClock::rfc3339(&self) -> alloc::string::String
-pub fn walthamstow_kernel::clock::WallClock::utc(&self) -> chrono::datetime::DateTime<chrono::offset::utc::Utc>
+pub fn walthamstow_kernel::clock::WallClock::utc(&self) -> jiff::timestamp::Timestamp
 impl core::clone::Clone for walthamstow_kernel::clock::WallClock
 pub fn walthamstow_kernel::clock::WallClock::clone(&self) -> Self
 impl core::default::Default for walthamstow_kernel::clock::WallClock
@@ -3514,7 +3517,7 @@ pub fn walthamstow_kernel::clock::WallClock::epoch_ms(&self) -> i64
 pub fn walthamstow_kernel::clock::WallClock::new(impl core::ops::function::Fn() -> std::time::SystemTime + core::marker::Send + core::marker::Sync + 'static) -> Self
 pub fn walthamstow_kernel::clock::WallClock::now(&self) -> std::time::SystemTime
 pub fn walthamstow_kernel::clock::WallClock::rfc3339(&self) -> alloc::string::String
-pub fn walthamstow_kernel::clock::WallClock::utc(&self) -> chrono::datetime::DateTime<chrono::offset::utc::Utc>
+pub fn walthamstow_kernel::clock::WallClock::utc(&self) -> jiff::timestamp::Timestamp
 impl core::clone::Clone for walthamstow_kernel::clock::WallClock
 pub fn walthamstow_kernel::clock::WallClock::clone(&self) -> Self
 impl core::default::Default for walthamstow_kernel::clock::WallClock

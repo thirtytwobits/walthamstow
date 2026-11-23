@@ -225,11 +225,7 @@ fn log_of<'a>(records: impl IntoIterator<Item = &'a StoredRecord>) -> (Vec<u8>, 
 }
 
 /// `commit`'s records as the store keeps them, from `next`, recorded at `recorded`.
-fn stored(
-    commit: &LogCommit,
-    next: Position,
-    recorded: chrono::DateTime<chrono::Utc>,
-) -> Vec<StoredRecord> {
+fn stored(commit: &LogCommit, next: Position, recorded: jiff::Timestamp) -> Vec<StoredRecord> {
     commit
         .records
         .iter()

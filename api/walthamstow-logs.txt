@@ -2644,7 +2644,7 @@ pub walthamstow_logs::types::StoredRecord::author: clerkenwell_events::Principal
 pub walthamstow_logs::types::StoredRecord::blobs: alloc::vec::Vec<walthamstow_logs::types::BlobRef>
 pub walthamstow_logs::types::StoredRecord::payload: serde_json::value::Value
 pub walthamstow_logs::types::StoredRecord::position: walthamstow_logs::types::Position
-pub walthamstow_logs::types::StoredRecord::recorded: chrono::datetime::DateTime<chrono::offset::utc::Utc>
+pub walthamstow_logs::types::StoredRecord::recorded: jiff::timestamp::Timestamp
 impl core::clone::Clone for walthamstow_logs::types::StoredRecord
 pub fn walthamstow_logs::types::StoredRecord::clone(&self) -> Self
 impl core::cmp::Eq for walthamstow_logs::types::StoredRecord
@@ -5380,7 +5380,7 @@ pub walthamstow_logs::StoredRecord::author: clerkenwell_events::Principal
 pub walthamstow_logs::StoredRecord::blobs: alloc::vec::Vec<walthamstow_logs::types::BlobRef>
 pub walthamstow_logs::StoredRecord::payload: serde_json::value::Value
 pub walthamstow_logs::StoredRecord::position: walthamstow_logs::types::Position
-pub walthamstow_logs::StoredRecord::recorded: chrono::datetime::DateTime<chrono::offset::utc::Utc>
+pub walthamstow_logs::StoredRecord::recorded: jiff::timestamp::Timestamp
 impl core::clone::Clone for walthamstow_logs::types::StoredRecord
 pub fn walthamstow_logs::types::StoredRecord::clone(&self) -> Self
 impl core::cmp::Eq for walthamstow_logs::types::StoredRecord

@@ -551,7 +551,7 @@ pub fn a_commit_carrying_nothing_is_invalid(harness: &dyn Harness) {
 /// highest of them, or the first position when there are none.
 pub fn an_image_sets_the_next_position_one_past_its_highest(harness: &dyn Harness) {
     let fixture = Fixture::new(harness);
-    let earlier = fixture.now() - chrono::Duration::days(1);
+    let earlier = fixture.now() - jiff::SignedDuration::from_hours(24);
     let records = vec![stored(3, 3, earlier), stored(7, 7, earlier)];
     let gapped = document("gapped");
     let revision = fixture.create(&gapped, &records);

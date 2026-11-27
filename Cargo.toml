@@ -27,12 +27,12 @@ clapham = { git = "https://github.com/thirtytwobits/clapham", tag = "v0.6.0", ve
 clapham-cli = { git = "https://github.com/thirtytwobits/clapham", tag = "v0.6.0", version = "0.6.0" }
 clapham-conformance = { git = "https://github.com/thirtytwobits/clapham", tag = "v0.6.0", version = "0.6.0" }
 clapham-mcp-server = { git = "https://github.com/thirtytwobits/clapham", tag = "v0.6.0", version = "0.6.0" }
-clerkenwell-doc = { git = "https://github.com/thirtytwobits/clerkenwell", tag = "v0.14.0" }
-clerkenwell-events = { git = "https://github.com/thirtytwobits/clerkenwell", tag = "v0.14.0" }
-clerkenwell-ops = { git = "https://github.com/thirtytwobits/clerkenwell", tag = "v0.14.0" }
-clerkenwell-schema = { git = "https://github.com/thirtytwobits/clerkenwell", tag = "v0.14.0" }
-clerkenwell-session = { git = "https://github.com/thirtytwobits/clerkenwell", tag = "v0.14.0" }
-clerkenwell-store = { git = "https://github.com/thirtytwobits/clerkenwell", tag = "v0.14.0" }
+clerkenwell-doc = { git = "https://github.com/thirtytwobits/clerkenwell", tag = "v0.15.0" }
+clerkenwell-events = { git = "https://github.com/thirtytwobits/clerkenwell", tag = "v0.15.0" }
+clerkenwell-ops = { git = "https://github.com/thirtytwobits/clerkenwell", tag = "v0.15.0" }
+clerkenwell-schema = { git = "https://github.com/thirtytwobits/clerkenwell", tag = "v0.15.0" }
+clerkenwell-session = { git = "https://github.com/thirtytwobits/clerkenwell", tag = "v0.15.0" }
+clerkenwell-store = { git = "https://github.com/thirtytwobits/clerkenwell", tag = "v0.15.0" }
 jiff = { version = "1.0.2", default-features = false, features = ["serde", "std"] }
 jsonschema = { version = "0.60.2", default-features = false, features = ["idna", "resolve-file", "resolve-http", "tls-ring"] }
 percent-encoding = "2.3.2"
@@ -49,9 +49,3 @@ tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.20", default-features = false, features = ["registry", "std"] }
 uuid = { version = "1.18.1", features = ["serde", "v4", "v5"] }
 winx = "0.36.4"
-
-# Clerkenwell's crates build on a Loro fork, and workspace patches do not propagate to
-# dependents: every workspace that builds Clerkenwell carries Clerkenwell's override, at the
-# Loro revision its release names.
-[patch.crates-io]
-generic-btree = { git = "https://github.com/thirtytwobits/loro.git", rev = "704cfb2bdb158bcd2910948ad140eb24713f35a1" }

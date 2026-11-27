@@ -1,9 +1,12 @@
 # Changelog
 
-## Unreleased
+## 0.12.0
 
 ### Breaking
 
+- Walthamstow builds on Clerkenwell 0.15.0, which takes `loro` 1.19.1 from crates.io. A host that
+  also depends on Clerkenwell takes its `v0.15.0` tag; Cargo treats each Git tag as a separate
+  crate. A workspace that builds Walthamstow needs no `generic-btree` override; remove it.
 - `WallClock::utc` returns a `jiff::Timestamp`, and `StoredRecord::recorded` is one, in place of
   `chrono::DateTime<Utc>`. `chrono` is unmaintained (RUSTSEC-2026-0543). `WallClock::rfc3339` and a
   log record's `recorded` field write the same text as before.

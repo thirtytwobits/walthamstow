@@ -6,7 +6,7 @@
 //! whose lease stands.
 
 use crate::types::{LogCommit, LogImage, Position, StoredRecord, WriteId};
-use chrono::{DateTime, Utc};
+use jiff::Timestamp;
 use serde_json::Value;
 use std::collections::BTreeMap;
 use walthamstow_kernel::DocumentId;
@@ -72,7 +72,7 @@ fn image_next(image: &LogImage) -> Option<u64> {
     Some(next)
 }
 
-fn append(document: &mut ModelDocument, commit: &LogCommit, now: DateTime<Utc>) {
+fn append(document: &mut ModelDocument, commit: &LogCommit, now: Timestamp) {
     for record in &commit.records {
         document.records.push(StoredRecord {
             position: Position::new(document.next),
@@ -191,7 +191,7 @@ impl Model {
         epoch: u64,
         base: ModelRevision,
         commit: &LogCommit,
-        now: DateTime<Utc>,
+        now: Timestamp,
     ) -> Outcome<ModelRevision> {
         self.change(document, epoch, base, &commit.id, |stored| {
             if commit.records.is_empty() && commit.head.is_none() {
@@ -209,7 +209,7 @@ impl Model {
         base: ModelRevision,
         from: Position,
         commit: &LogCommit,
-        now: DateTime<Utc>,
+        now: Timestamp,
     ) -> Outcome<ModelRevision> {
         self.change(document, epoch, base, &commit.id, |stored| {
             if from.get() >= stored.next {

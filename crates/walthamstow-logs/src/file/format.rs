@@ -149,14 +149,14 @@ pub(super) fn parse_log(bytes: &[u8], next: Position) -> Result<Log, LogFault> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::{DateTime, Utc};
     use clerkenwell_events::{ActorKind, Principal};
+    use jiff::Timestamp;
 
     fn record(position: u64) -> StoredRecord {
         StoredRecord {
             position: Position::new(position),
             author: Principal::new("writer", ActorKind::Agent),
-            recorded: DateTime::<Utc>::UNIX_EPOCH,
+            recorded: Timestamp::UNIX_EPOCH,
             blobs: Vec::new(),
             payload: Value::from(position),
         }

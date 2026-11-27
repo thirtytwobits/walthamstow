@@ -7,7 +7,7 @@ use crate::store::LogStore;
 use crate::types::{
     Listed, LogCommit, LogImage, Position, Revision, StoredHead, StoredRecord, WriteId,
 };
-use chrono::{DateTime, Utc};
+use jiff::Timestamp;
 use serde_json::Value;
 use std::collections::BTreeMap;
 use std::fmt;
@@ -191,11 +191,7 @@ pub(crate) fn after(next: Position, count: usize) -> KernelResult<Position> {
 
 /// Appends `commit`'s records, recorded at `recorded`, and replaces the head when the commit
 /// carries one. Refused, with nothing changed, when the log has no positions left for them.
-fn append(
-    document: &mut Document,
-    commit: &LogCommit,
-    recorded: DateTime<Utc>,
-) -> KernelResult<()> {
+fn append(document: &mut Document, commit: &LogCommit, recorded: Timestamp) -> KernelResult<()> {
     let next = after(document.next, commit.records.len())?;
     let records = commit.records.iter().zip(document.next.get()..);
     document

@@ -3,8 +3,8 @@
 //! What a log document holds, and what a write and a read carry.
 
 use crate::fault::LogFault;
-use chrono::{DateTime, Utc};
 use clerkenwell_events::Principal;
+use jiff::Timestamp;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::fmt;
@@ -282,7 +282,8 @@ pub struct StoredRecord {
     /// Who wrote the record, as the writer named it.
     pub author: Principal,
     /// When the store recorded it, on the clock the store is given.
-    pub recorded: DateTime<Utc>,
+    #[serde(with = "walthamstow_kernel::clock::utc_rfc3339")]
+    pub recorded: Timestamp,
     pub blobs: Vec<BlobRef>,
     pub payload: Value,
 }

@@ -23,8 +23,8 @@ pub mod rules;
 use crate::fault::FaultKind;
 use crate::store::LogStore;
 use crate::types::{LogCommit, LogImage, NewRecord, Position, Revision, StoredRecord, WriteId};
-use chrono::{DateTime, Utc};
 use clerkenwell_events::{ActorKind, Principal};
+use jiff::Timestamp;
 use serde_json::Value;
 use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 use std::time::{Duration, SystemTime};
@@ -158,14 +158,14 @@ impl Fixture {
     }
 
     /// Moves the wall clock on by `seconds`, and returns the time it then reads.
-    fn advance_wall(&self, seconds: u64) -> DateTime<Utc> {
+    fn advance_wall(&self, seconds: u64) -> Timestamp {
         let mut wall = locked(&self.wall);
         *wall += Duration::from_secs(seconds);
-        DateTime::from(*wall)
+        Timestamp::try_from(*wall).expect("the suite's wall clock is in range")
     }
 
-    fn now(&self) -> DateTime<Utc> {
-        DateTime::from(*locked(&self.wall))
+    fn now(&self) -> Timestamp {
+        Timestamp::try_from(*locked(&self.wall)).expect("the suite's wall clock is in range")
     }
 
     /// Creates `document` with `records`, no records when empty, and returns its revision.
@@ -213,7 +213,7 @@ fn new_record(payload: i64) -> NewRecord {
     }
 }
 
-fn stored(position: u64, payload: i64, recorded: DateTime<Utc>) -> StoredRecord {
+fn stored(position: u64, payload: i64, recorded: Timestamp) -> StoredRecord {
     StoredRecord {
         position: Position::new(position),
         author: author("writer"),

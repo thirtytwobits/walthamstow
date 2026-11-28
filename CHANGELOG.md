@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+### Breaking
+
+- Walthamstow builds on Clerkenwell 0.16.0 and Clapham 0.7.0, the Clapham that `clerkenwell-ops`
+  takes. A host that also depends on either takes its tag; Cargo treats each Git tag as a separate
+  crate.
+
 ## 0.12.0
 
 ### Breaking
